@@ -19,3 +19,49 @@ query GetTitles {
     }
   }
 }
+
+
+query GetPerson($itsystem_user_key: String!, $now: DateTime!, $employee_uuid: UUID!) {
+  employees(filter: {uuids: [$employee_uuid]}) {
+    objects {
+      current {
+        uuid
+        user_key
+        nickname
+        name
+      }
+    }
+  }
+  addresses(
+    filter: {employee: {uuids: [$employee_uuid]}, address_type: {scope: "EMAIL"}, to_date: null}
+  ) {
+    objects {
+      validities(start: $now, end: null) {
+        uuid
+        value
+      }
+    }
+  }
+  itusers(
+    filter: {employee: {uuids: [$employee_uuid]}, itsystem: {user_keys: [$itsystem_user_key]}, to_date: null}
+  ) {
+    objects {
+      validities(start: $now, end: null) {
+        user_key
+      }
+    }
+  }
+  engagements(
+    filter: {employee: {uuids: [$employee_uuid]}, to_date: null}
+  ) {
+    objects {
+      validities(start: $now, end: null) {
+        org_unit_uuid
+        job_function {
+          name
+          uuid
+        }
+      }
+    }
+  }
+}
