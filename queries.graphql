@@ -65,3 +65,36 @@ query GetPerson($itsystem_user_key: String!, $now: DateTime!, $employee_uuid: UU
     }
   }
 }
+
+
+query GetPersonUuidForItUser($now: DateTime!, $uuid: UUID!) {
+  itusers(filter: {uuids: [$uuid]}) {
+    objects {
+      validities(start: $now, end: null) {
+        employee_uuid
+      }
+    }
+  }
+}
+
+
+query GetPersonUuidForAddress($now: DateTime!, $uuid: UUID!) {
+  addresses(filter: {uuids: [$uuid]}) {
+    objects {
+      validities(start: $now, end: null) {
+        employee_uuid
+      }
+    }
+  }
+}
+
+
+query GetPersonUuidForEngagement($now: DateTime!, $uuid: UUID!) {
+  engagements(filter: {uuids: [$uuid]}) {
+    objects {
+      validities(start: $now, end: null) {
+        employee_uuid
+      }
+    }
+  }
+}

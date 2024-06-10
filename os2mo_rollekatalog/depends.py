@@ -12,3 +12,4 @@ from os2mo_rollekatalog.config import _Settings
 
 GraphQLClient = Annotated[_GraphQLClient, Depends(from_context("graphql_client"))]
 Settings = Annotated[_Settings, Depends(from_user_context("settings"))]
+UserCache = Annotated[dict, Depends(from_user_context("user_cache"))]
