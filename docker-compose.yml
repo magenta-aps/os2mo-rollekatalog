@@ -17,7 +17,7 @@ services:
       FASTRAMQPI__AMQP__URL: "amqp://guest:guest@msg-broker:5672/"
 
       # Rollekatalog
-      # TODO
+      ITSYSTEM_USER_KEY: "Active Directory"
     volumes:
       - ./:/app/:ro
     ports:
