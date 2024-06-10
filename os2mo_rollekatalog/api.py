@@ -41,3 +41,9 @@ async def person(
         settings.use_nickname,
         settings.sync_titles,
     )
+
+
+@router.get("/dump_user_cache")
+async def dump_user_cache(user_cache: depends.UserCache) -> dict[UUID, User]:
+    """Dump the user cache."""
+    return user_cache

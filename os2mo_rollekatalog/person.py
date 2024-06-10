@@ -65,3 +65,19 @@ async def get_person(
         email=email,
         positions=positions,
     )
+
+
+async def sync_person(
+    mo: depends.GraphQLClient,
+    cache: dict[UUID, User],
+    itsystem_user_key: str,
+    person_uuid: UUID,
+    use_nickname: bool,
+    sync_titles: bool,
+) -> None:
+    user = await get_person(
+        mo, itsystem_user_key, person_uuid, use_nickname, sync_titles
+    )
+    if user is None:
+        return
+    cache[person_uuid] = user

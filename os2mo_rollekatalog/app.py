@@ -20,7 +20,7 @@ def create_app(**kwargs: Any) -> FastAPI:
         graphql_client_cls=GraphQLClient,
     )
     fastramqpi.add_context(settings=settings)
-    # context = fastramqpi.get_context()
+    fastramqpi.add_context(user_cache={})
 
     # FastAPI router
     app = fastramqpi.get_app()
