@@ -1,5 +1,7 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
+from uuid import UUID
+
 from fastramqpi.config import Settings as FastRAMQPISettings
 from pydantic import BaseSettings
 from pydantic import Field
@@ -11,6 +13,10 @@ class _Settings(BaseSettings):
         env_nested_delimiter = "__"
 
     fastramqpi: FastRAMQPISettings
+
+    root_org_unit: UUID = Field(
+        description="Root in OS2mo. Only sync this org unit, and units below."
+    )
 
     itsystem_user_key: str = Field(
         description="Designed to sync AD GUIDs to Rollekatalog, this value represents the user key of the AD itsystem in OS2mo."

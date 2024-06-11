@@ -98,3 +98,45 @@ query GetPersonUuidForEngagement($now: DateTime!, $uuid: UUID!) {
     }
   }
 }
+
+
+query GetOrgUnit($itsystem_user_key: String!, $now: DateTime!, $uuid: UUID!) {
+  org_units(filter: {uuids: [$uuid]}) {
+    objects {
+      current {
+        uuid
+        name
+        parent {
+          uuid
+        }
+        ancestors {
+          uuid
+        }
+      }
+    }
+  }
+  managers(filter: {org_unit: {uuids: [$uuid]}}) {
+    objects {
+      validities(start: $now, end: null) {
+        person {
+          uuid
+          itusers(filter: {itsystem: {user_keys: [$itsystem_user_key]}}) {
+            user_key
+          }
+        }
+      }
+    }
+  }
+  kles(filter: {org_unit: {uuids: [$uuid]}}) {
+    objects {
+      validities(start: $now, end: null) {
+        kle_number {
+          user_key
+        }
+        kle_aspects {
+          scope
+        }
+      }
+    }
+  }
+}

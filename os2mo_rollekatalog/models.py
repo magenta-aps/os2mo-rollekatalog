@@ -9,6 +9,8 @@ from pydantic import EmailStr
 
 SamAccountName = NewType("SamAccountName", str)
 Name = NewType("Name", str)
+OrgUnitName = NewType("OrgUnitName", str)
+KLE = NewType("KLE", str)
 
 
 class Position(BaseModel):
@@ -24,3 +26,17 @@ class User(BaseModel):
     email: EmailStr | None
     # If empty position, do not sync
     positions: list[Position]
+
+
+class Manager(BaseModel):
+    uuid: UUID
+    userId: SamAccountName
+
+
+class OrgUnit(BaseModel):
+    uuid: UUID
+    name: OrgUnitName
+    parentOrgUnitUuid: UUID | None
+    manager: Manager | None
+    klePerforming: list[KLE]
+    kleInterest: list[KLE]

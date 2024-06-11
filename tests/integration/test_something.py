@@ -16,7 +16,7 @@ async def test_version(
 
     @retry()
     async def verify() -> None:
-        assert version.mo_version == "36.7.2"
+        assert version.mo_version == "36.7.3"
 
     await verify()
 
