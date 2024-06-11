@@ -79,3 +79,21 @@ async def get_org_unit(
         klePerforming=kle_performing,
         kleInterest=kle_interests,
     )
+
+
+async def sync_org_unit(
+    mo: depends.GraphQLClient,
+    cache: dict[UUID, OrgUnit],
+    itsystem_user_key: str,
+    root_org_unit: UUID,
+    org_unit_uuid: UUID,
+) -> None:
+    org_unit = await get_org_unit(
+        mo,
+        itsystem_user_key,
+        root_org_unit,
+        org_unit_uuid,
+    )
+    if org_unit is None:
+        return
+    cache[org_unit_uuid] = org_unit

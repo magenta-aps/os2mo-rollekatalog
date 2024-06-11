@@ -62,3 +62,11 @@ async def org_unit(
 async def dump_user_cache(user_cache: depends.UserCache) -> dict[UUID, User]:
     """Dump the user cache."""
     return user_cache
+
+
+@router.get("/dump_org_unit_cache")
+async def dump_org_unit_cache(
+    org_unit_cache: depends.OrgUnitCache,
+) -> dict[UUID, OrgUnit]:
+    """Dump the org unit cache."""
+    return org_unit_cache

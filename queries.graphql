@@ -67,11 +67,16 @@ query GetPerson($itsystem_user_key: String!, $now: DateTime!, $employee_uuid: UU
 }
 
 
-query GetPersonUuidForItUser($now: DateTime!, $uuid: UUID!) {
+query GetUuidsForItUser($uuid: UUID!) {
   itusers(filter: {uuids: [$uuid]}) {
     objects {
-      validities(start: $now, end: null) {
-        employee_uuid
+      validities(start: null, end: null) {
+        person {
+          uuid
+          engagements {
+            org_unit_uuid
+          }
+        }
       }
     }
   }
@@ -136,6 +141,28 @@ query GetOrgUnit($itsystem_user_key: String!, $now: DateTime!, $uuid: UUID!) {
         kle_aspects {
           scope
         }
+      }
+    }
+  }
+}
+
+
+query GetOrgUnitUuidForKle($now: DateTime!, $uuid: UUID!) {
+  kles(filter: {uuids: [$uuid]}) {
+    objects {
+      validities(start: $now, end: null) {
+        org_unit_uuid
+      }
+    }
+  }
+}
+
+
+query GetOrgUnitUuidForManager($now: DateTime!, $uuid: UUID!) {
+  managers(filter: {uuids: [$uuid]}) {
+    objects {
+      validities(start: $now, end: null) {
+        org_unit_uuid
       }
     }
   }
