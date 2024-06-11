@@ -21,6 +21,7 @@ def create_app(**kwargs: Any) -> FastAPI:
     )
     fastramqpi.add_context(settings=settings)
     fastramqpi.add_context(user_cache={})
+    fastramqpi.add_context(org_unit_cache={})
 
     # FastAPI router
     app = fastramqpi.get_app()

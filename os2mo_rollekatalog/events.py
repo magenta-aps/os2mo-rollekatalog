@@ -7,6 +7,7 @@ from fastramqpi.ramqp.mo import MORouter
 from fastramqpi.ramqp.mo import PayloadUUID
 
 from os2mo_rollekatalog import depends
+from os2mo_rollekatalog.orgunit import sync_org_unit
 from os2mo_rollekatalog.person import sync_person
 from os2mo_rollekatalog.titles import get_job_titles
 
@@ -50,23 +51,33 @@ async def handle_ituser(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
     user_cache: depends.UserCache,
+    org_unit_cache: depends.OrgUnitCache,
 ) -> None:
-    result = await mo.get_person_uuid_for_it_user(datetime.now(), ituser_uuid)
-    uuids = {
-        val.employee_uuid
+    result = await mo.get_uuids_for_it_user(ituser_uuid)
+    persons = [
+        person
         for obj in result.objects
         for val in obj.validities
-        if val.employee_uuid is not None
-    }
-    for person_uuid in uuids:
+        if val.person is not None
+        for person in val.person
+    ]
+    for person in persons:
         await sync_person(
             mo,
             user_cache,
             settings.itsystem_user_key,
-            person_uuid,
+            person.uuid,
             settings.use_nickname,
             settings.sync_titles,
         )
+        for engagement in person.engagements:
+            await sync_org_unit(
+                mo,
+                org_unit_cache,
+                settings.itsystem_user_key,
+                settings.root_org_unit,
+                engagement.org_unit_uuid,
+            )
 
 
 @router.register("address")
@@ -116,4 +127,58 @@ async def handle_engagement(
             person_uuid,
             settings.use_nickname,
             settings.sync_titles,
+        )
+
+
+@router.register("org_unit")
+async def handle_org_unit(
+    org_unit_uuid: PayloadUUID,
+    settings: depends.Settings,
+    mo: depends.GraphQLClient,
+    org_unit_cache: depends.OrgUnitCache,
+) -> None:
+    await sync_org_unit(
+        mo,
+        org_unit_cache,
+        settings.itsystem_user_key,
+        settings.root_org_unit,
+        org_unit_uuid,
+    )
+
+
+@router.register("kle")
+async def handle_kle(
+    kle_uuid: PayloadUUID,
+    settings: depends.Settings,
+    mo: depends.GraphQLClient,
+    org_unit_cache: depends.OrgUnitCache,
+) -> None:
+    result = await mo.get_org_unit_uuid_for_kle(datetime.now(), kle_uuid)
+    uuids = {val.org_unit_uuid for obj in result.objects for val in obj.validities}
+    for org_unit_uuid in uuids:
+        await sync_org_unit(
+            mo,
+            org_unit_cache,
+            settings.itsystem_user_key,
+            settings.root_org_unit,
+            org_unit_uuid,
+        )
+
+
+@router.register("manager")
+async def handle_manager(
+    manager_uuid: PayloadUUID,
+    settings: depends.Settings,
+    mo: depends.GraphQLClient,
+    org_unit_cache: depends.OrgUnitCache,
+) -> None:
+    result = await mo.get_org_unit_uuid_for_manager(datetime.now(), manager_uuid)
+    uuids = {val.org_unit_uuid for obj in result.objects for val in obj.validities}
+    for org_unit_uuid in uuids:
+        await sync_org_unit(
+            mo,
+            org_unit_cache,
+            settings.itsystem_user_key,
+            settings.root_org_unit,
+            org_unit_uuid,
         )
