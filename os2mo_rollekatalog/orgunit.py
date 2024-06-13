@@ -1,14 +1,16 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
+from contextlib import suppress
 from datetime import datetime
 from uuid import UUID
 
 from os2mo_rollekatalog import depends
+from os2mo_rollekatalog.junkyard import NoSuitableSamAccount
 from os2mo_rollekatalog.junkyard import flatten_validities
+from os2mo_rollekatalog.junkyard import pick_samaccount
 from os2mo_rollekatalog.models import Manager
 from os2mo_rollekatalog.models import OrgUnit
 from os2mo_rollekatalog.models import OrgUnitName
-from os2mo_rollekatalog.models import SamAccountName
 
 
 class ExpectedParent(Exception):
@@ -52,11 +54,10 @@ async def get_org_unit(
             if manager.person is None:
                 continue
             for person in manager.person:
-                # Make sure the manager has an AD account
-                if len(person.itusers):
+                with suppress(NoSuitableSamAccount):
                     return Manager(
                         uuid=person.uuid,
-                        userId=SamAccountName(person.itusers[-1].user_key),
+                        userId=pick_samaccount(person.itusers),
                     )
         return None
 

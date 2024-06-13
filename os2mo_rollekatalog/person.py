@@ -4,10 +4,11 @@ from datetime import datetime
 from uuid import UUID
 
 from os2mo_rollekatalog import depends
+from os2mo_rollekatalog.junkyard import NoSuitableSamAccount
 from os2mo_rollekatalog.junkyard import flatten_validities
+from os2mo_rollekatalog.junkyard import pick_samaccount
 from os2mo_rollekatalog.models import Name
 from os2mo_rollekatalog.models import Position
-from os2mo_rollekatalog.models import SamAccountName
 from os2mo_rollekatalog.models import User
 
 
@@ -40,10 +41,8 @@ async def get_person(
         name = Name(mo_person.name)
 
     try:
-        sam_account_name = SamAccountName(
-            list(flatten_validities(result.itusers))[-1].user_key
-        )
-    except IndexError:
+        sam_account_name = pick_samaccount(list(flatten_validities(result.itusers)))
+    except NoSuitableSamAccount:
         # Do not sync users without an AD account
         return None
 
