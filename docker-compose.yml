@@ -19,6 +19,7 @@ services:
       # Rollekatalog
       ITSYSTEM_USER_KEY: "Active Directory"
       ROOT_ORG_UNIT: "7a8e45f7-4de0-44c8-990f-43c0565ee505"  # Skole og Børn
+      SYNC_TITLES: "true"
     volumes:
       - ./:/app/:ro
     ports:

@@ -23,8 +23,10 @@ async def handler(mo: depends.GraphQLClient) -> None:
 
 
 @router.register("class")
-async def sync_job_titles(mo: depends.GraphQLClient) -> None:
-    titles = await get_job_titles(mo)
+async def sync_job_titles(
+    settings: depends.Settings, mo: depends.GraphQLClient
+) -> None:
+    titles = await get_job_titles(mo, settings.sync_titles)
     print(f"found the following titles {titles}")
     # TODO send to rollekatalog https://htk.rollekatalog.dk/download/api.html#_update_all_titles
 

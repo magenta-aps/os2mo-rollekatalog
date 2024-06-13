@@ -24,9 +24,9 @@ async def hello() -> str:
 
 
 @router.get("/titles")
-async def titles(mo: depends.GraphQLClient) -> list[Title]:
+async def titles(settings: depends.Settings, mo: depends.GraphQLClient) -> list[Title]:
     """Get job titles that will be synced."""
-    return await get_job_titles(mo)
+    return await get_job_titles(mo, settings.sync_titles)
 
 
 @router.get("/person")
