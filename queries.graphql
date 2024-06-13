@@ -56,7 +56,12 @@ query GetPerson($itsystem_user_key: String!, $now: DateTime!, $employee_uuid: UU
   ) {
     objects {
       validities(start: $now, end: null) {
-        org_unit_uuid
+        org_unit {
+          uuid
+          ancestors {
+            uuid
+          }
+        }
         job_function {
           name
           uuid

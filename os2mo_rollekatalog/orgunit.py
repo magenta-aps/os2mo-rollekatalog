@@ -7,6 +7,7 @@ from uuid import UUID
 from os2mo_rollekatalog import depends
 from os2mo_rollekatalog.junkyard import NoSuitableSamAccount
 from os2mo_rollekatalog.junkyard import flatten_validities
+from os2mo_rollekatalog.junkyard import in_org_tree
 from os2mo_rollekatalog.junkyard import pick_samaccount
 from os2mo_rollekatalog.models import Manager
 from os2mo_rollekatalog.models import OrgUnit
@@ -33,9 +34,7 @@ async def get_org_unit(
 
     org_unit = result.org_units.objects[0].current
 
-    if root_org_unit not in {ancestor.uuid for ancestor in org_unit.ancestors} | {
-        org_unit.uuid,
-    }:
+    if not in_org_tree(root_org_unit, org_unit):
         return None
 
     if org_unit.uuid == root_org_unit:
