@@ -7,6 +7,7 @@ from fastramqpi.ramqp.mo import MORouter
 from fastramqpi.ramqp.mo import PayloadUUID
 
 from os2mo_rollekatalog import depends
+from os2mo_rollekatalog.junkyard import flatten_validities
 from os2mo_rollekatalog.orgunit import sync_org_unit
 from os2mo_rollekatalog.person import sync_person
 from os2mo_rollekatalog.titles import get_job_titles
@@ -54,30 +55,26 @@ async def handle_ituser(
     org_unit_cache: depends.OrgUnitCache,
 ) -> None:
     result = await mo.get_uuids_for_it_user(ituser_uuid)
-    persons = [
-        person
-        for obj in result.objects
-        for val in obj.validities
-        if val.person is not None
-        for person in val.person
-    ]
-    for person in persons:
-        await sync_person(
-            mo,
-            user_cache,
-            settings.itsystem_user_key,
-            person.uuid,
-            settings.use_nickname,
-            settings.sync_titles,
-        )
-        for engagement in person.engagements:
-            await sync_org_unit(
+    for person_container in flatten_validities(result):
+        if person_container.person is None:
+            continue
+        for person in person_container.person:
+            await sync_person(
                 mo,
-                org_unit_cache,
+                user_cache,
                 settings.itsystem_user_key,
-                settings.root_org_unit,
-                engagement.org_unit_uuid,
+                person.uuid,
+                settings.use_nickname,
+                settings.sync_titles,
             )
+            for engagement in person.engagements:
+                await sync_org_unit(
+                    mo,
+                    org_unit_cache,
+                    settings.itsystem_user_key,
+                    settings.root_org_unit,
+                    engagement.org_unit_uuid,
+                )
 
 
 @router.register("address")
@@ -88,21 +85,16 @@ async def handle_address(
     user_cache: depends.UserCache,
 ) -> None:
     result = await mo.get_person_uuid_for_address(datetime.now(), address_uuid)
-    uuids = {
-        val.employee_uuid
-        for obj in result.objects
-        for val in obj.validities
-        if val.employee_uuid is not None
-    }
-    for person_uuid in uuids:
-        await sync_person(
-            mo,
-            user_cache,
-            settings.itsystem_user_key,
-            person_uuid,
-            settings.use_nickname,
-            settings.sync_titles,
-        )
+    for address in flatten_validities(result):
+        if address.employee_uuid:
+            await sync_person(
+                mo,
+                user_cache,
+                settings.itsystem_user_key,
+                address.employee_uuid,
+                settings.use_nickname,
+                settings.sync_titles,
+            )
 
 
 @router.register("engagement")
@@ -113,18 +105,12 @@ async def handle_engagement(
     user_cache: depends.UserCache,
 ) -> None:
     result = await mo.get_person_uuid_for_engagement(datetime.now(), engagement_uuid)
-    uuids = {
-        val.employee_uuid
-        for obj in result.objects
-        for val in obj.validities
-        if val.employee_uuid is not None
-    }
-    for person_uuid in uuids:
+    for engagement in flatten_validities(result):
         await sync_person(
             mo,
             user_cache,
             settings.itsystem_user_key,
-            person_uuid,
+            engagement.employee_uuid,
             settings.use_nickname,
             settings.sync_titles,
         )
@@ -154,14 +140,13 @@ async def handle_kle(
     org_unit_cache: depends.OrgUnitCache,
 ) -> None:
     result = await mo.get_org_unit_uuid_for_kle(datetime.now(), kle_uuid)
-    uuids = {val.org_unit_uuid for obj in result.objects for val in obj.validities}
-    for org_unit_uuid in uuids:
+    for kle in flatten_validities(result):
         await sync_org_unit(
             mo,
             org_unit_cache,
             settings.itsystem_user_key,
             settings.root_org_unit,
-            org_unit_uuid,
+            kle.org_unit_uuid,
         )
 
 
@@ -173,12 +158,11 @@ async def handle_manager(
     org_unit_cache: depends.OrgUnitCache,
 ) -> None:
     result = await mo.get_org_unit_uuid_for_manager(datetime.now(), manager_uuid)
-    uuids = {val.org_unit_uuid for obj in result.objects for val in obj.validities}
-    for org_unit_uuid in uuids:
+    for manager in flatten_validities(result):
         await sync_org_unit(
             mo,
             org_unit_cache,
             settings.itsystem_user_key,
             settings.root_org_unit,
-            org_unit_uuid,
+            manager.org_unit_uuid,
         )
