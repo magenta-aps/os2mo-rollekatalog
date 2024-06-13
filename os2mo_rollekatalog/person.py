@@ -6,6 +6,7 @@ from uuid import UUID
 from os2mo_rollekatalog import depends
 from os2mo_rollekatalog.junkyard import NoSuitableSamAccount
 from os2mo_rollekatalog.junkyard import flatten_validities
+from os2mo_rollekatalog.junkyard import in_org_tree
 from os2mo_rollekatalog.junkyard import pick_samaccount
 from os2mo_rollekatalog.models import Name
 from os2mo_rollekatalog.models import Position
@@ -15,6 +16,7 @@ from os2mo_rollekatalog.models import User
 async def get_person(
     mo: depends.GraphQLClient,
     itsystem_user_key: str,
+    root_org_unit: UUID,
     person_uuid: UUID,
     use_nickname: bool,
     sync_titles: bool,
@@ -46,14 +48,18 @@ async def get_person(
         # Do not sync users without an AD account
         return None
 
-    positions = [
-        Position(
-            name=engagement.job_function.name,
-            orgUnitUuid=engagement.org_unit_uuid,
-            titleUuid=engagement.job_function.uuid if sync_titles else None,
-        )
-        for engagement in flatten_validities(result.engagements)
-    ]
+    positions = []
+    for engagement in flatten_validities(result.engagements):
+        for org_unit in engagement.org_unit:
+            if not in_org_tree(root_org_unit, org_unit):
+                continue
+            positions.append(
+                Position(
+                    name=engagement.job_function.name,
+                    orgUnitUuid=org_unit.uuid,
+                    titleUuid=engagement.job_function.uuid if sync_titles else None,
+                )
+            )
 
     return User(
         extUuid=mo_person.uuid,
@@ -68,12 +74,13 @@ async def sync_person(
     mo: depends.GraphQLClient,
     cache: dict[UUID, User],
     itsystem_user_key: str,
+    root_org_unit: UUID,
     person_uuid: UUID,
     use_nickname: bool,
     sync_titles: bool,
 ) -> None:
     user = await get_person(
-        mo, itsystem_user_key, person_uuid, use_nickname, sync_titles
+        mo, itsystem_user_key, root_org_unit, person_uuid, use_nickname, sync_titles
     )
     if user is None:
         return

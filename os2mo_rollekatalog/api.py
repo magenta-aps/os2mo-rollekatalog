@@ -37,6 +37,7 @@ async def person(
     return await get_person(
         mo,
         settings.itsystem_user_key,
+        settings.root_org_unit,
         person_uuid,
         settings.use_nickname,
         settings.sync_titles,
