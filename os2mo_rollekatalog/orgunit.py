@@ -1,13 +1,16 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
+from contextlib import suppress
 from datetime import datetime
 from uuid import UUID
 
 from os2mo_rollekatalog import depends
+from os2mo_rollekatalog.junkyard import NoSuitableSamAccount
+from os2mo_rollekatalog.junkyard import flatten_validities
+from os2mo_rollekatalog.junkyard import pick_samaccount
 from os2mo_rollekatalog.models import Manager
 from os2mo_rollekatalog.models import OrgUnit
 from os2mo_rollekatalog.models import OrgUnitName
-from os2mo_rollekatalog.models import SamAccountName
 
 
 class ExpectedParent(Exception):
@@ -46,30 +49,28 @@ async def get_org_unit(
         parent_uuid = org_unit.parent.uuid
 
     def get_manager() -> Manager | None:
-        for obj in result.managers.objects:
-            for validity in obj.validities:
-                # Check that manager position is not vacant
-                if validity.person is not None:
-                    for person in validity.person:
-                        # Make sure the manager has an AD account
-                        if len(person.itusers):
-                            return Manager(
-                                uuid=person.uuid,
-                                userId=SamAccountName(person.itusers[-1].user_key),
-                            )
+        for manager in flatten_validities(result.managers):
+            # Check that manager position is not vacant
+            if manager.person is None:
+                continue
+            for person in manager.person:
+                with suppress(NoSuitableSamAccount):
+                    return Manager(
+                        uuid=person.uuid,
+                        userId=pick_samaccount(person.itusers),
+                    )
         return None
 
     manager = get_manager()
 
     kle_performing = []
     kle_interests = []
-    for obj in result.kles.objects:
-        for kle in obj.validities:
-            for aspect in kle.kle_aspects:
-                if aspect.scope == "INDSIGT":
-                    kle_interests.append(kle.kle_number.user_key)
-                if aspect.scope == "UDFOERENDE":
-                    kle_performing.append(kle.kle_number.user_key)
+    for kle in flatten_validities(result.kles):
+        for aspect in kle.kle_aspects:
+            if aspect.scope == "INDSIGT":
+                kle_interests.append(kle.kle_number.user_key)
+            if aspect.scope == "UDFOERENDE":
+                kle_performing.append(kle.kle_number.user_key)
 
     return OrgUnit(
         uuid=org_unit.uuid,

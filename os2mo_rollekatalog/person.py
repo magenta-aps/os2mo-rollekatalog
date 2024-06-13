@@ -4,9 +4,11 @@ from datetime import datetime
 from uuid import UUID
 
 from os2mo_rollekatalog import depends
+from os2mo_rollekatalog.junkyard import NoSuitableSamAccount
+from os2mo_rollekatalog.junkyard import flatten_validities
+from os2mo_rollekatalog.junkyard import pick_samaccount
 from os2mo_rollekatalog.models import Name
 from os2mo_rollekatalog.models import Position
-from os2mo_rollekatalog.models import SamAccountName
 from os2mo_rollekatalog.models import User
 
 
@@ -29,9 +31,7 @@ async def get_person(
 
     try:
         # Behaviour of the old integration 🤷
-        email = [
-            addr.value for obj in result.addresses.objects for addr in obj.validities
-        ][-1]
+        email = list(flatten_validities(result.addresses))[-1].value
     except IndexError:
         email = None
 
@@ -41,21 +41,18 @@ async def get_person(
         name = Name(mo_person.name)
 
     try:
-        sam_account_name = SamAccountName(
-            [it.user_key for obj in result.itusers.objects for it in obj.validities][-1]
-        )
-    except IndexError:
+        sam_account_name = pick_samaccount(list(flatten_validities(result.itusers)))
+    except NoSuitableSamAccount:
         # Do not sync users without an AD account
         return None
 
-    engagements = [eng for obj in result.engagements.objects for eng in obj.validities]
     positions = [
         Position(
             name=engagement.job_function.name,
             orgUnitUuid=engagement.org_unit_uuid,
             titleUuid=engagement.job_function.uuid if sync_titles else None,
         )
-        for engagement in engagements
+        for engagement in flatten_validities(result.engagements)
     ]
 
     return User(

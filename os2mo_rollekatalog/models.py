@@ -13,6 +13,11 @@ OrgUnitName = NewType("OrgUnitName", str)
 KLE = NewType("KLE", str)
 
 
+class Title(BaseModel):
+    uuid: UUID
+    user_key: str
+
+
 class Position(BaseModel):
     name: str
     orgUnitUuid: UUID
