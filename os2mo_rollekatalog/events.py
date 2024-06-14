@@ -31,7 +31,9 @@ async def sync_job_titles(
     title_client: depends.TitleClient,
     mo: depends.GraphQLClient,
 ) -> None:
-    titles = await get_job_titles(mo, settings.sync_titles)
+    if not settings.sync_titles:
+        return
+    titles = await get_job_titles(mo)
     payload = jsonable_encoder({"titles": [title.dict() for title in titles]})
     logger.info("Uploading titles to Rollekatalog", payload=payload)
     await rollekatalog.upload(
