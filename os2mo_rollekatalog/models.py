@@ -45,3 +45,7 @@ class OrgUnit(BaseModel):
     manager: Manager | None
     klePerforming: list[KLE]
     kleInterest: list[KLE]
+
+
+OrgUnitCache = NewType("OrgUnitCache", dict[UUID, OrgUnit])
+UserCache = NewType("UserCache", dict[UUID, User])

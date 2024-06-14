@@ -11,6 +11,7 @@ from os2mo_rollekatalog.junkyard import in_org_tree
 from os2mo_rollekatalog.junkyard import pick_samaccount
 from os2mo_rollekatalog.models import Manager
 from os2mo_rollekatalog.models import OrgUnit
+from os2mo_rollekatalog.models import OrgUnitCache
 from os2mo_rollekatalog.models import OrgUnitName
 
 
@@ -83,7 +84,8 @@ async def get_org_unit(
 
 async def sync_org_unit(
     mo: depends.GraphQLClient,
-    cache: dict[UUID, OrgUnit],
+    rollekatalog: depends.Rollekatalog,
+    cache: OrgUnitCache,
     itsystem_user_key: str,
     root_org_unit: UUID,
     org_unit_uuid: UUID,
@@ -95,5 +97,10 @@ async def sync_org_unit(
         org_unit_uuid,
     )
     if org_unit is None:
-        return
-    cache[org_unit_uuid] = org_unit
+        del cache[org_unit_uuid]
+        rollekatalog.sync_soon()
+    else:
+        if org_unit == cache.get(org_unit_uuid):
+            return
+        cache[org_unit_uuid] = org_unit
+        rollekatalog.sync_soon()

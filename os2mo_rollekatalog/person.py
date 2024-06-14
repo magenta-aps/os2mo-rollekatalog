@@ -11,6 +11,7 @@ from os2mo_rollekatalog.junkyard import pick_samaccount
 from os2mo_rollekatalog.models import Name
 from os2mo_rollekatalog.models import Position
 from os2mo_rollekatalog.models import User
+from os2mo_rollekatalog.models import UserCache
 
 
 async def get_person(
@@ -72,7 +73,8 @@ async def get_person(
 
 async def sync_person(
     mo: depends.GraphQLClient,
-    cache: dict[UUID, User],
+    rollekatalog: depends.Rollekatalog,
+    cache: UserCache,
     itsystem_user_key: str,
     root_org_unit: UUID,
     person_uuid: UUID,
@@ -83,5 +85,11 @@ async def sync_person(
         mo, itsystem_user_key, root_org_unit, person_uuid, use_nickname, sync_titles
     )
     if user is None:
-        return
-    cache[person_uuid] = user
+        if person_uuid in cache:
+            del cache[person_uuid]
+            rollekatalog.sync_soon()
+    else:
+        if user == cache.get(person_uuid):
+            return
+        cache[person_uuid] = user
+        rollekatalog.sync_soon()
