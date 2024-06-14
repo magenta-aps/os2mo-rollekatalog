@@ -93,6 +93,7 @@ async def handle_ituser(
                     mo,
                     rollekatalog,
                     org_unit_cache,
+                    user_cache,
                     settings.itsystem_user_key,
                     settings.root_org_unit,
                     engagement.org_unit_uuid,
@@ -151,11 +152,13 @@ async def handle_org_unit(
     mo: depends.GraphQLClient,
     rollekatalog: depends.Rollekatalog,
     org_unit_cache: depends.OrgUnitCache,
+    user_cache: depends.UserCache,
 ) -> None:
     await sync_org_unit(
         mo,
         rollekatalog,
         org_unit_cache,
+        user_cache,
         settings.itsystem_user_key,
         settings.root_org_unit,
         org_unit_uuid,
@@ -169,6 +172,7 @@ async def handle_kle(
     mo: depends.GraphQLClient,
     rollekatalog: depends.Rollekatalog,
     org_unit_cache: depends.OrgUnitCache,
+    user_cache: depends.UserCache,
 ) -> None:
     result = await mo.get_org_unit_uuid_for_kle(datetime.now(), kle_uuid)
     for kle in flatten_validities(result):
@@ -176,6 +180,7 @@ async def handle_kle(
             mo,
             rollekatalog,
             org_unit_cache,
+            user_cache,
             settings.itsystem_user_key,
             settings.root_org_unit,
             kle.org_unit_uuid,
@@ -189,6 +194,7 @@ async def handle_manager(
     mo: depends.GraphQLClient,
     rollekatalog: depends.Rollekatalog,
     org_unit_cache: depends.OrgUnitCache,
+    user_cache: depends.UserCache,
 ) -> None:
     result = await mo.get_org_unit_uuid_for_manager(datetime.now(), manager_uuid)
     for manager in flatten_validities(result):
@@ -196,6 +202,7 @@ async def handle_manager(
             mo,
             rollekatalog,
             org_unit_cache,
+            user_cache,
             settings.itsystem_user_key,
             settings.root_org_unit,
             manager.org_unit_uuid,

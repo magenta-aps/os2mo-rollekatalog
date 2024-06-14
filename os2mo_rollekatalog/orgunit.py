@@ -13,6 +13,7 @@ from os2mo_rollekatalog.models import Manager
 from os2mo_rollekatalog.models import OrgUnit
 from os2mo_rollekatalog.models import OrgUnitCache
 from os2mo_rollekatalog.models import OrgUnitName
+from os2mo_rollekatalog.models import UserCache
 
 
 class ExpectedParent(Exception):
@@ -85,7 +86,8 @@ async def get_org_unit(
 async def sync_org_unit(
     mo: depends.GraphQLClient,
     rollekatalog: depends.Rollekatalog,
-    cache: OrgUnitCache,
+    org_unit_cache: OrgUnitCache,
+    user_cache: UserCache,
     itsystem_user_key: str,
     root_org_unit: UUID,
     org_unit_uuid: UUID,
@@ -97,10 +99,29 @@ async def sync_org_unit(
         org_unit_uuid,
     )
     if org_unit is None:
-        del cache[org_unit_uuid]
+        if org_unit_uuid not in org_unit_cache:
+            return
+        del org_unit_cache[org_unit_uuid]
+
+        # We have to remove all positions (on users) in this org_unit and the
+        # user if they have no other positions left.
+        users_to_remove = []
+        for uuid, user in user_cache.items():
+            still_occupied = []
+            for position in user.positions:
+                if position.orgUnitUuid != org_unit_uuid:
+                    still_occupied.append(position)
+            if len(still_occupied) == 0:
+                users_to_remove.append(uuid)
+            else:
+                # Reflected in user cache
+                user.positions = still_occupied
+        for user_uuid in users_to_remove:
+            del user_cache[user_uuid]
+
         rollekatalog.sync_soon()
     else:
-        if org_unit == cache.get(org_unit_uuid):
+        if org_unit == org_unit_cache.get(org_unit_uuid):
             return
-        cache[org_unit_uuid] = org_unit
+        org_unit_cache[org_unit_uuid] = org_unit
         rollekatalog.sync_soon()
