@@ -13,6 +13,8 @@ from os2mo_rollekatalog.app import create_app
 @pytest.fixture
 def test_client(monkeypatch: MonkeyPatch) -> Iterator[TestClient]:
     """Create ASGI test client with associated lifecycles."""
+    monkeypatch.setenv("ROLLEKATALOG_URL", "http://example.org")
+    monkeypatch.setenv("API_KEY", "dummy")
     monkeypatch.setenv("ROOT_ORG_UNIT", "df30a6f3-35da-40b5-8143-57be1e9bd778")
     monkeypatch.setenv("ITSYSTEM_USER_KEY", "Active Directory")
 

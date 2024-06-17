@@ -17,6 +17,9 @@ services:
       FASTRAMQPI__AMQP__URL: "amqp://guest:guest@msg-broker:5672/"
 
       # Rollekatalog
+      ROLLEKATALOG_URL: "https://example.rollekatalog.dk"
+      API_KEY: "secret"
+      INTERVAL: "15"
       ITSYSTEM_USER_KEY: "Active Directory"
       ROOT_ORG_UNIT: "7a8e45f7-4de0-44c8-990f-43c0565ee505"  # Skole og Børn
       SYNC_TITLES: "true"

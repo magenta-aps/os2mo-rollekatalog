@@ -5,6 +5,8 @@ from uuid import UUID
 from fastramqpi.config import Settings as FastRAMQPISettings
 from pydantic import BaseSettings
 from pydantic import Field
+from pydantic import HttpUrl
+from pydantic import SecretStr
 
 
 class _Settings(BaseSettings):
@@ -14,6 +16,11 @@ class _Settings(BaseSettings):
 
     fastramqpi: FastRAMQPISettings
 
+    rollekatalog_url: HttpUrl = Field(description="Base url for Rollekatalog.")
+    api_key: SecretStr = Field(description="API key for Rollekatalog.")
+    interval: int = Field(
+        60 * 15, description="The interval in which we sync to Rollekatalog."
+    )
     root_org_unit: UUID = Field(
         description="Root in OS2mo. Only sync this org unit, and units below."
     )
