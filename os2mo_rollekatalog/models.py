@@ -29,7 +29,6 @@ class User(BaseModel):
     userId: SamAccountName
     name: Name
     email: EmailStr | None
-    # If empty position, do not sync
     positions: list[Position]
 
 

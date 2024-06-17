@@ -61,6 +61,9 @@ async def get_person(
                     titleUuid=engagement.job_function.uuid if sync_titles else None,
                 )
             )
+    if len(positions) == 0:
+        # Do not sync users without any positions
+        return None
 
     return User(
         extUuid=mo_person.uuid,
