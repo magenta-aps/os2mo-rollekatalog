@@ -7,15 +7,18 @@ from typing import Any
 from typing import Never
 
 import structlog
-from fastapi.encoders import jsonable_encoder
 from httpx import AsyncClient
 from httpx import HTTPStatusError
 from httpx import TimeoutException
 from pydantic import HttpUrl
 from pydantic import SecretStr
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from os2mo_rollekatalog.models import OrgUnitCache
-from os2mo_rollekatalog.models import UserCache
+from os2mo_rollekatalog.models import OrgUnit
+from os2mo_rollekatalog.models import User
 
 
 logger = structlog.get_logger(__name__)
@@ -46,18 +49,14 @@ class Rollekatalog:
         url: HttpUrl,
         api_key: SecretStr,
         interval: int,
-        orgs: OrgUnitCache,
-        users: UserCache,
+        sessionmaker: async_sessionmaker[AsyncSession],
     ):
         self.url = url
         self.api_key = api_key
         self.interval = interval
+        self.sessionmaker = sessionmaker
         self.event = asyncio.Event()
         self.client = AsyncClient()
-
-        # When we get a persistent data layer, we will remove these references
-        self.orgs = orgs
-        self.users = users
 
     def sync_soon(self) -> None:
         self.event.set()
@@ -68,9 +67,31 @@ class Rollekatalog:
             self.event.clear()
             await asyncio.sleep(self.interval)
 
-            org_units = [org.dict() for org in self.orgs.values()]
-            users = [user.dict() for user in self.users.values()]
-            payload = jsonable_encoder({"orgUnits": org_units, "users": users})
+            async with self.sessionmaker() as session, session.begin():
+                org_units_from_db = (
+                    (
+                        await session.execute(
+                            select(OrgUnit).options(selectinload(OrgUnit.manager))
+                        )
+                    )
+                    .scalars()
+                    .all()
+                )
+                users_from_db = (
+                    (
+                        await session.execute(
+                            select(User)
+                            .options(selectinload(User.positions))
+                            .join(User.positions)
+                        )
+                    )
+                    .scalars()
+                    .all()
+                )
+                org_units = [org.to_rollekatalog_payload() for org in org_units_from_db]
+                users = [user.to_rollekatalog_payload() for user in users_from_db]
+
+            payload = {"orgUnits": org_units, "users": users}
             logger.info("Uploading org units and users to Rollekatalog")
             try:
                 await upload(

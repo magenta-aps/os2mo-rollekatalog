@@ -4,6 +4,12 @@ from contextlib import suppress
 from datetime import datetime
 from uuid import UUID
 
+import structlog
+from sqlalchemy import delete
+from sqlalchemy import select
+from sqlalchemy import Row
+from sqlalchemy.orm import selectinload
+
 from os2mo_rollekatalog import depends
 from os2mo_rollekatalog.junkyard import NoSuitableSamAccount
 from os2mo_rollekatalog.junkyard import flatten_validities
@@ -11,9 +17,12 @@ from os2mo_rollekatalog.junkyard import in_org_tree
 from os2mo_rollekatalog.junkyard import pick_samaccount
 from os2mo_rollekatalog.models import Manager
 from os2mo_rollekatalog.models import OrgUnit
-from os2mo_rollekatalog.models import OrgUnitCache
 from os2mo_rollekatalog.models import OrgUnitName
-from os2mo_rollekatalog.models import UserCache
+from os2mo_rollekatalog.models import Position
+from os2mo_rollekatalog.models import User
+
+
+logger = structlog.get_logger(__name__)
 
 
 class ExpectedParent(Exception):
@@ -86,8 +95,7 @@ async def get_org_unit(
 async def sync_org_unit(
     mo: depends.GraphQLClient,
     rollekatalog: depends.Rollekatalog,
-    org_unit_cache: OrgUnitCache,
-    user_cache: UserCache,
+    session: depends.Session,
     itsystem_user_key: str,
     root_org_unit: UUID,
     org_unit_uuid: UUID,
@@ -98,30 +106,43 @@ async def sync_org_unit(
         root_org_unit,
         org_unit_uuid,
     )
+
     if org_unit is None:
-        if org_unit_uuid not in org_unit_cache:
-            return
-        del org_unit_cache[org_unit_uuid]
+        delete_result = await session.execute(
+            delete(OrgUnit).where(OrgUnit.uuid == org_unit_uuid)
+        )
+        if delete_result.rowcount == 0:
+            return  # No changes.
 
-        # We have to remove all positions (on users) in this org_unit and the
-        # user if they have no other positions left.
-        users_to_remove = []
-        for uuid, user in user_cache.items():
-            still_occupied = []
-            for position in user.positions:
-                if position.orgUnitUuid != org_unit_uuid:
-                    still_occupied.append(position)
-            if len(still_occupied) == 0:
-                users_to_remove.append(uuid)
-            else:
-                # Reflected in user cache
-                user.positions = still_occupied
-        for user_uuid in users_to_remove:
-            del user_cache[user_uuid]
+        logger.info("Remove org unit", uuid=org_unit_uuid)
+        await session.execute(
+            delete(Position).where(Position.orgUnitUuid == org_unit_uuid)
+        )
+        users_without_positions = (
+            select(User.id).outerjoin(Position).where(Position.id == None)  # noqa: E711
+        )
+        await session.execute(delete(User).where(User.id.in_(users_without_positions)))
 
         rollekatalog.sync_soon()
-    else:
-        if org_unit == org_unit_cache.get(org_unit_uuid):
-            return
-        org_unit_cache[org_unit_uuid] = org_unit
+        return
+
+    result = await session.execute(
+        select(OrgUnit)
+        .options(selectinload(OrgUnit.manager))
+        .where(OrgUnit.uuid == org_unit.uuid)
+    )
+    dborg: Row[tuple[OrgUnit]] | None = result.one_or_none()
+
+    if dborg is None:
+        logger.info("Add new org unit", uuid=org_unit.uuid, name=org_unit.name)
+        session.add(org_unit)
         rollekatalog.sync_soon()
+        return
+
+    if org_unit == dborg[0]:
+        return
+
+    logger.info("Update org unit", uuid=org_unit.uuid, name=org_unit.name)
+    await session.delete(dborg[0])
+    session.add(org_unit)
+    rollekatalog.sync_soon()

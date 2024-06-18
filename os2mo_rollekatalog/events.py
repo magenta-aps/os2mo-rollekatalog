@@ -50,12 +50,12 @@ async def handle_person(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
     rollekatalog: depends.Rollekatalog,
-    user_cache: depends.UserCache,
+    session: depends.Session,
 ) -> None:
     await sync_person(
         mo,
         rollekatalog,
-        user_cache,
+        session,
         settings.itsystem_user_key,
         settings.root_org_unit,
         person_uuid,
@@ -70,8 +70,7 @@ async def handle_ituser(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
     rollekatalog: depends.Rollekatalog,
-    user_cache: depends.UserCache,
-    org_unit_cache: depends.OrgUnitCache,
+    session: depends.Session,
 ) -> None:
     result = await mo.get_uuids_for_it_user(ituser_uuid)
     for person_container in flatten_validities(result):
@@ -81,7 +80,7 @@ async def handle_ituser(
             await sync_person(
                 mo,
                 rollekatalog,
-                user_cache,
+                session,
                 settings.itsystem_user_key,
                 settings.root_org_unit,
                 person.uuid,
@@ -92,8 +91,7 @@ async def handle_ituser(
                 await sync_org_unit(
                     mo,
                     rollekatalog,
-                    org_unit_cache,
-                    user_cache,
+                    session,
                     settings.itsystem_user_key,
                     settings.root_org_unit,
                     engagement.org_unit_uuid,
@@ -106,7 +104,7 @@ async def handle_address(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
     rollekatalog: depends.Rollekatalog,
-    user_cache: depends.UserCache,
+    session: depends.Session,
 ) -> None:
     result = await mo.get_person_uuid_for_address(datetime.now(), address_uuid)
     for address in flatten_validities(result):
@@ -114,7 +112,7 @@ async def handle_address(
             await sync_person(
                 mo,
                 rollekatalog,
-                user_cache,
+                session,
                 settings.itsystem_user_key,
                 settings.root_org_unit,
                 address.employee_uuid,
@@ -129,14 +127,14 @@ async def handle_engagement(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
     rollekatalog: depends.Rollekatalog,
-    user_cache: depends.UserCache,
+    session: depends.Session,
 ) -> None:
     result = await mo.get_person_uuid_for_engagement(datetime.now(), engagement_uuid)
     for engagement in flatten_validities(result):
         await sync_person(
             mo,
             rollekatalog,
-            user_cache,
+            session,
             settings.itsystem_user_key,
             settings.root_org_unit,
             engagement.employee_uuid,
@@ -151,14 +149,12 @@ async def handle_org_unit(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
     rollekatalog: depends.Rollekatalog,
-    org_unit_cache: depends.OrgUnitCache,
-    user_cache: depends.UserCache,
+    session: depends.Session,
 ) -> None:
     await sync_org_unit(
         mo,
         rollekatalog,
-        org_unit_cache,
-        user_cache,
+        session,
         settings.itsystem_user_key,
         settings.root_org_unit,
         org_unit_uuid,
@@ -171,16 +167,14 @@ async def handle_kle(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
     rollekatalog: depends.Rollekatalog,
-    org_unit_cache: depends.OrgUnitCache,
-    user_cache: depends.UserCache,
+    session: depends.Session,
 ) -> None:
     result = await mo.get_org_unit_uuid_for_kle(datetime.now(), kle_uuid)
     for kle in flatten_validities(result):
         await sync_org_unit(
             mo,
             rollekatalog,
-            org_unit_cache,
-            user_cache,
+            session,
             settings.itsystem_user_key,
             settings.root_org_unit,
             kle.org_unit_uuid,
@@ -193,16 +187,14 @@ async def handle_manager(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
     rollekatalog: depends.Rollekatalog,
-    org_unit_cache: depends.OrgUnitCache,
-    user_cache: depends.UserCache,
+    session: depends.Session,
 ) -> None:
     result = await mo.get_org_unit_uuid_for_manager(datetime.now(), manager_uuid)
     for manager in flatten_validities(result):
         await sync_org_unit(
             mo,
             rollekatalog,
-            org_unit_cache,
-            user_cache,
+            session,
             settings.itsystem_user_key,
             settings.root_org_unit,
             manager.org_unit_uuid,

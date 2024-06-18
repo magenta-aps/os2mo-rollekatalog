@@ -3,8 +3,15 @@
 from typing import NewType
 from uuid import UUID
 
+from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
-from pydantic import EmailStr
+from sqlalchemy import ForeignKey
+from sqlalchemy import String
+from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.orm import mapped_column
+from sqlalchemy.orm import relationship
+from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import Mapped
 
 
 SamAccountName = NewType("SamAccountName", str)
@@ -13,38 +20,150 @@ OrgUnitName = NewType("OrgUnitName", str)
 KLE = NewType("KLE", str)
 
 
+# Titles are synced on-demand and not part of the persistent state
 class Title(BaseModel):
     uuid: UUID
     user_key: str
 
 
-class Position(BaseModel):
-    name: str
-    orgUnitUuid: UUID
-    titleUuid: UUID | None
+class Base(DeclarativeBase):
+    type_annotation_map = {
+        SamAccountName: String,
+        Name: String,
+        OrgUnitName: String,
+        KLE: String,
+        list[KLE]: ARRAY(String),
+    }
 
 
-class User(BaseModel):
-    extUuid: UUID
-    userId: SamAccountName
-    name: Name
-    email: EmailStr | None
-    positions: list[Position]
+class Position(Base):
+    __tablename__ = "position"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str]
+    # Not a relation, as we could learn about the user before the orgunit
+    orgUnitUuid: Mapped[UUID]
+    titleUuid: Mapped[UUID | None]
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
+
+    def __repr__(self) -> str:
+        return f"Position({self.name=}, {self.orgUnitUuid=}, {self.titleUuid=})"
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, Position):
+            return (
+                self.name == other.name
+                and self.orgUnitUuid == other.orgUnitUuid
+                and self.titleUuid == other.titleUuid
+            )
+        raise NotImplementedError()
+
+    def to_rollekatalog_payload(self):
+        result = {"name": self.name, "orgUnitUuid": self.orgUnitUuid}
+        if self.titleUuid is not None:
+            result["titleUuid"] = self.titleUuid
+        return jsonable_encoder(result)
 
 
-class Manager(BaseModel):
-    uuid: UUID
-    userId: SamAccountName
+class User(Base):
+    __tablename__ = "user"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    extUuid: Mapped[UUID]
+    userId: Mapped[SamAccountName]
+    name: Mapped[Name]
+    email: Mapped[str | None]
+    positions: Mapped[list[Position]] = relationship(
+        single_parent=True, cascade="all, delete-orphan"
+    )
+
+    def __repr__(self) -> str:
+        return f"User({self.extUuid=}, {self.userId=}, {self.name=}, {self.email=}, {self.positions=})"
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, User):
+            return (
+                self.extUuid == other.extUuid
+                and self.userId == other.userId
+                and self.name == other.name
+                and self.email == other.email
+                and self.positions == other.positions
+            )
+        raise NotImplementedError()
+
+    def to_rollekatalog_payload(self):
+        return jsonable_encoder(
+            {
+                "extUuid": self.extUuid,
+                "userId": self.userId,
+                "name": self.name,
+                "email": self.email,
+                "positions": [pos.to_rollekatalog_payload() for pos in self.positions],
+            }
+        )
 
 
-class OrgUnit(BaseModel):
-    uuid: UUID
-    name: OrgUnitName
-    parentOrgUnitUuid: UUID | None
-    manager: Manager | None
-    klePerforming: list[KLE]
-    kleInterest: list[KLE]
+class Manager(Base):
+    __tablename__ = "manager"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    uuid: Mapped[UUID]
+    userId: Mapped[SamAccountName]
+
+    org_unit_id: Mapped[int] = mapped_column(
+        ForeignKey("orgunit.id", ondelete="CASCADE")
+    )
+
+    def __repr__(self) -> str:
+        return f"Manager({self.uuid=}, {self.userId=})"
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, Manager):
+            return self.uuid == other.uuid and self.userId == other.userId
+        raise NotImplementedError()
+
+    def to_rollekatalog_payload(self):
+        return jsonable_encoder(
+            {"uuid": self.uuid, "userId": self.userId, "org_unit_id": self.org_unit_id}
+        )
 
 
-OrgUnitCache = NewType("OrgUnitCache", dict[UUID, OrgUnit])
-UserCache = NewType("UserCache", dict[UUID, User])
+class OrgUnit(Base):
+    __tablename__ = "orgunit"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    uuid: Mapped[UUID] = mapped_column(unique=True)
+    name: Mapped[OrgUnitName]
+    # Not a relation, as we could learn about the child before the parent
+    parentOrgUnitUuid: Mapped[UUID | None]
+    manager: Mapped[Manager] = relationship(cascade="all, delete-orphan")
+    klePerforming: Mapped[list[KLE]]
+    kleInterest: Mapped[list[KLE]]
+
+    def __repr__(self) -> str:
+        return f"OrgUnit({self.uuid=}, {self.name=}, {self.parentOrgUnitUuid=}, {self.manager=}, {self.klePerforming=}, {self.kleInterest=})"
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, OrgUnit):
+            return (
+                self.uuid == other.uuid
+                and self.name == other.name
+                and self.parentOrgUnitUuid == other.parentOrgUnitUuid
+                and self.manager == other.manager
+                and self.klePerforming == other.klePerforming
+                and self.kleInterest == other.kleInterest
+            )
+        raise NotImplementedError()
+
+    def to_rollekatalog_payload(self):
+        return jsonable_encoder(
+            {
+                "uuid": self.uuid,
+                "name": self.name,
+                "parentOrgUnitUuid": self.parentOrgUnitUuid,
+                "manager": self.manager,
+                "klePerforming": self.klePerforming,
+                "kleInterest": self.kleInterest,
+            }
+        )

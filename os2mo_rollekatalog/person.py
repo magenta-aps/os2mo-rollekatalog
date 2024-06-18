@@ -3,6 +3,12 @@
 from datetime import datetime
 from uuid import UUID
 
+import structlog
+from sqlalchemy import delete
+from sqlalchemy import select
+from sqlalchemy import Row
+from sqlalchemy.orm import selectinload
+
 from os2mo_rollekatalog import depends
 from os2mo_rollekatalog.junkyard import NoSuitableSamAccount
 from os2mo_rollekatalog.junkyard import flatten_validities
@@ -11,7 +17,9 @@ from os2mo_rollekatalog.junkyard import pick_samaccount
 from os2mo_rollekatalog.models import Name
 from os2mo_rollekatalog.models import Position
 from os2mo_rollekatalog.models import User
-from os2mo_rollekatalog.models import UserCache
+
+
+logger = structlog.get_logger(__name__)
 
 
 async def get_person(
@@ -77,7 +85,7 @@ async def get_person(
 async def sync_person(
     mo: depends.GraphQLClient,
     rollekatalog: depends.Rollekatalog,
-    cache: UserCache,
+    session: depends.Session,
     itsystem_user_key: str,
     root_org_unit: UUID,
     person_uuid: UUID,
@@ -88,11 +96,36 @@ async def sync_person(
         mo, itsystem_user_key, root_org_unit, person_uuid, use_nickname, sync_titles
     )
     if user is None:
-        if person_uuid in cache:
-            del cache[person_uuid]
+        delete_result = await session.execute(
+            delete(User).where(User.extUuid == person_uuid)
+        )
+        if delete_result.rowcount > 0:
+            logger.info("Remove user", uuid=person_uuid)
             rollekatalog.sync_soon()
-    else:
-        if user == cache.get(person_uuid):
-            return
-        cache[person_uuid] = user
+        return
+
+    result = await session.execute(
+        select(User)
+        .options(selectinload(User.positions))
+        .where(User.extUuid == person_uuid)
+        .join(User.positions)
+    )
+    dbuser: Row[tuple[User]] | None = result.one_or_none()
+
+    if dbuser is None:
+        logger.info(
+            "Add new user", uuid=user.extUuid, name=user.name, samaccount=user.userId
+        )
+        session.add(user)
         rollekatalog.sync_soon()
+        return
+
+    if user == dbuser[0]:
+        return
+
+    logger.info(
+        "Update user", uuid=user.extUuid, name=user.name, samaccount=user.userId
+    )
+    await session.delete(dbuser[0])
+    session.add(user)
+    rollekatalog.sync_soon()
