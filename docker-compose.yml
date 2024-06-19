@@ -15,6 +15,10 @@ services:
       FASTRAMQPI__AUTH_SERVER: "http://keycloak:8080/auth"
       FASTRAMQPI__AUTH_REALM: "mo"
       FASTRAMQPI__AMQP__URL: "amqp://guest:guest@msg-broker:5672/"
+      FASTRAMQPI__DATABASE__HOST: "db"
+      FASTRAMQPI__DATABASE__USER: "rollekatalog"
+      FASTRAMQPI__DATABASE__PASSWORD: "hemmelighed"
+      FASTRAMQPI__DATABASE__NAME: "rollekatalog"
 
       # Rollekatalog
       ROLLEKATALOG_URL: "https://example.rollekatalog.dk"
@@ -27,6 +31,13 @@ services:
       - ./:/app/:ro
     ports:
       - 127.0.0.1:8000:8000
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: "rollekatalog"
+      POSTGRES_PASSWORD: "hemmelighed"
+      POSTGRES_DB: "rollekatalog"
 
 networks:
   default:

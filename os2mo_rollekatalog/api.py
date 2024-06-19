@@ -5,8 +5,6 @@ from fastapi import APIRouter
 from uuid import UUID
 
 from os2mo_rollekatalog import depends
-from os2mo_rollekatalog.models import User
-from os2mo_rollekatalog.models import OrgUnit
 from os2mo_rollekatalog.models import Title
 from os2mo_rollekatalog.person import get_person
 from os2mo_rollekatalog.orgunit import get_org_unit
@@ -32,9 +30,9 @@ async def titles(mo: depends.GraphQLClient) -> list[Title]:
 @router.get("/person")
 async def person(
     settings: depends.Settings, mo: depends.GraphQLClient, person_uuid: UUID
-) -> User | None:
+) -> dict | None:
     """See how a person will be synced."""
-    return await get_person(
+    person = await get_person(
         mo,
         settings.itsystem_user_key,
         settings.root_org_unit,
@@ -42,30 +40,22 @@ async def person(
         settings.use_nickname,
         settings.sync_titles,
     )
+    if person is None:
+        return None
+    return person.to_rollekatalog_payload()
 
 
 @router.get("/org_unit")
 async def org_unit(
     settings: depends.Settings, mo: depends.GraphQLClient, uuid: UUID
-) -> OrgUnit | None:
+) -> dict | None:
     """See how an org unit will be synced."""
-    return await get_org_unit(
+    org_unit = await get_org_unit(
         mo,
         settings.itsystem_user_key,
         settings.root_org_unit,
         uuid,
     )
-
-
-@router.get("/dump_user_cache")
-async def dump_user_cache(user_cache: depends.UserCache) -> dict[UUID, User]:
-    """Dump the user cache."""
-    return user_cache
-
-
-@router.get("/dump_org_unit_cache")
-async def dump_org_unit_cache(
-    org_unit_cache: depends.OrgUnitCache,
-) -> dict[UUID, OrgUnit]:
-    """Dump the org unit cache."""
-    return org_unit_cache
+    if org_unit is None:
+        return None
+    return org_unit.to_rollekatalog_payload()
