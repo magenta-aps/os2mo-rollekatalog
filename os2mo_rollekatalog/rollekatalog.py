@@ -7,6 +7,7 @@ from typing import Any
 from typing import Never
 
 import structlog
+from fastramqpi.metrics import dipex_last_success_timestamp
 from httpx import AsyncClient
 from httpx import HTTPStatusError
 from httpx import TimeoutException
@@ -100,6 +101,7 @@ class Rollekatalog:
                     self.api_key,
                     payload,
                 )
+                dipex_last_success_timestamp.set_to_current_time()
             except HTTPStatusError as e:
                 logger.warning("Failed to upload organisation", exception=str(e))
                 self.sync_soon()
