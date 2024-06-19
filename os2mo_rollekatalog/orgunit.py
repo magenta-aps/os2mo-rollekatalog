@@ -144,6 +144,8 @@ async def sync_org_unit(
         return
 
     logger.info("Update org unit", uuid=org_unit.uuid, name=org_unit.name)
+    if dborg[0].manager:
+        await session.delete(dborg[0].manager)
     await session.delete(dborg[0])
     session.add(org_unit)
     rollekatalog.sync_soon()
