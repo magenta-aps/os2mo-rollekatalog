@@ -83,6 +83,19 @@ async def get_person(
     )
 
 
+async def fetch_person_from_db(session: depends.Session, uuid: UUID) -> User | None:
+    result = await session.execute(
+        select(User)
+        .options(selectinload(User.positions))
+        .where(User.extUuid == uuid)
+        .join(User.positions)
+    )
+    dbuser: Row[tuple[User]] | None = result.one_or_none()
+    if dbuser is None:
+        return None
+    return dbuser[0]
+
+
 async def sync_person(
     mo: depends.GraphQLClient,
     rollekatalog: depends.Rollekatalog,
@@ -106,13 +119,7 @@ async def sync_person(
             rollekatalog.sync_soon()
         return
 
-    result = await session.execute(
-        select(User)
-        .options(selectinload(User.positions))
-        .where(User.extUuid == person_uuid)
-        .join(User.positions)
-    )
-    dbuser: Row[tuple[User]] | None = result.one_or_none()
+    dbuser = await fetch_person_from_db(session, person_uuid)
 
     if dbuser is None:
         logger.info(
@@ -122,12 +129,12 @@ async def sync_person(
         rollekatalog.sync_soon()
         return
 
-    if user == dbuser[0]:
+    if user == dbuser:
         return
 
     logger.info(
         "Update user", uuid=user.extUuid, name=user.name, samaccount=user.userId
     )
-    await session.delete(dbuser[0])
+    await session.delete(dbuser)
     session.add(user)
     rollekatalog.sync_soon()

@@ -93,6 +93,20 @@ async def get_org_unit(
     )
 
 
+async def fetch_org_unit_from_db(
+    session: depends.Session, uuid: UUID
+) -> OrgUnit | None:
+    result = await session.execute(
+        select(OrgUnit)
+        .options(selectinload(OrgUnit.manager))
+        .where(OrgUnit.uuid == uuid)
+    )
+    dborg: Row[tuple[OrgUnit]] | None = result.one_or_none()
+    if dborg is None:
+        return None
+    return dborg[0]
+
+
 async def sync_org_unit(
     mo: depends.GraphQLClient,
     rollekatalog: depends.Rollekatalog,
@@ -127,12 +141,7 @@ async def sync_org_unit(
         rollekatalog.sync_soon()
         return
 
-    result = await session.execute(
-        select(OrgUnit)
-        .options(selectinload(OrgUnit.manager))
-        .where(OrgUnit.uuid == org_unit.uuid)
-    )
-    dborg: Row[tuple[OrgUnit]] | None = result.one_or_none()
+    dborg = await fetch_org_unit_from_db(session, org_unit.uuid)
 
     if dborg is None:
         logger.info("Add new org unit", uuid=org_unit.uuid, name=org_unit.name)
@@ -140,13 +149,13 @@ async def sync_org_unit(
         rollekatalog.sync_soon()
         return
 
-    if org_unit == dborg[0]:
+    if org_unit == dborg:
         return
 
     logger.info("Update org unit", uuid=org_unit.uuid, name=org_unit.name)
-    if dborg[0].manager:
-        await session.delete(dborg[0].manager)
-    await session.delete(dborg[0])
+    if dborg.manager:
+        await session.delete(dborg.manager)
+    await session.delete(dborg)
     await session.flush()
     session.add(org_unit)
     rollekatalog.sync_soon()
