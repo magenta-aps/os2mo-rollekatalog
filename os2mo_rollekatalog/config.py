@@ -2,11 +2,22 @@
 # SPDX-License-Identifier: MPL-2.0
 from uuid import UUID
 
-from fastramqpi.config import Settings as FastRAMQPISettings
+from fastramqpi.config import Settings as _FastRAMQPISettings
+from fastramqpi.ramqp.config import AMQPConnectionSettings
 from pydantic import BaseSettings
 from pydantic import Field
 from pydantic import HttpUrl
 from pydantic import SecretStr
+
+
+class AMQPConnectionSettingsSeeded(AMQPConnectionSettings):
+    exchange = "os2mo_rollekatalog"
+    queue_prefix = "os2mo_rollekatalog"
+    upstream_exchange = "os2mo"
+
+
+class FastRAMQPISettings(_FastRAMQPISettings):
+    amqp: AMQPConnectionSettingsSeeded
 
 
 class _Settings(BaseSettings):
