@@ -1,6 +1,5 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
-from datetime import datetime
 
 import structlog
 from fastapi.encoders import jsonable_encoder
@@ -106,7 +105,7 @@ async def handle_address(
     rollekatalog: depends.Rollekatalog,
     session: depends.Session,
 ) -> None:
-    result = await mo.get_person_uuid_for_address(datetime.now(), address_uuid)
+    result = await mo.get_person_uuid_for_address(address_uuid)
     for address in flatten_validities(result):
         if address.employee_uuid:
             await sync_person(
@@ -129,7 +128,7 @@ async def handle_engagement(
     rollekatalog: depends.Rollekatalog,
     session: depends.Session,
 ) -> None:
-    result = await mo.get_person_uuid_for_engagement(datetime.now(), engagement_uuid)
+    result = await mo.get_person_uuid_for_engagement(engagement_uuid)
     for engagement in flatten_validities(result):
         await sync_person(
             mo,
@@ -169,7 +168,7 @@ async def handle_kle(
     rollekatalog: depends.Rollekatalog,
     session: depends.Session,
 ) -> None:
-    result = await mo.get_org_unit_uuid_for_kle(datetime.now(), kle_uuid)
+    result = await mo.get_org_unit_uuid_for_kle(kle_uuid)
     for kle in flatten_validities(result):
         await sync_org_unit(
             mo,
@@ -189,7 +188,7 @@ async def handle_manager(
     rollekatalog: depends.Rollekatalog,
     session: depends.Session,
 ) -> None:
-    result = await mo.get_org_unit_uuid_for_manager(datetime.now(), manager_uuid)
+    result = await mo.get_org_unit_uuid_for_manager(manager_uuid)
     for manager in flatten_validities(result):
         await sync_org_unit(
             mo,

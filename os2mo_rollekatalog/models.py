@@ -121,6 +121,8 @@ class Manager(Base):
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Manager):
             return self.uuid == other.uuid and self.userId == other.userId
+        if other is None:
+            return False
         raise NotImplementedError()
 
     def to_rollekatalog_payload(self):
@@ -137,7 +139,7 @@ class OrgUnit(Base):
     name: Mapped[OrgUnitName]
     # Not a relation, as we could learn about the child before the parent
     parentOrgUnitUuid: Mapped[UUID | None]
-    manager: Mapped[Manager] = relationship(cascade="all, delete-orphan")
+    manager: Mapped[Manager | None] = relationship(cascade="all, delete-orphan")
     klePerforming: Mapped[list[KLE]]
     kleInterest: Mapped[list[KLE]]
 

@@ -35,6 +35,7 @@ def create_app(**kwargs: Any) -> FastAPI:
     )
     fastramqpi.add_context(rollekatalog=rollekatalog_task)
     fastramqpi.add_lifespan_manager(rollekatalog_task.lifespan())
+    rollekatalog_task.sync_soon()
 
     # FastAPI router
     app = fastramqpi.get_app()

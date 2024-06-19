@@ -12,6 +12,7 @@ from sqlalchemy.orm import selectinload
 
 from os2mo_rollekatalog import depends
 from os2mo_rollekatalog.junkyard import NoSuitableSamAccount
+from os2mo_rollekatalog.junkyard import WillNotSync
 from os2mo_rollekatalog.junkyard import flatten_validities
 from os2mo_rollekatalog.junkyard import in_org_tree
 from os2mo_rollekatalog.junkyard import pick_samaccount
@@ -34,19 +35,19 @@ async def get_org_unit(
     itsystem_user_key: str,
     root_org_unit: UUID,
     org_unit_uuid: UUID,
-) -> OrgUnit | None:
+) -> OrgUnit:
     result = await mo.get_org_unit(itsystem_user_key, datetime.now(), org_unit_uuid)
 
     if (
         len(result.org_units.objects) == 0
         or result.org_units.objects[0].current is None
     ):
-        return None
+        raise WillNotSync("Not found. Strange.")
 
     org_unit = result.org_units.objects[0].current
 
     if not in_org_tree(root_org_unit, org_unit):
-        return None
+        raise WillNotSync(f"Not in tree, must be below {root_org_unit}")
 
     if org_unit.uuid == root_org_unit:
         # Make this one the root in Rollekatalog
@@ -92,6 +93,20 @@ async def get_org_unit(
     )
 
 
+async def fetch_org_unit_from_db(
+    session: depends.Session, uuid: UUID
+) -> OrgUnit | None:
+    result = await session.execute(
+        select(OrgUnit)
+        .options(selectinload(OrgUnit.manager))
+        .where(OrgUnit.uuid == uuid)
+    )
+    dborg: Row[tuple[OrgUnit]] | None = result.one_or_none()
+    if dborg is None:
+        return None
+    return dborg[0]
+
+
 async def sync_org_unit(
     mo: depends.GraphQLClient,
     rollekatalog: depends.Rollekatalog,
@@ -100,14 +115,14 @@ async def sync_org_unit(
     root_org_unit: UUID,
     org_unit_uuid: UUID,
 ) -> None:
-    org_unit = await get_org_unit(
-        mo,
-        itsystem_user_key,
-        root_org_unit,
-        org_unit_uuid,
-    )
-
-    if org_unit is None:
+    try:
+        org_unit = await get_org_unit(
+            mo,
+            itsystem_user_key,
+            root_org_unit,
+            org_unit_uuid,
+        )
+    except WillNotSync:
         delete_result = await session.execute(
             delete(OrgUnit).where(OrgUnit.uuid == org_unit_uuid)
         )
@@ -126,12 +141,7 @@ async def sync_org_unit(
         rollekatalog.sync_soon()
         return
 
-    result = await session.execute(
-        select(OrgUnit)
-        .options(selectinload(OrgUnit.manager))
-        .where(OrgUnit.uuid == org_unit.uuid)
-    )
-    dborg: Row[tuple[OrgUnit]] | None = result.one_or_none()
+    dborg = await fetch_org_unit_from_db(session, org_unit.uuid)
 
     if dborg is None:
         logger.info("Add new org unit", uuid=org_unit.uuid, name=org_unit.name)
@@ -139,10 +149,13 @@ async def sync_org_unit(
         rollekatalog.sync_soon()
         return
 
-    if org_unit == dborg[0]:
+    if org_unit == dborg:
         return
 
     logger.info("Update org unit", uuid=org_unit.uuid, name=org_unit.name)
-    await session.delete(dborg[0])
+    if dborg.manager:
+        await session.delete(dborg.manager)
+    await session.delete(dborg)
+    await session.flush()
     session.add(org_unit)
     rollekatalog.sync_soon()

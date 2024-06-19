@@ -11,6 +11,7 @@ from sqlalchemy.orm import selectinload
 
 from os2mo_rollekatalog import depends
 from os2mo_rollekatalog.junkyard import NoSuitableSamAccount
+from os2mo_rollekatalog.junkyard import WillNotSync
 from os2mo_rollekatalog.junkyard import flatten_validities
 from os2mo_rollekatalog.junkyard import in_org_tree
 from os2mo_rollekatalog.junkyard import pick_samaccount
@@ -29,14 +30,14 @@ async def get_person(
     person_uuid: UUID,
     use_nickname: bool,
     sync_titles: bool,
-) -> User | None:
+) -> User:
     result = await mo.get_person(itsystem_user_key, datetime.now(), person_uuid)
 
     if (
         len(result.employees.objects) == 0
         or result.employees.objects[0].current is None
     ):
-        return None
+        raise WillNotSync("Not found. Strange.")
 
     mo_person = result.employees.objects[0].current
 
@@ -55,7 +56,7 @@ async def get_person(
         sam_account_name = pick_samaccount(list(flatten_validities(result.itusers)))
     except NoSuitableSamAccount:
         # Do not sync users without an AD account
-        return None
+        raise WillNotSync("No SAM Account")
 
     positions = []
     for engagement in flatten_validities(result.engagements):
@@ -71,7 +72,7 @@ async def get_person(
             )
     if len(positions) == 0:
         # Do not sync users without any positions
-        return None
+        raise WillNotSync("User has no valid positions (engagements)")
 
     return User(
         extUuid=mo_person.uuid,
@@ -80,6 +81,19 @@ async def get_person(
         email=email,
         positions=positions,
     )
+
+
+async def fetch_person_from_db(session: depends.Session, uuid: UUID) -> User | None:
+    result = await session.execute(
+        select(User)
+        .options(selectinload(User.positions))
+        .where(User.extUuid == uuid)
+        .join(User.positions)
+    )
+    dbuser: Row[tuple[User]] | None = result.one_or_none()
+    if dbuser is None:
+        return None
+    return dbuser[0]
 
 
 async def sync_person(
@@ -92,10 +106,11 @@ async def sync_person(
     use_nickname: bool,
     sync_titles: bool,
 ) -> None:
-    user = await get_person(
-        mo, itsystem_user_key, root_org_unit, person_uuid, use_nickname, sync_titles
-    )
-    if user is None:
+    try:
+        user = await get_person(
+            mo, itsystem_user_key, root_org_unit, person_uuid, use_nickname, sync_titles
+        )
+    except WillNotSync:
         delete_result = await session.execute(
             delete(User).where(User.extUuid == person_uuid)
         )
@@ -104,13 +119,7 @@ async def sync_person(
             rollekatalog.sync_soon()
         return
 
-    result = await session.execute(
-        select(User)
-        .options(selectinload(User.positions))
-        .where(User.extUuid == person_uuid)
-        .join(User.positions)
-    )
-    dbuser: Row[tuple[User]] | None = result.one_or_none()
+    dbuser = await fetch_person_from_db(session, person_uuid)
 
     if dbuser is None:
         logger.info(
@@ -120,12 +129,12 @@ async def sync_person(
         rollekatalog.sync_soon()
         return
 
-    if user == dbuser[0]:
+    if user == dbuser:
         return
 
     logger.info(
         "Update user", uuid=user.extUuid, name=user.name, samaccount=user.userId
     )
-    await session.delete(dbuser[0])
+    await session.delete(dbuser)
     session.add(user)
     rollekatalog.sync_soon()
