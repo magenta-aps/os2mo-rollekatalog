@@ -147,5 +147,6 @@ async def sync_org_unit(
     if dborg[0].manager:
         await session.delete(dborg[0].manager)
     await session.delete(dborg[0])
+    await session.flush()
     session.add(org_unit)
     rollekatalog.sync_soon()
