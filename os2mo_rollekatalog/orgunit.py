@@ -12,6 +12,7 @@ from sqlalchemy.orm import selectinload
 
 from os2mo_rollekatalog import depends
 from os2mo_rollekatalog.junkyard import NoSuitableSamAccount
+from os2mo_rollekatalog.junkyard import WillNotSync
 from os2mo_rollekatalog.junkyard import flatten_validities
 from os2mo_rollekatalog.junkyard import in_org_tree
 from os2mo_rollekatalog.junkyard import pick_samaccount
@@ -34,19 +35,19 @@ async def get_org_unit(
     itsystem_user_key: str,
     root_org_unit: UUID,
     org_unit_uuid: UUID,
-) -> OrgUnit | None:
+) -> OrgUnit:
     result = await mo.get_org_unit(itsystem_user_key, datetime.now(), org_unit_uuid)
 
     if (
         len(result.org_units.objects) == 0
         or result.org_units.objects[0].current is None
     ):
-        return None
+        raise WillNotSync("Not found. Strange.")
 
     org_unit = result.org_units.objects[0].current
 
     if not in_org_tree(root_org_unit, org_unit):
-        return None
+        raise WillNotSync(f"Not in tree, must be below {root_org_unit}")
 
     if org_unit.uuid == root_org_unit:
         # Make this one the root in Rollekatalog
@@ -100,14 +101,14 @@ async def sync_org_unit(
     root_org_unit: UUID,
     org_unit_uuid: UUID,
 ) -> None:
-    org_unit = await get_org_unit(
-        mo,
-        itsystem_user_key,
-        root_org_unit,
-        org_unit_uuid,
-    )
-
-    if org_unit is None:
+    try:
+        org_unit = await get_org_unit(
+            mo,
+            itsystem_user_key,
+            root_org_unit,
+            org_unit_uuid,
+        )
+    except WillNotSync:
         delete_result = await session.execute(
             delete(OrgUnit).where(OrgUnit.uuid == org_unit_uuid)
         )

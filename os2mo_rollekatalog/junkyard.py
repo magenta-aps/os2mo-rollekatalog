@@ -12,6 +12,11 @@ from os2mo_rollekatalog.models import SamAccountName
 T = TypeVar("T", covariant=True)
 
 
+class WillNotSync(Exception):
+    def __init__(self, message: str):
+        self.message = message
+
+
 class NoSuitableSamAccount(Exception): ...
 
 
