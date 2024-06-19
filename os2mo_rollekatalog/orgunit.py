@@ -130,13 +130,26 @@ async def sync_org_unit(
             return  # No changes.
 
         logger.info("Remove org unit", uuid=org_unit_uuid)
+        # TODO: these invariants should be upheld by the db and cascade deleted
+        # Remove positions that are no longer in a valid org unit:
         await session.execute(
             delete(Position).where(Position.orgUnitUuid == org_unit_uuid)
         )
+        # Remove users that no longer have >= 1 position:
         users_without_positions = (
             select(User.id).outerjoin(Position).where(Position.id == None)  # noqa: E711
         )
         await session.execute(delete(User).where(User.id.in_(users_without_positions)))
+        # Remove org units that points to the removed unit (recursively (to
+        # uphold the other invariants)):
+        for (child_uuid,) in (
+            await session.execute(
+                select(OrgUnit.uuid).where(OrgUnit.parentOrgUnitUuid == org_unit_uuid)
+            )
+        ).all():
+            await sync_org_unit(
+                mo, rollekatalog, session, itsystem_user_key, root_org_unit, child_uuid
+            )
 
         rollekatalog.sync_soon()
         return
