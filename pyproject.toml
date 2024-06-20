@@ -13,10 +13,11 @@ pydantic = "^1"
 structlog = "^24.1.0"
 uvicorn = "^0.29.0"
 httpx = "^0.27.0"
-fastramqpi = "^7.4.0"
+fastramqpi = "^7.5.0"
 fastapi = "^0.111.0"
 email-validator = "^2.1.1"
 sqlalchemy = "^2.0.30"
+asgi-lifespan = "^2.1.0"
 
 [tool.poetry.group.pre-commit.dependencies]
 mypy = "^1.8.0"
