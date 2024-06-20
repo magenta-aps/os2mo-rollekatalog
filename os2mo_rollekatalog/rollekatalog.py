@@ -92,6 +92,11 @@ class Rollekatalog:
                 org_units = [org.to_rollekatalog_payload() for org in org_units_from_db]
                 users = [user.to_rollekatalog_payload() for user in users_from_db]
 
+            if org_units == [] and users == []:
+                logger.warning("No data to upload")
+                self.sync_soon()
+                continue
+
             payload = {"orgUnits": org_units, "users": users}
             logger.info("Uploading org units and users to Rollekatalog")
             try:
