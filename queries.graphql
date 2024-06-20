@@ -172,3 +172,111 @@ query GetOrgUnitUuidForManager($uuid: UUID!) {
     }
   }
 }
+
+
+query _Testing_GetOrgUnitType {
+  classes(filter: {facet_user_keys: "org_unit_type"}) {
+    objects {
+      uuid
+    }
+  }
+}
+
+
+mutation _Testing_CreateOrgUnitRoot($name: String!, $root_uuid: UUID!, $org_unit_type: UUID!) {
+  org_unit_create(
+    input: {
+      uuid: $root_uuid,
+      name: $name,
+      org_unit_type: $org_unit_type,
+      validity: {from: "2010-02-03"},
+    },
+  ) {
+    uuid
+  }
+}
+
+
+mutation _Testing_CreateOrgUnit($name: String!, $parent: UUID!, $org_unit_type: UUID!) {
+  org_unit_create(
+    input: {
+      name: $name,
+      parent: $parent,
+      org_unit_type: $org_unit_type,
+      validity: {from: "2010-02-03"},
+    },
+  ) {
+    uuid
+  }
+}
+
+
+mutation _Testing_RenameOrgUnit($uuid: UUID!, $name: String!) {
+  org_unit_update(input: {uuid: $uuid, validity: {from: "2013-05-05"}, name: $name}) {
+    uuid
+  }
+}
+
+
+mutation _Testing_CreateEmployee($first_name: String!, $last_name: String!) {
+  employee_create(input: {given_name: $first_name, surname: $last_name}) {
+    uuid
+  }
+}
+
+
+mutation _Testing_CreateItSystem($name: String!) {
+  itsystem_create(input: {user_key: $name, name: $name, validity: {from: "2014-02-01"}}) {
+    uuid
+  }
+}
+
+
+mutation _Testing_CreateItUser($itsystem: UUID!, $person: UUID!, $name: String!) {
+  ituser_create(input: {user_key: $name, itsystem: $itsystem, person: $person, validity: {from: "2015-02-08"}}) {
+    uuid
+  }
+}
+
+
+mutation _Testing_CreateEngagement($orgunit: UUID!, $person: UUID!, $engagement_type: UUID!, $job_function: UUID!) {
+  engagement_create(
+    input: {org_unit: $orgunit, engagement_type: $engagement_type, job_function: $job_function, person: $person, validity: {from: "2016-05-05"}}
+  ) {
+    uuid
+  }
+}
+
+
+query _Testing_GetEngagementType {
+  facets(filter: {user_keys: "engagement_type"}) {
+    objects {
+      current {
+        classes {
+          uuid
+        }
+      }
+    }
+  }
+}
+
+
+query _Testing_GetJobFunction {
+  facets(filter: {user_keys: "engagement_job_function"}) {
+    objects {
+      current {
+        classes {
+          uuid
+          user_key
+        }
+      }
+    }
+  }
+}
+
+
+mutation _Testing_MoveOrgUnitToRoot($uuid: UUID!) {
+  org_unit_update(input: {uuid: $uuid, validity: {from: "2020-05-08"}, parent: null}) {
+    uuid
+  }
+}
