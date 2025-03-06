@@ -15,7 +15,7 @@ from os2mo_rollekatalog.titles import get_job_titles
 
 
 router = MORouter()
-logger = structlog.get_logger(__name__)
+logger = structlog.stdlib.get_logger(__name__)
 
 
 @router.register("class")

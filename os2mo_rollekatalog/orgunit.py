@@ -23,7 +23,7 @@ from os2mo_rollekatalog.models import Position
 from os2mo_rollekatalog.models import User
 
 
-logger = structlog.get_logger(__name__)
+logger = structlog.stdlib.get_logger(__name__)
 
 
 class ExpectedParent(Exception):
