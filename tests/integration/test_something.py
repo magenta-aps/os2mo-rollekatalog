@@ -211,11 +211,3 @@ async def test_too_much(
         assert (await test_client.get(f"/cache/org_unit/{layer3_1}")).json() is None
 
     await verify_removal()
-
-
-@pytest.mark.integration_test
-async def test_greeting(
-    test_client: AsyncClient,
-) -> None:
-    r = await test_client.get("/hello")
-    assert r.json() == "World!"

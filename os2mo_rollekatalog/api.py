@@ -21,12 +21,6 @@ router = APIRouter()
 logger = structlog.get_logger(__name__)
 
 
-@router.get("/hello")
-async def hello() -> str:
-    """Greetings."""
-    return "World!"
-
-
 @router.get("/titles")
 async def titles(mo: depends.GraphQLClient) -> list[Title]:
     """Get job titles that would be synced with SYNC_TITLES=true."""

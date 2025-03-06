@@ -2,13 +2,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
 
-query GetVersion {
-  version {
-    mo_version
-  }
-}
-
-
 query GetTitles {
   classes(filter: {facet: {user_keys:"engagement_job_function"}}) {
     objects {

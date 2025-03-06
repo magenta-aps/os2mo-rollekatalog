@@ -19,12 +19,6 @@ logger = structlog.get_logger(__name__)
 
 
 @router.register("class")
-async def handler(mo: depends.GraphQLClient) -> None:
-    version = await mo.get_version()
-    print(version)
-
-
-@router.register("class")
 async def sync_job_titles(
     settings: depends.Settings,
     title_client: depends.TitleClient,
