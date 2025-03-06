@@ -137,7 +137,7 @@ async def sync_org_unit(
         )
         # Remove users that no longer have >= 1 position:
         users_without_positions = (
-            select(User.id).outerjoin(Position).where(Position.id == None)  # noqa: E711
+            select(User.id).outerjoin(Position).where(Position.id.is_(None))
         )
         await session.execute(delete(User).where(User.id.in_(users_without_positions)))
         # Remove org units that points to the removed unit (recursively (to
