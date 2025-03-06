@@ -1641,6 +1641,7 @@ files = [
 ]
 
 [package.dependencies]
+email-validator = {version = ">=1.0.3", optional = true, markers = "extra == \"email\""}
 typing-extensions = ">=4.2.0"
 
 [package.extras]
@@ -2767,4 +2768,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "fd64efb9de5807ca0d70a463d3f4b65b4dd37efbb25f435af2e74aa5c6f1192a"
+content-hash = "97f1dd8594ccfe680498b3c31aa4b0e2206497eaeac8aaec7a4cb224b61d2ca9"
