@@ -27,6 +27,9 @@ services:
       ITSYSTEM_USER_KEY: "Active Directory"
       ROOT_ORG_UNIT: "7a8e45f7-4de0-44c8-990f-43c0565ee505"  # Skole og Børn
       SYNC_TITLES: "true"
+    networks:
+      - default
+      - os2mo_default
     volumes:
       - ./:/app/:ro
     ports:
@@ -40,6 +43,5 @@ services:
       POSTGRES_DB: "rollekatalog"
 
 networks:
-  default:
+  os2mo_default:
     external: true
-    name: os2mo_default
