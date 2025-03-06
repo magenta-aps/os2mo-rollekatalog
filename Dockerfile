@@ -23,8 +23,6 @@ RUN poetry install --no-root
 
 COPY os2mo_rollekatalog ./os2mo_rollekatalog
 
-VOLUME ["/data/"]
-
 CMD ["uvicorn", "--factory", "os2mo_rollekatalog.app:create_app", "--host", "0.0.0.0"]
 
 # Add build version to the environment last to avoid build cache misses
