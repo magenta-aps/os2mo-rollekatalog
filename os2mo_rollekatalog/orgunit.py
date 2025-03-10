@@ -77,7 +77,7 @@ async def get_org_unit(
     kle_interests = set()
     for kle in flatten_validities(result.kles):
         for aspect in kle.kle_aspects:
-            if aspect.scope == "INDSIGT":
+            if aspect.scope == "INFORMERET":
                 kle_interests |= {n.user_key for n in kle.kle_number}
             if aspect.scope == "UDFOERENDE":
                 kle_performing |= {n.user_key for n in kle.kle_number}
