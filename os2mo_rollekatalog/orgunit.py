@@ -7,7 +7,6 @@ from uuid import UUID
 import structlog
 from sqlalchemy import delete
 from sqlalchemy import select
-from sqlalchemy import Row
 from sqlalchemy.orm import selectinload
 
 from os2mo_rollekatalog import depends
@@ -96,15 +95,11 @@ async def get_org_unit(
 async def fetch_org_unit_from_db(
     session: depends.Session, uuid: UUID
 ) -> OrgUnit | None:
-    result = await session.execute(
+    return await session.scalar(
         select(OrgUnit)
         .options(selectinload(OrgUnit.manager))
         .where(OrgUnit.uuid == uuid)
     )
-    dborg: Row[tuple[OrgUnit]] | None = result.one_or_none()
-    if dborg is None:
-        return None
-    return dborg[0]
 
 
 async def sync_org_unit(
