@@ -31,8 +31,7 @@ async def sync_job_titles(
     logger.info("Uploading titles to Rollekatalog", payload=payload)
     await rollekatalog.upload(
         title_client,
-        f"{settings.rollekatalog_url}/api/title",
-        settings.api_key,
+        "/api/title",
         payload,
     )
 

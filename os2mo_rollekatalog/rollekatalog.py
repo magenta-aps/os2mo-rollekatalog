@@ -5,6 +5,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from typing import Any
 from typing import Never
+from typing import NewType
 
 import structlog
 from fastramqpi.metrics import dipex_last_success_timestamp
@@ -25,12 +26,19 @@ from os2mo_rollekatalog.models import User
 logger = structlog.stdlib.get_logger(__name__)
 
 
-async def upload(
-    client: AsyncClient, url: str, api_key: SecretStr, payload: Any
-) -> None:
-    r = await client.post(
-        url, json=payload, headers={"ApiKey": api_key.get_secret_value()}
+RollekatalogClient = NewType("RollekatalogClient", AsyncClient)
+
+
+def create_authenticated_client(
+    base_url: HttpUrl, api_key: SecretStr
+) -> RollekatalogClient:
+    return RollekatalogClient(
+        AsyncClient(base_url=base_url, headers={"ApiKey": api_key.get_secret_value()})
     )
+
+
+async def upload(client: RollekatalogClient, path: str, payload: Any) -> None:
+    r = await client.post(path, json=payload)
     r.raise_for_status()
 
 
@@ -47,17 +55,14 @@ class Rollekatalog:
 
     def __init__(
         self,
-        url: HttpUrl,
-        api_key: SecretStr,
         interval: int,
+        client: RollekatalogClient,
         sessionmaker: async_sessionmaker[AsyncSession],
     ):
-        self.url = url
-        self.api_key = api_key
         self.interval = interval
         self.sessionmaker = sessionmaker
         self.event = asyncio.Event()
-        self.client = AsyncClient()
+        self.client = client
 
     def sync_soon(self) -> None:
         self.event.set()
@@ -102,8 +107,7 @@ class Rollekatalog:
             try:
                 await upload(
                     self.client,
-                    f"{self.url}/api/organisation/v3",
-                    self.api_key,
+                    "/api/organisation/v3",
                     payload,
                 )
                 dipex_last_success_timestamp.set_to_current_time()

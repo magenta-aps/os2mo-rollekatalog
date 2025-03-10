@@ -3,7 +3,6 @@
 
 from fastapi import FastAPI
 from fastramqpi.main import FastRAMQPI
-from httpx import AsyncClient
 
 from os2mo_rollekatalog import api
 from os2mo_rollekatalog import events
@@ -24,12 +23,15 @@ def create_app() -> FastAPI:
         database_metadata=models.Base.metadata,
     )
     fastramqpi.add_context(settings=settings)
-    fastramqpi.add_context(title_client=AsyncClient())
+
+    client = rollekatalog.create_authenticated_client(
+        settings.rollekatalog_url, settings.api_key
+    )
+    fastramqpi.add_context(title_client=client)
 
     rollekatalog_task = rollekatalog.Rollekatalog(
-        url=settings.rollekatalog_url,
-        api_key=settings.api_key,
         interval=settings.interval,
+        client=client,
         sessionmaker=fastramqpi.get_context()["sessionmaker"],
     )
     fastramqpi.add_context(rollekatalog=rollekatalog_task)
