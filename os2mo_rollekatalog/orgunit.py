@@ -79,9 +79,9 @@ async def get_org_unit(
     for kle in flatten_validities(result.kles):
         for aspect in kle.kle_aspects:
             if aspect.scope == "INDSIGT":
-                kle_interests.append(kle.kle_number.user_key)
+                kle_interests.extend([n.user_key for n in kle.kle_number])
             if aspect.scope == "UDFOERENDE":
-                kle_performing.append(kle.kle_number.user_key)
+                kle_performing.extend([n.user_key for n in kle.kle_number])
 
     return OrgUnit(
         uuid=org_unit.uuid,
