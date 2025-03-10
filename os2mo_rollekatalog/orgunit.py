@@ -137,11 +137,9 @@ async def sync_org_unit(
         await session.execute(delete(User).where(User.id.in_(users_without_positions)))
         # Remove org units that points to the removed unit (recursively (to
         # uphold the other invariants)):
-        for (child_uuid,) in (
-            await session.execute(
-                select(OrgUnit.uuid).where(OrgUnit.parentOrgUnitUuid == org_unit_uuid)
-            )
-        ).all():
+        for child_uuid in await session.scalars(
+            select(OrgUnit.uuid).where(OrgUnit.parentOrgUnitUuid == org_unit_uuid)
+        ):
             await sync_org_unit(
                 mo, rollekatalog, session, itsystem_user_key, root_org_unit, child_uuid
             )
