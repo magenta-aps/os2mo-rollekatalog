@@ -73,22 +73,22 @@ async def get_org_unit(
 
     manager = get_manager()
 
-    kle_performing = []
-    kle_interests = []
+    kle_performing = set()
+    kle_interests = set()
     for kle in flatten_validities(result.kles):
         for aspect in kle.kle_aspects:
             if aspect.scope == "INDSIGT":
-                kle_interests.extend([n.user_key for n in kle.kle_number])
+                kle_interests |= {n.user_key for n in kle.kle_number}
             if aspect.scope == "UDFOERENDE":
-                kle_performing.extend([n.user_key for n in kle.kle_number])
+                kle_performing |= {n.user_key for n in kle.kle_number}
 
     return OrgUnit(
         uuid=org_unit.uuid,
         name=OrgUnitName(org_unit.name),
         parentOrgUnitUuid=parent_uuid,
         manager=manager,
-        klePerforming=kle_performing,
-        kleInterest=kle_interests,
+        klePerforming=list(kle_performing),
+        kleInterest=list(kle_interests),
     )
 
 
