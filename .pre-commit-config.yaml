@@ -38,3 +38,9 @@ repos:
       - id: commitizen
       - id: commitizen-branch
         stages: [ push ]
+
+  - repo: https://github.com/fpgmaas/deptry.git
+    rev: 0.23.0
+    hooks:
+      - id: deptry
+        language: system

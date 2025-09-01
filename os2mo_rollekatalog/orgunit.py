@@ -7,7 +7,6 @@ from uuid import UUID
 import structlog
 from sqlalchemy import delete
 from sqlalchemy import select
-from sqlalchemy import Row
 from sqlalchemy.orm import selectinload
 
 from os2mo_rollekatalog import depends
@@ -23,7 +22,7 @@ from os2mo_rollekatalog.models import Position
 from os2mo_rollekatalog.models import User
 
 
-logger = structlog.get_logger(__name__)
+logger = structlog.stdlib.get_logger(__name__)
 
 
 class ExpectedParent(Exception):
@@ -74,37 +73,33 @@ async def get_org_unit(
 
     manager = get_manager()
 
-    kle_performing = []
-    kle_interests = []
+    kle_performing = set()
+    kle_interests = set()
     for kle in flatten_validities(result.kles):
         for aspect in kle.kle_aspects:
-            if aspect.scope == "INDSIGT":
-                kle_interests.append(kle.kle_number.user_key)
+            if aspect.scope == "INFORMERET":
+                kle_interests |= {n.user_key for n in kle.kle_number}
             if aspect.scope == "UDFOERENDE":
-                kle_performing.append(kle.kle_number.user_key)
+                kle_performing |= {n.user_key for n in kle.kle_number}
 
     return OrgUnit(
         uuid=org_unit.uuid,
         name=OrgUnitName(org_unit.name),
         parentOrgUnitUuid=parent_uuid,
         manager=manager,
-        klePerforming=kle_performing,
-        kleInterest=kle_interests,
+        klePerforming=list(kle_performing),
+        kleInterest=list(kle_interests),
     )
 
 
 async def fetch_org_unit_from_db(
     session: depends.Session, uuid: UUID
 ) -> OrgUnit | None:
-    result = await session.execute(
+    return await session.scalar(
         select(OrgUnit)
         .options(selectinload(OrgUnit.manager))
         .where(OrgUnit.uuid == uuid)
     )
-    dborg: Row[tuple[OrgUnit]] | None = result.one_or_none()
-    if dborg is None:
-        return None
-    return dborg[0]
 
 
 async def sync_org_unit(
@@ -137,16 +132,14 @@ async def sync_org_unit(
         )
         # Remove users that no longer have >= 1 position:
         users_without_positions = (
-            select(User.id).outerjoin(Position).where(Position.id == None)  # noqa: E711
+            select(User.id).outerjoin(Position).where(Position.id.is_(None))
         )
         await session.execute(delete(User).where(User.id.in_(users_without_positions)))
         # Remove org units that points to the removed unit (recursively (to
         # uphold the other invariants)):
-        for (child_uuid,) in (
-            await session.execute(
-                select(OrgUnit.uuid).where(OrgUnit.parentOrgUnitUuid == org_unit_uuid)
-            )
-        ).all():
+        for child_uuid in await session.scalars(
+            select(OrgUnit.uuid).where(OrgUnit.parentOrgUnitUuid == org_unit_uuid)
+        ):
             await sync_org_unit(
                 mo, rollekatalog, session, itsystem_user_key, root_org_unit, child_uuid
             )

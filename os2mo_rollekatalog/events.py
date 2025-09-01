@@ -15,13 +15,7 @@ from os2mo_rollekatalog.titles import get_job_titles
 
 
 router = MORouter()
-logger = structlog.get_logger(__name__)
-
-
-@router.register("class")
-async def handler(mo: depends.GraphQLClient) -> None:
-    version = await mo.get_version()
-    print(version)
+logger = structlog.stdlib.get_logger(__name__)
 
 
 @router.register("class")
@@ -37,8 +31,7 @@ async def sync_job_titles(
     logger.info("Uploading titles to Rollekatalog", payload=payload)
     await rollekatalog.upload(
         title_client,
-        f"{settings.rollekatalog_url}/api/title",
-        settings.api_key,
+        "/api/title",
         payload,
     )
 

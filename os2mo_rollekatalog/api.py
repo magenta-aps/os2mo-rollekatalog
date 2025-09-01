@@ -18,13 +18,7 @@ from os2mo_rollekatalog.titles import get_job_titles
 
 
 router = APIRouter()
-logger = structlog.get_logger(__name__)
-
-
-@router.get("/hello")
-async def hello() -> str:
-    """Greetings."""
-    return "World!"
+logger = structlog.stdlib.get_logger(__name__)
 
 
 @router.get("/titles")

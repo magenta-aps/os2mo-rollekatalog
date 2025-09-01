@@ -6,7 +6,6 @@ from uuid import UUID
 import structlog
 from sqlalchemy import delete
 from sqlalchemy import select
-from sqlalchemy import Row
 from sqlalchemy.orm import selectinload
 
 from os2mo_rollekatalog import depends
@@ -20,7 +19,7 @@ from os2mo_rollekatalog.models import Position
 from os2mo_rollekatalog.models import User
 
 
-logger = structlog.get_logger(__name__)
+logger = structlog.stdlib.get_logger(__name__)
 
 
 async def get_person(
@@ -84,16 +83,12 @@ async def get_person(
 
 
 async def fetch_person_from_db(session: depends.Session, uuid: UUID) -> User | None:
-    result = await session.execute(
+    return await session.scalar(
         select(User)
         .options(selectinload(User.positions))
         .where(User.extUuid == uuid)
         .join(User.positions)
     )
-    dbuser: Row[tuple[User]] | None = result.one_or_none()
-    if dbuser is None:
-        return None
-    return dbuser[0]
 
 
 async def sync_person(
