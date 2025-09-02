@@ -21,6 +21,7 @@ services:
       FASTRAMQPI__DATABASE__NAME: "rollekatalog"
 
       # Rollekatalog
+      SYNC_ENABLED: "true"
       ROLLEKATALOG_URL: "http://rollekatalog:8090"
       API_KEY: "00000000-0000-4000-0000-000000000000"
       INTERVAL: "15"

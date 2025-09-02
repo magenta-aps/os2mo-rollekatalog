@@ -11,6 +11,9 @@ import structlog
 from fastramqpi.metrics import dipex_last_success_timestamp
 from httpx import AsyncClient
 from httpx import HTTPStatusError
+from httpx import MockTransport
+from httpx import Request
+from httpx import Response
 from httpx import TimeoutException
 from pydantic import AnyHttpUrl
 from pydantic import SecretStr
@@ -30,11 +33,20 @@ RollekatalogClient = NewType("RollekatalogClient", AsyncClient)
 
 
 def create_authenticated_client(
-    base_url: AnyHttpUrl, api_key: SecretStr
+    sync_enabled: bool, base_url: AnyHttpUrl, api_key: SecretStr
 ) -> RollekatalogClient:
-    return RollekatalogClient(
-        AsyncClient(base_url=base_url, headers={"ApiKey": api_key.get_secret_value()})
-    )
+    if sync_enabled:
+        client = AsyncClient(
+            base_url=base_url, headers={"ApiKey": api_key.get_secret_value()}
+        )
+    else:
+
+        def handler(request: Request) -> Response:
+            logger.info("Sync to Rollekatalog is disabled. Not syncing.")
+            return Response(200, json=[])
+
+        client = AsyncClient(base_url=base_url, transport=MockTransport(handler))
+    return RollekatalogClient(client)
 
 
 async def upload(client: RollekatalogClient, path: str, payload: Any) -> None:
