@@ -25,7 +25,7 @@ def create_app() -> FastAPI:
     fastramqpi.add_context(settings=settings)
 
     client = rollekatalog.create_authenticated_client(
-        settings.rollekatalog_url, settings.api_key
+        settings.sync_enabled, settings.rollekatalog_url, settings.api_key
     )
     fastramqpi.add_context(title_client=client)
 

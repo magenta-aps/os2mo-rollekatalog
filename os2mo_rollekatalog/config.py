@@ -27,6 +27,15 @@ class _Settings(BaseSettings):
 
     fastramqpi: FastRAMQPISettings
 
+    sync_enabled: bool = Field(
+        False,
+        description=(
+            "Enable writes to rollekatalog. This is disabled by default to "
+            "allow a smooth roll-out. Trigger all refresh events and let the "
+            "integration populate its database before enabling sync."
+        ),
+    )
+
     rollekatalog_url: AnyHttpUrl = Field(description="Base url for Rollekatalog.")
     api_key: SecretStr = Field(description="API key for Rollekatalog.")
     interval: int = Field(
