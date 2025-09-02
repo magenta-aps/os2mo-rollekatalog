@@ -12,7 +12,7 @@ from fastramqpi.metrics import dipex_last_success_timestamp
 from httpx import AsyncClient
 from httpx import HTTPStatusError
 from httpx import TimeoutException
-from pydantic import HttpUrl
+from pydantic import AnyHttpUrl
 from pydantic import SecretStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -30,7 +30,7 @@ RollekatalogClient = NewType("RollekatalogClient", AsyncClient)
 
 
 def create_authenticated_client(
-    base_url: HttpUrl, api_key: SecretStr
+    base_url: AnyHttpUrl, api_key: SecretStr
 ) -> RollekatalogClient:
     return RollekatalogClient(
         AsyncClient(base_url=base_url, headers={"ApiKey": api_key.get_secret_value()})

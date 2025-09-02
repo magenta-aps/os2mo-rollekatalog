@@ -21,10 +21,10 @@ services:
       FASTRAMQPI__DATABASE__NAME: "rollekatalog"
 
       # Rollekatalog
-      ROLLEKATALOG_URL: "https://example.rollekatalog.dk"
-      API_KEY: "secret"
+      ROLLEKATALOG_URL: "http://rollekatalog:8090"
+      API_KEY: "00000000-0000-4000-0000-000000000000"
       INTERVAL: "15"
-      ITSYSTEM_USER_KEY: "Active Directory"
+      ITSYSTEM_USER_KEY: "OpenDesk"
       ROOT_ORG_UNIT: "7a8e45f7-4de0-44c8-990f-43c0565ee505"  # Skole og Børn
       SYNC_TITLES: "true"
     networks:
@@ -41,6 +41,60 @@ services:
       POSTGRES_USER: "rollekatalog"
       POSTGRES_PASSWORD: "hemmelighed"
       POSTGRES_DB: "rollekatalog"
+
+  maria:
+    image: mariadb:10.11
+    environment:
+      MARIADB_USER: 'rollekatalog'
+      MARIADB_PASSWORD: 'Test1234'
+      MARIADB_DATABASE: 'rollekatalog'
+      MARIADB_ROOT_PASSWORD: 'Test1234'
+
+  rollekatalog:
+    image: rollekatalog/linux:2025-05-26
+    ports:
+      - 8090:8090
+    environment:
+      rc.customer.cvr: "12345678"
+      rc.customer.apikey: "00000000-0000-4000-0000-000000000000"
+      rc.scheduled.enabled: "true"
+      rc.titles.enabled: "true"
+
+      spring.datasource.username: "rollekatalog"
+      spring.datasource.password: "Test1234"
+      spring.datasource.url: "jdbc:mariadb://maria/rollekatalog"
+      spring.datasource.driver-class-name: "org.mariadb.jdbc.Driver"
+      spring.flyway.locations: "classpath:db/migration/mysql"
+
+      di.saml.sp.baseUrl: "http://localhost:8090"
+      di.saml.sp.entityId: "http://localhost:8090"
+      di.saml.idp.metadataLocation: "url:http://idp:8080/simplesaml/saml2/idp/metadata.php"
+      # Keystores are a java thing. I created this with the keystore-explorer
+      # GUI. Its a keystore with the password "1234" and a RSA Key Pair with
+      # the Common Name "localhost".
+      di.saml.keystore.location: "file:///home/cert/keystore.pfx"
+      di.saml.keystore.password: "1234"
+
+      rc.integrations.kspcics.enabled: "false"
+      rc.integrations.kombit.enabled: "false"
+      rc.integrations.email.enabled: "false"
+    volumes:
+      - ./dev-environment/rollekatalog/cert:/home/cert
+
+  idp:
+    image: magentaaps/simplesamlphp:master
+    environment:
+      - SIMPLESAMLPHP_SP_ENTITY_ID=http://localhost:8090
+      - SIMPLESAMLPHP_BASEURLPATH=http://localhost:8050/simplesaml
+      - SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE=http://localhost:8090/saml/login
+      - SIMPLESAMLPHP_SECRET_SALT=supersecret
+    volumes:
+      - ./dev-environment/simplesaml/authsources.php:/var/www/simplesamlphp/config/authsources.php
+      - ./dev-environment/simplesaml/saml20-idp-hosted.php:/var/www/simplesamlphp/metadata/saml20-idp-hosted.php
+      - ./dev-environment/simplesaml/cert:/var/www/simplesamlphp/cert
+    ports:
+      - "8050:8080"
+
 
 networks:
   os2mo_default:
