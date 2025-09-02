@@ -21,6 +21,15 @@ seen in [os2mo_rollekatalog/config.py]. Complex variables such as dict or lists
 can be given as JSON strings, as specified by Pydantic's settings parser.
 
 
+## Development
+
+In development, Rollekatalog is started on http://localhost:8090 and
+SimpleSAMLphp on http://localhost:8050. The dev environment is configured for
+OS2mos "Kolding" test dataset. In there, the user Ludvig is expected to be
+syncronised to Rollekatalog. Run `./dev-environment/devtool` to force sync
+Ludvig and make him administrator in Rollekatalog.
+
+
 ## Full synchronization
 
 When first deployed or when a "full" sync is needed for other reasons (such as
@@ -36,6 +45,7 @@ mutation RefreshForRollekatalog {
 
 
 ## Versioning
+
 This project uses [Semantic Versioning](https://semver.org/) with the following
 strategy:
 - MAJOR: Incompatible API changes.
@@ -44,6 +54,7 @@ strategy:
 
 
 ## Authors
+
 Magenta ApS <https://magenta.dk>
 
 
