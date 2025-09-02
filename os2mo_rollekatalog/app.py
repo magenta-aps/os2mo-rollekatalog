@@ -18,7 +18,7 @@ def create_app() -> FastAPI:
     fastramqpi = FastRAMQPI(
         application_name="rollekatalog",
         settings=settings.fastramqpi,
-        graphql_version=22,
+        graphql_version=25,
         graphql_client_cls=GraphQLClient,
         database_metadata=models.Base.metadata,
     )

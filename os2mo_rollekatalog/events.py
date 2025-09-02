@@ -27,7 +27,7 @@ async def sync_job_titles(
     if not settings.sync_titles:
         return
     titles = await get_job_titles(mo)
-    payload = jsonable_encoder({"titles": [title.dict() for title in titles]})
+    payload = jsonable_encoder([title.to_rollekatalog_payload() for title in titles])
     logger.info("Uploading titles to Rollekatalog", payload=payload)
     await rollekatalog.upload(
         title_client,

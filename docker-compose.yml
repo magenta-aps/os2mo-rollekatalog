@@ -6,7 +6,7 @@ services:
     build: .
     command: ["uvicorn", "--factory", "os2mo_rollekatalog.app:create_app", "--host", "0.0.0.0", "--reload"]
     environment:
-      LOG_LEVEL: "DEBUG"
+      LOG_LEVEL: "INFO"
 
       # OS2mo
       FASTRAMQPI__MO_URL: "http://mo:5000"
