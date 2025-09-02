@@ -25,6 +25,10 @@ class Title(BaseModel):
     uuid: UUID
     user_key: str
 
+    def to_rollekatalog_payload(self):
+        result = {"name": self.user_key, "uuid": self.uuid}
+        return jsonable_encoder(result)
+
 
 class Base(DeclarativeBase):
     type_annotation_map = {
