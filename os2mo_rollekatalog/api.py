@@ -27,7 +27,7 @@ async def titles(mo: depends.GraphQLClient) -> list[Title]:
     return await get_job_titles(mo)
 
 
-@router.get("/person/{uuid}")
+@router.get("/debug/person/{uuid}")
 async def person(
     settings: depends.Settings, mo: depends.GraphQLClient, uuid: UUID
 ) -> dict:
@@ -46,7 +46,7 @@ async def person(
     return person.to_rollekatalog_payload()
 
 
-@router.post("/person/{uuid}")
+@router.post("/sync/person/{uuid}")
 async def sync_person_on_demand(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
@@ -76,7 +76,7 @@ async def person_from_cache(session: depends.Session, uuid: UUID) -> dict | None
     return user.to_rollekatalog_payload()
 
 
-@router.get("/org_unit/{uuid}")
+@router.get("/debug/org_unit/{uuid}")
 async def org_unit(
     settings: depends.Settings, mo: depends.GraphQLClient, uuid: UUID
 ) -> dict:
@@ -93,7 +93,7 @@ async def org_unit(
     return org_unit.to_rollekatalog_payload()
 
 
-@router.post("/org_unit/{uuid}")
+@router.post("/sync/org_unit/{uuid}")
 async def sync_org_unit_on_demand(
     settings: depends.Settings,
     mo: depends.GraphQLClient,

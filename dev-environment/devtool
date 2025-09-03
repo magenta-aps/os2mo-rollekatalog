@@ -3,14 +3,14 @@
 set -eo pipefail
 
 printf "Requesting sync of Ludvigs OU\n"
-syncorg=$(curl -s -X POST 'http://localhost:8000/org_unit/7a8e45f7-4de0-44c8-990f-43c0565ee505')
+syncorg=$(curl -s -X POST 'http://localhost:8000/sync/org_unit/7a8e45f7-4de0-44c8-990f-43c0565ee505')
 if [ "$syncorg" != "null" ]; then
     printf "Sync OU failed. Integration returned: %s\n" "$syncorg"
     exit 1;
 fi
 
 printf "Requesting sync of Ludvig\n"
-syncperson=$(curl -s -X POST 'http://localhost:8000/person/4e7e5443-09a9-4a46-8cd5-f7bcefeb2902')
+syncperson=$(curl -s -X POST 'http://localhost:8000/sync/person/4e7e5443-09a9-4a46-8cd5-f7bcefeb2902')
 if [ "$syncperson" != "null" ]; then
     printf "Sync person failed. Integration returned: %s\n" "$syncperson"
     exit 1;
