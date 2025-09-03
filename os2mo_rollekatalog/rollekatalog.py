@@ -50,8 +50,11 @@ def create_authenticated_client(
 
 
 async def upload(client: RollekatalogClient, path: str, payload: Any) -> None:
-    r = await client.post(path, json=payload)
-    r.raise_for_status()
+    try:
+        r = await client.post(path, json=payload)
+        r.raise_for_status()
+    except HTTPStatusError as e:
+        logger.error(e.response.text)
 
 
 class Rollekatalog:
