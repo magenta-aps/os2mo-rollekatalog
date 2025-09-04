@@ -3,6 +3,7 @@
 from contextlib import suppress
 from datetime import datetime
 from uuid import UUID
+from more_itertools import one
 
 import structlog
 from sqlalchemy import delete
@@ -12,8 +13,6 @@ from sqlalchemy.orm import selectinload
 from os2mo_rollekatalog import depends
 from os2mo_rollekatalog.junkyard import NoSuitableSamAccount
 from os2mo_rollekatalog.junkyard import WillNotSync
-from os2mo_rollekatalog.junkyard import flatten_validities
-from os2mo_rollekatalog.junkyard import in_org_tree
 from os2mo_rollekatalog.junkyard import pick_samaccount
 from os2mo_rollekatalog.models import Manager
 from os2mo_rollekatalog.models import OrgUnit
@@ -35,31 +34,19 @@ async def get_org_unit(
     root_org_unit: UUID,
     org_unit_uuid: UUID,
 ) -> OrgUnit:
-    result = await mo.get_org_unit(itsystem_user_key, datetime.now(), org_unit_uuid)
+    result = await mo.get_org_unit(
+        org_unit_uuid, root_org_unit, itsystem_user_key, datetime.now()
+    )
 
-    if (
-        len(result.org_units.objects) == 0
-        or result.org_units.objects[0].current is None
-    ):
-        raise WillNotSync("Not found. Strange.")
+    if len(result.objects) == 0 or one(result.objects).current is None:
+        raise WillNotSync("Org unit is not in root org.")
 
-    org_unit = result.org_units.objects[0].current
-
-    if not in_org_tree(root_org_unit, org_unit):
-        raise WillNotSync(f"Not in tree, must be below {root_org_unit}")
-
-    if org_unit.uuid == root_org_unit:
-        # Make this one the root in Rollekatalog
-        parent_uuid = None
-    elif org_unit.parent is None:
-        # This should never happen, as we know `root_org_unit` is in ancestors.
-        raise ExpectedParent(f"org_unit.parent is None for {org_unit.uuid=}")
-    else:
-        # Otherwise, we have a known parent
-        parent_uuid = org_unit.parent.uuid
+    org_unit = one(result.objects).current
+    if org_unit is None:
+        raise
 
     def get_manager() -> Manager | None:
-        for manager in flatten_validities(result.managers):
+        for manager in org_unit.managers:
             # Check that manager position is not vacant
             if manager.person is None:
                 continue
@@ -75,12 +62,16 @@ async def get_org_unit(
 
     kle_performing = set()
     kle_interests = set()
-    for kle in flatten_validities(result.kles):
+    for kle in org_unit.kles:
         for aspect in kle.kle_aspects:
             if aspect.scope == "INFORMERET":
                 kle_interests |= {n.user_key for n in kle.kle_number}
             if aspect.scope == "UDFOERENDE":
                 kle_performing |= {n.user_key for n in kle.kle_number}
+
+    parent_uuid = None
+    if org_unit.uuid != root_org_unit and org_unit.parent:
+        parent_uuid = org_unit.parent.uuid
 
     return OrgUnit(
         uuid=org_unit.uuid,

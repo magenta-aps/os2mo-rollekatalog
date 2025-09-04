@@ -103,8 +103,20 @@ query GetPersonUuidForEngagement($uuid: UUID!) {
 }
 
 
-query GetOrgUnit($itsystem_user_key: String!, $now: DateTime!, $uuid: UUID!) {
-  org_units(filter: {uuids: [$uuid]}) {
+query GetOrgUnit(
+  $uuid: UUID!
+  $root_uuid: UUID!
+  $itsystem_user_key: String!
+  $now: DateTime!
+) {
+  org_units(
+    filter: {
+      uuids: [$uuid]
+      ancestor: { uuids: [$root_uuid] }
+      from_date: $now
+      to_date: null
+    }
+  ) {
     objects {
       current {
         uuid
@@ -112,32 +124,21 @@ query GetOrgUnit($itsystem_user_key: String!, $now: DateTime!, $uuid: UUID!) {
         parent {
           uuid
         }
-        ancestors {
-          uuid
-        }
-      }
-    }
-  }
-  managers(filter: {org_unit: {uuids: [$uuid]}}) {
-    objects {
-      validities(start: $now, end: null) {
-        person {
-          uuid
-          itusers(filter: {itsystem: {user_keys: [$itsystem_user_key]}}) {
-            user_key
+        managers(filter: {from_date: $now, to_date: null}){
+          person(filter: {from_date: $now, to_date: null}){
+            uuid
+            itusers(filter: { itsystem: { user_keys: [$itsystem_user_key] }, from_date: $now, to_date: null}) {
+              user_key
+            }
           }
         }
-      }
-    }
-  }
-  kles(filter: {org_unit: {uuids: [$uuid]}}) {
-    objects {
-      validities(start: $now, end: null) {
-        kle_number {
-          user_key
-        }
-        kle_aspects {
-          scope
+        kles(filter: {from_date: $now, to_date: null}){
+          kle_number {
+            user_key
+          }
+          kle_aspects {
+            scope
+          }
         }
       }
     }
