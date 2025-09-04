@@ -14,50 +14,44 @@ query GetTitles {
 }
 
 
-query GetPerson($itsystem_user_key: String!, $now: DateTime!, $employee_uuid: UUID!) {
-  employees(filter: {uuids: [$employee_uuid]}) {
+query GetPerson(
+  $employee_uuid: UUID!
+  $root_uuid: UUID!,
+  $itsystem_user_key: String!
+  $now: DateTime!
+) {
+  employees(filter: { uuids: [$employee_uuid], from_date: $now, to_date: null}) {
     objects {
       current {
         uuid
         user_key
         nickname
         name
-      }
-    }
-  }
-  addresses(
-    filter: {employee: {uuids: [$employee_uuid]}, address_type: {scope: "EMAIL"}, to_date: null}
-  ) {
-    objects {
-      validities(start: $now, end: null) {
-        uuid
-        value
-      }
-    }
-  }
-  itusers(
-    filter: {employee: {uuids: [$employee_uuid]}, itsystem: {user_keys: [$itsystem_user_key]}, to_date: null}
-  ) {
-    objects {
-      validities(start: $now, end: null) {
-        user_key
-      }
-    }
-  }
-  engagements(
-    filter: {employee: {uuids: [$employee_uuid]}, to_date: null}
-  ) {
-    objects {
-      validities(start: $now, end: null) {
-        org_unit {
+        addresses(
+          filter: {
+            address_type: { scope: "EMAIL" },
+            from_date: $now, to_date: null
+          }
+        ) {
           uuid
-          ancestors {
+          value
+        }
+        itusers(
+          filter: {
+            itsystem: { user_keys: [$itsystem_user_key] },
+            from_date: $now, to_date: null
+          }
+        ) {
+          user_key
+        }
+        engagements(filter: {from_date: $now, to_date: null}){
+          org_unit(filter: {ancestor: {uuids: [$root_uuid]},from_date: $now, to_date: null}) {
             uuid
           }
-        }
-        job_function {
-          name
-          uuid
+          job_function {
+            name
+            uuid
+          }
         }
       }
     }

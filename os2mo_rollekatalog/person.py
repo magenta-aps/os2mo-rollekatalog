@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MPL-2.0
 from datetime import datetime
 from uuid import UUID
+from more_itertools import one
 
 import structlog
 from sqlalchemy import delete
@@ -11,8 +12,6 @@ from sqlalchemy.orm import selectinload
 from os2mo_rollekatalog import depends
 from os2mo_rollekatalog.junkyard import NoSuitableSamAccount
 from os2mo_rollekatalog.junkyard import WillNotSync
-from os2mo_rollekatalog.junkyard import flatten_validities
-from os2mo_rollekatalog.junkyard import in_org_tree
 from os2mo_rollekatalog.junkyard import pick_samaccount
 from os2mo_rollekatalog.models import Name
 from os2mo_rollekatalog.models import Position
@@ -30,19 +29,20 @@ async def get_person(
     use_nickname: bool,
     sync_titles: bool,
 ) -> User:
-    result = await mo.get_person(itsystem_user_key, datetime.now(), person_uuid)
+    result = await mo.get_person(
+        person_uuid, root_org_unit, itsystem_user_key, datetime.now()
+    )
 
-    if (
-        len(result.employees.objects) == 0
-        or result.employees.objects[0].current is None
-    ):
+    if len(result.objects) == 0 or one(result.objects).current is None:
         raise WillNotSync("Not found. Strange.")
 
-    mo_person = result.employees.objects[0].current
+    mo_person = one(result.objects).current
 
+    if mo_person is None:
+        raise
     try:
         # Behaviour of the old integration 🤷
-        email = list(flatten_validities(result.addresses))[-1].value
+        email = list(mo_person.addresses)[-1].value
     except IndexError:
         email = None
 
@@ -52,16 +52,14 @@ async def get_person(
         name = Name(mo_person.name)
 
     try:
-        sam_account_name = pick_samaccount(list(flatten_validities(result.itusers)))
+        sam_account_name = pick_samaccount(mo_person.itusers)
     except NoSuitableSamAccount:
         # Do not sync users without an AD account
         raise WillNotSync("No SAM Account")
 
     positions = []
-    for engagement in flatten_validities(result.engagements):
+    for engagement in mo_person.engagements:
         for org_unit in engagement.org_unit:
-            if not in_org_tree(root_org_unit, org_unit):
-                continue
             positions.append(
                 Position(
                     name=engagement.job_function.name,
