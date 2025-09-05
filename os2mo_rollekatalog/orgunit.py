@@ -30,6 +30,7 @@ class ExpectedParent(Exception):
 
 async def get_org_unit(
     mo: depends.GraphQLClient,
+    ldap_client: depends.LDAPClient,
     itsystem_user_key: str,
     root_org_unit: UUID,
     org_unit_uuid: UUID,
@@ -50,7 +51,7 @@ async def get_org_unit(
     else:
         parent_uuid = org_unit.parent.uuid
 
-    def get_manager() -> Manager | None:
+    async def get_manager() -> Manager | None:
         for manager in org_unit.managers:
             # Check that manager position is not vacant
             if manager.person is None:
@@ -59,11 +60,15 @@ async def get_org_unit(
                 with suppress(NoSuitableSamAccount):
                     return Manager(
                         uuid=person.uuid,
-                        userId=pick_samaccount(person.itusers),
+                        userId=(
+                            await pick_samaccount(
+                                ldap_client, person.uuid, person.itusers
+                            )
+                        ),
                     )
         return None
 
-    manager = get_manager()
+    manager = await get_manager()
 
     kle_performing = set()
     kle_interests = set()
@@ -96,6 +101,7 @@ async def fetch_org_unit_from_db(
 
 async def sync_org_unit(
     mo: depends.GraphQLClient,
+    ldap_client: depends.LDAPClient,
     rollekatalog: depends.Rollekatalog,
     session: depends.Session,
     itsystem_user_key: str,
@@ -105,6 +111,7 @@ async def sync_org_unit(
     try:
         org_unit = await get_org_unit(
             mo,
+            ldap_client,
             itsystem_user_key,
             root_org_unit,
             org_unit_uuid,
@@ -133,7 +140,13 @@ async def sync_org_unit(
             select(OrgUnit.uuid).where(OrgUnit.parentOrgUnitUuid == org_unit_uuid)
         ):
             await sync_org_unit(
-                mo, rollekatalog, session, itsystem_user_key, root_org_unit, child_uuid
+                mo,
+                ldap_client,
+                rollekatalog,
+                session,
+                itsystem_user_key,
+                root_org_unit,
+                child_uuid,
             )
 
         rollekatalog.sync_soon()

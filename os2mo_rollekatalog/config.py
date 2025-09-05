@@ -55,3 +55,7 @@ class _Settings(BaseSettings):
     sync_titles: bool = Field(
         False, description="Whether we should sync job titles objects to Rollekatalog."
     )
+
+    ldap_url: AnyHttpUrl | None = Field(
+        None, description="Optional base url for LDAP integration."
+    )

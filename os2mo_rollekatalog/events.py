@@ -41,11 +41,13 @@ async def handle_person(
     person_uuid: PayloadUUID,
     settings: depends.Settings,
     mo: depends.GraphQLClient,
+    ldap_client: depends.LDAPClient,
     rollekatalog: depends.Rollekatalog,
     session: depends.Session,
 ) -> None:
     await sync_person(
         mo,
+        ldap_client,
         rollekatalog,
         session,
         settings.itsystem_user_key,
@@ -61,6 +63,7 @@ async def handle_ituser(
     ituser_uuid: PayloadUUID,
     settings: depends.Settings,
     mo: depends.GraphQLClient,
+    ldap_client: depends.LDAPClient,
     rollekatalog: depends.Rollekatalog,
     session: depends.Session,
 ) -> None:
@@ -71,6 +74,7 @@ async def handle_ituser(
         for person in person_container.person:
             await sync_person(
                 mo,
+                ldap_client,
                 rollekatalog,
                 session,
                 settings.itsystem_user_key,
@@ -82,6 +86,7 @@ async def handle_ituser(
             for engagement in person.engagements:
                 await sync_org_unit(
                     mo,
+                    ldap_client,
                     rollekatalog,
                     session,
                     settings.itsystem_user_key,
@@ -95,6 +100,7 @@ async def handle_address(
     address_uuid: PayloadUUID,
     settings: depends.Settings,
     mo: depends.GraphQLClient,
+    ldap_client: depends.LDAPClient,
     rollekatalog: depends.Rollekatalog,
     session: depends.Session,
 ) -> None:
@@ -103,6 +109,7 @@ async def handle_address(
         if address.employee_uuid:
             await sync_person(
                 mo,
+                ldap_client,
                 rollekatalog,
                 session,
                 settings.itsystem_user_key,
@@ -118,6 +125,7 @@ async def handle_engagement(
     engagement_uuid: PayloadUUID,
     settings: depends.Settings,
     mo: depends.GraphQLClient,
+    ldap_client: depends.LDAPClient,
     rollekatalog: depends.Rollekatalog,
     session: depends.Session,
 ) -> None:
@@ -125,6 +133,7 @@ async def handle_engagement(
     for engagement in flatten_validities(result):
         await sync_person(
             mo,
+            ldap_client,
             rollekatalog,
             session,
             settings.itsystem_user_key,
@@ -140,11 +149,13 @@ async def handle_org_unit(
     org_unit_uuid: PayloadUUID,
     settings: depends.Settings,
     mo: depends.GraphQLClient,
+    ldap_client: depends.LDAPClient,
     rollekatalog: depends.Rollekatalog,
     session: depends.Session,
 ) -> None:
     await sync_org_unit(
         mo,
+        ldap_client,
         rollekatalog,
         session,
         settings.itsystem_user_key,
@@ -158,6 +169,7 @@ async def handle_kle(
     kle_uuid: PayloadUUID,
     settings: depends.Settings,
     mo: depends.GraphQLClient,
+    ldap_client: depends.LDAPClient,
     rollekatalog: depends.Rollekatalog,
     session: depends.Session,
 ) -> None:
@@ -165,6 +177,7 @@ async def handle_kle(
     for kle in flatten_validities(result):
         await sync_org_unit(
             mo,
+            ldap_client,
             rollekatalog,
             session,
             settings.itsystem_user_key,
@@ -178,6 +191,7 @@ async def handle_manager(
     manager_uuid: PayloadUUID,
     settings: depends.Settings,
     mo: depends.GraphQLClient,
+    ldap_client: depends.LDAPClient,
     rollekatalog: depends.Rollekatalog,
     session: depends.Session,
 ) -> None:
@@ -185,6 +199,7 @@ async def handle_manager(
     for manager in flatten_validities(result):
         await sync_org_unit(
             mo,
+            ldap_client,
             rollekatalog,
             session,
             settings.itsystem_user_key,

@@ -23,6 +23,7 @@ logger = structlog.stdlib.get_logger(__name__)
 
 async def get_person(
     mo: depends.GraphQLClient,
+    ldap_client: depends.LDAPClient,
     itsystem_user_key: str,
     root_org_unit: UUID,
     person_uuid: UUID,
@@ -52,7 +53,9 @@ async def get_person(
         name = Name(mo_person.name)
 
     try:
-        sam_account_name = pick_samaccount(mo_person.itusers)
+        sam_account_name = await pick_samaccount(
+            ldap_client, mo_person.uuid, mo_person.itusers
+        )
     except NoSuitableSamAccount:
         # Do not sync users without an AD account
         raise WillNotSync("No SAM Account")
@@ -91,6 +94,7 @@ async def fetch_person_from_db(session: depends.Session, uuid: UUID) -> User | N
 
 async def sync_person(
     mo: depends.GraphQLClient,
+    ldap_client: depends.LDAPClient,
     rollekatalog: depends.Rollekatalog,
     session: depends.Session,
     itsystem_user_key: str,
@@ -101,7 +105,13 @@ async def sync_person(
 ) -> None:
     try:
         user = await get_person(
-            mo, itsystem_user_key, root_org_unit, person_uuid, use_nickname, sync_titles
+            mo,
+            ldap_client,
+            itsystem_user_key,
+            root_org_unit,
+            person_uuid,
+            use_nickname,
+            sync_titles,
         )
     except WillNotSync:
         delete_result = await session.execute(
