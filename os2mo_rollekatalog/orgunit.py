@@ -38,12 +38,17 @@ async def get_org_unit(
         org_unit_uuid, root_org_unit, itsystem_user_key, datetime.now()
     )
 
-    if len(result.objects) == 0 or one(result.objects).current is None:
-        raise WillNotSync("Org unit is not in root org.")
+    if len(result.objects) == 0:
+        raise WillNotSync("Org unit is not in root-org tree.")
 
     org_unit = one(result.objects).current
     if org_unit is None:
-        raise
+        raise WillNotSync("Org unit does not exist now or in the future.")
+
+    if org_unit.uuid == root_org_unit or org_unit.parent is None:
+        parent_uuid = None
+    else:
+        parent_uuid = org_unit.parent.uuid
 
     def get_manager() -> Manager | None:
         for manager in org_unit.managers:
@@ -68,10 +73,6 @@ async def get_org_unit(
                 kle_interests |= {n.user_key for n in kle.kle_number}
             if aspect.scope == "UDFOERENDE":
                 kle_performing |= {n.user_key for n in kle.kle_number}
-
-    parent_uuid = None
-    if org_unit.uuid != root_org_unit and org_unit.parent:
-        parent_uuid = org_unit.parent.uuid
 
     return OrgUnit(
         uuid=org_unit.uuid,

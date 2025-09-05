@@ -55,6 +55,7 @@ async def upload(client: RollekatalogClient, path: str, payload: Any) -> None:
         r.raise_for_status()
     except HTTPStatusError as e:
         logger.error(e.response.text)
+        raise e
 
 
 class Rollekatalog:
