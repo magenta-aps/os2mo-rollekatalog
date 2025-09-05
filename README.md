@@ -37,9 +37,23 @@ a changed configuration), the following GraphQL query can be submitted to
 OS2mo:
 
 ```
-mutation RefreshForRollekatalog {
-  employee_refresh(exchange: "os2mo_rollekatalog") { objects }
-  org_unit_refresh(exchange: "os2mo_rollekatalog") { objects }
+mutation RefreshAll($exchange: "os2mo_rollekatalog", $root_uuid: UUID!) {
+  employee_refresh(exchange: $exchange) {
+    objects
+  }
+  org_unit_refresh(
+    exchange: $exchange
+    filter: { ancestor: { uuids: [$root_uuid] } }
+  ) {
+    objects
+  }
+  class_refresh(
+    exchange: $exchange
+    limit: 1
+    filter: { facet: { user_keys: "engagement_job_function" } }
+  ) {
+    objects
+  }
 }
 ```
 

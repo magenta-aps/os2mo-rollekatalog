@@ -131,3 +131,8 @@ async def org_unit_from_cache(session: depends.Session, uuid: UUID) -> dict | No
     if org is None:
         return None
     return org.to_rollekatalog_payload()
+
+
+@router.post("/trigger/all")
+async def trigger_refresh_all(settings: depends.Settings, mo: depends.GraphQLClient):
+    await mo.refresh_all(settings.fastramqpi.amqp.exchange, settings.root_org_unit)
