@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 
+import logging
+
 from fastapi import FastAPI
 from fastramqpi.main import FastRAMQPI
 
@@ -49,5 +51,8 @@ def create_app() -> FastAPI:
     # MO AMQP
     mo_amqp_system = fastramqpi.get_amqpsystem()
     mo_amqp_system.router.registry.update(events.router.registry)
+
+    # HTTPX is too loud by default.
+    logging.getLogger("httpx").setLevel(logging.WARN)
 
     return app

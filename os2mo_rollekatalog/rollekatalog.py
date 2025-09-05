@@ -54,7 +54,7 @@ async def upload(client: RollekatalogClient, path: str, payload: Any) -> None:
         r = await client.post(path, json=payload)
         r.raise_for_status()
     except HTTPStatusError as e:
-        logger.error(e.response.text)
+        logger.error("Error: Failed to upload data", http_body=e.response.text)
         raise e
 
 
