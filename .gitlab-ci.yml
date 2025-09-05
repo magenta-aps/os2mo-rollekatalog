@@ -54,7 +54,7 @@ include:
   - project: labs/salt-automation
     file:
       - gitlab-ci-templates/common/pre-commit.v1.yml
-      - gitlab-ci-templates/python/pytest.v1.yml
+      - gitlab-ci-templates/python/pytest-meta.v1.yml
     rules:
       - <<: *if-merge-request
   - project: rammearkitektur/os2mo
@@ -73,15 +73,20 @@ workflow:
     - <<: *if-default-branch-refs
     - <<: *if-merge-request
 
-
-Test:
+Unit-test:
+  extends:
+    - .pytest
   variables:
     PYTEST_ADDOPTS: "-m 'not integration_test'"
-  rules:
-    - <<: *if-merge-request
 
 Integration-test:
   extends:
     - .integration-test:mo
   rules:
     - <<: *if-merge-request
+
+Export coverage:
+  extends: .export_coverage
+
+Check coverage:
+  extends: .check_coverage
