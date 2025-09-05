@@ -29,12 +29,16 @@ async def titles(mo: depends.GraphQLClient) -> list[Title]:
 
 @router.get("/debug/person/{uuid}")
 async def person(
-    settings: depends.Settings, mo: depends.GraphQLClient, uuid: UUID
+    settings: depends.Settings,
+    mo: depends.GraphQLClient,
+    ldap_client: depends.LDAPClient,
+    uuid: UUID,
 ) -> dict:
     """See how a person will be synced, or debug why it is not to be."""
     try:
         person = await get_person(
             mo,
+            ldap_client,
             settings.itsystem_user_key,
             settings.root_org_unit,
             uuid,
@@ -50,6 +54,7 @@ async def person(
 async def sync_person_on_demand(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
+    ldap_client: depends.LDAPClient,
     rollekatalog: depends.Rollekatalog,
     session: depends.Session,
     uuid: UUID,
@@ -57,6 +62,7 @@ async def sync_person_on_demand(
     """Sync person."""
     await sync_person(
         mo,
+        ldap_client,
         rollekatalog,
         session,
         settings.itsystem_user_key,
@@ -78,12 +84,16 @@ async def person_from_cache(session: depends.Session, uuid: UUID) -> dict | None
 
 @router.get("/debug/org_unit/{uuid}")
 async def org_unit(
-    settings: depends.Settings, mo: depends.GraphQLClient, uuid: UUID
+    settings: depends.Settings,
+    mo: depends.GraphQLClient,
+    ldap_client: depends.LDAPClient,
+    uuid: UUID,
 ) -> dict:
     """See how an org unit will be synced, or debug why it is not to be."""
     try:
         org_unit = await get_org_unit(
             mo,
+            ldap_client,
             settings.itsystem_user_key,
             settings.root_org_unit,
             uuid,
@@ -97,6 +107,7 @@ async def org_unit(
 async def sync_org_unit_on_demand(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
+    ldap_client: depends.LDAPClient,
     rollekatalog: depends.Rollekatalog,
     session: depends.Session,
     uuid: UUID,
@@ -104,6 +115,7 @@ async def sync_org_unit_on_demand(
     """Sync org unit."""
     await sync_org_unit(
         mo,
+        ldap_client,
         rollekatalog,
         session,
         settings.itsystem_user_key,
