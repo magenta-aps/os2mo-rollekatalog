@@ -174,11 +174,11 @@ async def test_too_much(
 
     @retry()
     async def verify_users() -> None:
-        assert (await test_client.get(f"/person/{joakim}")).json() == {
+        assert (await test_client.get(f"/debug/person/{joakim}")).json() == {
             "error": "User has no valid positions (engagements)"
         }
         assert (
-            await test_client.get(f"/person/{user_without_sam_account}")
+            await test_client.get(f"/debug/person/{user_without_sam_account}")
         ).json() == {"error": "No SAM Account"}
 
         assert (await test_client.get(f"/cache/person/{joakim}")).json() is None

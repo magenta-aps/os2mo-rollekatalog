@@ -16,6 +16,7 @@ httpx = "^0.27.0"
 fastramqpi = "^12"
 fastapi = "^0.115.0"
 sqlalchemy = "^2.0.30"
+more-itertools = "^10.8.0"
 
 [tool.poetry.group.pre-commit.dependencies]
 mypy = "^1.8.0"
@@ -67,6 +68,7 @@ plugins = [
     # Add UNSET and UnsetType to generated input types
     "fastramqpi.ariadne.UnsetInputTypesPlugin",
 ]
+include_comments = false
 [tool.ariadne-codegen.scalars.DateTime]
 type = "datetime.datetime"
 parse = "fastramqpi.ariadne.parse_graphql_datetime"
