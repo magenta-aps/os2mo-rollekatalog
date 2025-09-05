@@ -24,6 +24,8 @@ async def sync_job_titles(
     title_client: depends.TitleClient,
     mo: depends.GraphQLClient,
 ) -> None:
+    # If this function is changed to not being on demand, it won't work unless the mutation is changed.
+    # Right now the mutation has `limit: 1`, so sync_job_titles is only triggered once
     if not settings.sync_titles:
         return
     titles = await get_job_titles(mo)

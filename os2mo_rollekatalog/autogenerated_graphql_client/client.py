@@ -63,6 +63,7 @@ from .get_person_uuid_for_engagement import (
 )
 from .get_titles import GetTitles, GetTitlesClasses
 from .get_uuids_for_it_user import GetUuidsForItUser, GetUuidsForItUserItusers
+from .refresh_all import RefreshAll
 
 
 def gql(q: str) -> str:
@@ -530,3 +531,28 @@ class GraphQLClient(AsyncBaseClient):
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return TestingMoveOrgUnitToRoot.parse_obj(data).org_unit_update
+
+    async def refresh_all(self, exchange: str, root_uuid: UUID) -> RefreshAll:
+        query = gql(
+            """
+            mutation RefreshAll($exchange: String!, $root_uuid: UUID!) {
+              employee_refresh(exchange: $exchange) {
+                objects
+              }
+              org_unit_refresh(exchange: $exchange, filter: {ancestor: {uuids: [$root_uuid]}}) {
+                objects
+              }
+              class_refresh(
+                exchange: $exchange
+                limit: 1
+                filter: {facet: {user_keys: "engagement_job_function"}}
+              ) {
+                objects
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {"exchange": exchange, "root_uuid": root_uuid}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return RefreshAll.parse_obj(data)
