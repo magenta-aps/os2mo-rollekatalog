@@ -95,7 +95,7 @@ async def fetch_person_from_db(session: depends.Session, uuid: UUID) -> User | N
 async def sync_person(
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
-    rollekatalog: depends.Rollekatalog,
+    periodic_sync: depends.PeriodicSync,
     session: depends.Session,
     itsystem_user_key: str,
     root_org_unit: UUID,
@@ -119,7 +119,7 @@ async def sync_person(
         )
         if delete_result.rowcount > 0:
             logger.info("Remove user", uuid=person_uuid)
-            rollekatalog.sync_soon()
+            periodic_sync.sync_soon()
         return
 
     dbuser = await fetch_person_from_db(session, person_uuid)
@@ -129,7 +129,7 @@ async def sync_person(
             "Add new user", uuid=user.extUuid, name=user.name, samaccount=user.userId
         )
         session.add(user)
-        rollekatalog.sync_soon()
+        periodic_sync.sync_soon()
         return
 
     if user == dbuser:
@@ -140,4 +140,4 @@ async def sync_person(
     )
     await session.delete(dbuser)
     session.add(user)
-    rollekatalog.sync_soon()
+    periodic_sync.sync_soon()

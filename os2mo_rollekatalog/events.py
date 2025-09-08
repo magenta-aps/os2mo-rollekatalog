@@ -44,13 +44,13 @@ async def handle_person(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
-    rollekatalog: depends.Rollekatalog,
+    periodic_sync: depends.PeriodicSync,
     session: depends.Session,
 ) -> None:
     await sync_person(
         mo,
         ldap_client,
-        rollekatalog,
+        periodic_sync,
         session,
         settings.itsystem_user_key,
         settings.root_org_unit,
@@ -66,7 +66,7 @@ async def handle_ituser(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
-    rollekatalog: depends.Rollekatalog,
+    periodic_sync: depends.PeriodicSync,
     session: depends.Session,
 ) -> None:
     result = await mo.get_uuids_for_it_user(ituser_uuid)
@@ -77,7 +77,7 @@ async def handle_ituser(
             await sync_person(
                 mo,
                 ldap_client,
-                rollekatalog,
+                periodic_sync,
                 session,
                 settings.itsystem_user_key,
                 settings.root_org_unit,
@@ -89,7 +89,7 @@ async def handle_ituser(
                 await sync_org_unit(
                     mo,
                     ldap_client,
-                    rollekatalog,
+                    periodic_sync,
                     session,
                     settings.itsystem_user_key,
                     settings.root_org_unit,
@@ -103,7 +103,7 @@ async def handle_address(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
-    rollekatalog: depends.Rollekatalog,
+    periodic_sync: depends.PeriodicSync,
     session: depends.Session,
 ) -> None:
     result = await mo.get_person_uuid_for_address(address_uuid)
@@ -112,7 +112,7 @@ async def handle_address(
             await sync_person(
                 mo,
                 ldap_client,
-                rollekatalog,
+                periodic_sync,
                 session,
                 settings.itsystem_user_key,
                 settings.root_org_unit,
@@ -128,7 +128,7 @@ async def handle_engagement(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
-    rollekatalog: depends.Rollekatalog,
+    periodic_sync: depends.PeriodicSync,
     session: depends.Session,
 ) -> None:
     result = await mo.get_person_uuid_for_engagement(engagement_uuid)
@@ -136,7 +136,7 @@ async def handle_engagement(
         await sync_person(
             mo,
             ldap_client,
-            rollekatalog,
+            periodic_sync,
             session,
             settings.itsystem_user_key,
             settings.root_org_unit,
@@ -152,13 +152,13 @@ async def handle_org_unit(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
-    rollekatalog: depends.Rollekatalog,
+    periodic_sync: depends.PeriodicSync,
     session: depends.Session,
 ) -> None:
     await sync_org_unit(
         mo,
         ldap_client,
-        rollekatalog,
+        periodic_sync,
         session,
         settings.itsystem_user_key,
         settings.root_org_unit,
@@ -172,7 +172,7 @@ async def handle_kle(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
-    rollekatalog: depends.Rollekatalog,
+    periodic_sync: depends.PeriodicSync,
     session: depends.Session,
 ) -> None:
     result = await mo.get_org_unit_uuid_for_kle(kle_uuid)
@@ -180,7 +180,7 @@ async def handle_kle(
         await sync_org_unit(
             mo,
             ldap_client,
-            rollekatalog,
+            periodic_sync,
             session,
             settings.itsystem_user_key,
             settings.root_org_unit,
@@ -194,7 +194,7 @@ async def handle_manager(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
-    rollekatalog: depends.Rollekatalog,
+    periodic_sync: depends.PeriodicSync,
     session: depends.Session,
 ) -> None:
     result = await mo.get_org_unit_uuid_for_manager(manager_uuid)
@@ -202,7 +202,7 @@ async def handle_manager(
         await sync_org_unit(
             mo,
             ldap_client,
-            rollekatalog,
+            periodic_sync,
             session,
             settings.itsystem_user_key,
             settings.root_org_unit,

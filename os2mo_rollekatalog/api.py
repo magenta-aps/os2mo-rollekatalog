@@ -55,7 +55,7 @@ async def sync_person_on_demand(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
-    rollekatalog: depends.Rollekatalog,
+    periodic_sync: depends.PeriodicSync,
     session: depends.Session,
     uuid: UUID,
 ) -> None:
@@ -63,7 +63,7 @@ async def sync_person_on_demand(
     await sync_person(
         mo,
         ldap_client,
-        rollekatalog,
+        periodic_sync,
         session,
         settings.itsystem_user_key,
         settings.root_org_unit,
@@ -108,7 +108,7 @@ async def sync_org_unit_on_demand(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
-    rollekatalog: depends.Rollekatalog,
+    periodic_sync: depends.PeriodicSync,
     session: depends.Session,
     uuid: UUID,
 ) -> None:
@@ -116,7 +116,7 @@ async def sync_org_unit_on_demand(
     await sync_org_unit(
         mo,
         ldap_client,
-        rollekatalog,
+        periodic_sync,
         session,
         settings.itsystem_user_key,
         settings.root_org_unit,
