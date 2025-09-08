@@ -35,14 +35,14 @@ def create_app() -> FastAPI:
     ldap_client = create_ldap_client(settings.ldap_url) if settings.ldap_url else None
     fastramqpi.add_context(ldap_client=ldap_client)
 
-    rollekatalog_task = rollekatalog.Rollekatalog(
+    periodic_sync_task = rollekatalog.PeriodicSync(
         interval=settings.interval,
         client=client,
         sessionmaker=fastramqpi.get_context()["sessionmaker"],
     )
-    fastramqpi.add_context(rollekatalog=rollekatalog_task)
-    fastramqpi.add_lifespan_manager(rollekatalog_task.lifespan())
-    rollekatalog_task.sync_soon()
+    fastramqpi.add_context(periodic_sync=periodic_sync_task)
+    fastramqpi.add_lifespan_manager(periodic_sync_task.lifespan())
+    periodic_sync_task.sync_soon()
 
     # FastAPI router
     app = fastramqpi.get_app()

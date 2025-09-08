@@ -19,8 +19,8 @@ Settings = Annotated[_Settings, Depends(from_user_context("settings"))]
 TitleClient = Annotated[
     rollekatalog.RollekatalogClient, Depends(from_user_context("title_client"))
 ]
-Rollekatalog = Annotated[
-    rollekatalog.Rollekatalog, Depends(from_user_context("rollekatalog"))
+PeriodicSync = Annotated[
+    rollekatalog.PeriodicSync, Depends(from_user_context("periodic_sync"))
 ]
 LDAPClient = Annotated[
     junkyard.LDAPClient | None, Depends(from_user_context("ldap_client"))

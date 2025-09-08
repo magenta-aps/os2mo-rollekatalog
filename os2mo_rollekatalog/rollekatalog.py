@@ -58,7 +58,7 @@ async def upload(client: RollekatalogClient, path: str, payload: Any) -> None:
         raise e
 
 
-class Rollekatalog:
+class PeriodicSync:
     """Periodically send data to OS2rollekatalog.
 
     This only writes to the Organisation API (org and users). Titles are synced

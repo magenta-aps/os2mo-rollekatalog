@@ -102,7 +102,7 @@ async def fetch_org_unit_from_db(
 async def sync_org_unit(
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
-    rollekatalog: depends.Rollekatalog,
+    periodic_sync: depends.PeriodicSync,
     session: depends.Session,
     itsystem_user_key: str,
     root_org_unit: UUID,
@@ -142,14 +142,14 @@ async def sync_org_unit(
             await sync_org_unit(
                 mo,
                 ldap_client,
-                rollekatalog,
+                periodic_sync,
                 session,
                 itsystem_user_key,
                 root_org_unit,
                 child_uuid,
             )
 
-        rollekatalog.sync_soon()
+        periodic_sync.sync_soon()
         return
 
     dborg = await fetch_org_unit_from_db(session, org_unit.uuid)
@@ -157,7 +157,7 @@ async def sync_org_unit(
     if dborg is None:
         logger.info("Add new org unit", uuid=org_unit.uuid, name=org_unit.name)
         session.add(org_unit)
-        rollekatalog.sync_soon()
+        periodic_sync.sync_soon()
         return
 
     if org_unit == dborg:
@@ -169,4 +169,4 @@ async def sync_org_unit(
     await session.delete(dborg)
     await session.flush()
     session.add(org_unit)
-    rollekatalog.sync_soon()
+    periodic_sync.sync_soon()
