@@ -48,7 +48,7 @@ class _Settings(BaseSettings):
     itsystem_user_key: str = Field(
         description="Designed to sync AD GUIDs to Rollekatalog, this value represents the user key of the AD itsystem in OS2mo."
     )
-    use_nickname: bool = Field(
+    prefer_nickname: bool = Field(
         False,
         description="Whether to sync the *name* or *nickname* of OS2mo to Rollekatalog.",
     )

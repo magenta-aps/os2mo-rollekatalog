@@ -42,7 +42,7 @@ async def person(
             settings.itsystem_user_key,
             settings.root_org_unit,
             uuid,
-            settings.use_nickname,
+            settings.prefer_nickname,
             settings.sync_titles,
         )
     except WillNotSync as e:
@@ -68,7 +68,7 @@ async def sync_person_on_demand(
         settings.itsystem_user_key,
         settings.root_org_unit,
         uuid,
-        settings.use_nickname,
+        settings.prefer_nickname,
         settings.sync_titles,
     )
 

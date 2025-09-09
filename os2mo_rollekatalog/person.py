@@ -27,7 +27,7 @@ async def get_person(
     itsystem_user_key: str,
     root_org_unit: UUID,
     person_uuid: UUID,
-    use_nickname: bool,
+    prefer_nickname: bool,
     sync_titles: bool,
 ) -> User:
     result = await mo.get_person(
@@ -47,7 +47,7 @@ async def get_person(
     except IndexError:
         email = None
 
-    if use_nickname and mo_person.nickname:
+    if prefer_nickname and mo_person.nickname:
         name = Name(mo_person.nickname)
     else:
         name = Name(mo_person.name)
@@ -100,7 +100,7 @@ async def sync_person(
     itsystem_user_key: str,
     root_org_unit: UUID,
     person_uuid: UUID,
-    use_nickname: bool,
+    prefer_nickname: bool,
     sync_titles: bool,
 ) -> None:
     try:
@@ -110,7 +110,7 @@ async def sync_person(
             itsystem_user_key,
             root_org_unit,
             person_uuid,
-            use_nickname,
+            prefer_nickname,
             sync_titles,
         )
     except WillNotSync:
