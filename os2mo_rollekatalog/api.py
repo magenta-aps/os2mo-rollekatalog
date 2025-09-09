@@ -4,10 +4,14 @@ from uuid import UUID
 
 import structlog
 from fastapi import APIRouter
+from sqlalchemy import select, func
+from sqlalchemy.orm import selectinload
 
 from os2mo_rollekatalog import depends
 from os2mo_rollekatalog.junkyard import WillNotSync
 from os2mo_rollekatalog.models import Title
+from os2mo_rollekatalog.models import User
+from os2mo_rollekatalog.models import OrgUnit
 from os2mo_rollekatalog.person import fetch_person_from_db
 from os2mo_rollekatalog.person import get_person
 from os2mo_rollekatalog.person import sync_person
@@ -25,6 +29,42 @@ logger = structlog.stdlib.get_logger(__name__)
 async def titles(mo: depends.GraphQLClient) -> list[Title]:
     """Get job titles that would be synced with SYNC_TITLES=true."""
     return await get_job_titles(mo)
+
+
+@router.get("/cache/stikprøve/person")
+async def random_users(session: depends.Session, count: int = 5):
+    """
+    Get a random sample of users from the cache.
+    """
+    stmt = (
+        select(User)
+        .options(selectinload(User.positions))
+        .order_by(func.random())
+        .limit(count)
+    )
+
+    scalar_result = await session.scalars(stmt)
+    users = scalar_result.all()
+
+    return [user.to_rollekatalog_payload() for user in users]
+
+
+@router.get("/cache/stikprøve/org_unit")
+async def random_org_units(session: depends.Session, count: int = 5):
+    """
+    Get a random sample of org units from the cache.
+    """
+    stmt = (
+        select(OrgUnit)
+        .options(selectinload(OrgUnit.manager))  # only relationship
+        .order_by(func.random())
+        .limit(count)
+    )
+
+    scalar_result = await session.scalars(stmt)
+    orgunits = scalar_result.all()
+
+    return [ou.to_rollekatalog_payload() for ou in orgunits]
 
 
 @router.get("/debug/person/{uuid}")
