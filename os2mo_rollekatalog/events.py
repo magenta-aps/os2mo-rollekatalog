@@ -55,7 +55,7 @@ async def handle_person(
         settings.itsystem_user_key,
         settings.root_org_unit,
         person_uuid,
-        settings.use_nickname,
+        settings.prefer_nickname,
         settings.sync_titles,
     )
 
@@ -82,7 +82,7 @@ async def handle_ituser(
                 settings.itsystem_user_key,
                 settings.root_org_unit,
                 person.uuid,
-                settings.use_nickname,
+                settings.prefer_nickname,
                 settings.sync_titles,
             )
             for engagement in person.engagements:
@@ -117,7 +117,7 @@ async def handle_address(
                 settings.itsystem_user_key,
                 settings.root_org_unit,
                 address.employee_uuid,
-                settings.use_nickname,
+                settings.prefer_nickname,
                 settings.sync_titles,
             )
 
@@ -141,7 +141,7 @@ async def handle_engagement(
             settings.itsystem_user_key,
             settings.root_org_unit,
             engagement.employee_uuid,
-            settings.use_nickname,
+            settings.prefer_nickname,
             settings.sync_titles,
         )
 
