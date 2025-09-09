@@ -47,7 +47,7 @@ async def get_person(
     except IndexError:
         email = None
 
-    if use_nickname:
+    if use_nickname and mo_person.nickname:
         name = Name(mo_person.nickname)
     else:
         name = Name(mo_person.name)

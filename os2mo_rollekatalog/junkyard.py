@@ -85,7 +85,9 @@ async def pick_samaccount(
     else:
         # This behaviour is compatible with the old integration. We ask the
         # LDAP integration to resolve the sam account name for the employee.
-        r = await ldap_client.get("/CPRUUID", params={"uuid": str(employee_uuid)})
+        r = await ldap_client.get(
+            "/CPRUUID", params={"uuid": str(employee_uuid)}, timeout=120
+        )
         if r.status_code == 404:
             raise NoSuitableSamAccount(
                 f"According to the LDAP integration {employee_uuid=} has no SAM-Account"
