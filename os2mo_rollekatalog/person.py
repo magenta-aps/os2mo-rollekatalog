@@ -29,7 +29,7 @@ async def get_person(
     person_uuid: UUID,
     prefer_nickname: bool,
     sync_titles: bool,
-) -> User:
+) -> list[User]:
     result = await mo.get_person(
         person_uuid, root_org_unit, itsystem_user_key, datetime.now()
     )
@@ -52,35 +52,40 @@ async def get_person(
     else:
         name = Name(mo_person.name)
 
-    try:
-        sam_account_name = await pick_samaccount(
-            ldap_client, mo_person.uuid, mo_person.itusers
-        )
-    except NoSuitableSamAccount:
-        # Do not sync users without an AD account
-        raise WillNotSync("No SAM Account")
-
-    positions = []
-    for engagement in mo_person.engagements:
-        for org_unit in engagement.org_unit:
-            positions.append(
-                Position(
-                    name=engagement.job_function.name,
-                    orgUnitUuid=org_unit.uuid,
-                    titleUuid=engagement.job_function.uuid if sync_titles else None,
-                )
+    users = []
+    for ituser in mo_person.itusers:
+        try:
+            sam_account_name = await pick_samaccount(
+                ldap_client, mo_person.uuid, mo_person.itusers
             )
-    if len(positions) == 0:
-        # Do not sync users without any positions
-        raise WillNotSync("User has no valid positions (engagements)")
+        except NoSuitableSamAccount:
+            # Do not sync users without an AD account
+            raise WillNotSync("No SAM Account")
 
-    return User(
-        extUuid=mo_person.uuid,
-        userId=sam_account_name,
-        name=name,
-        email=email,
-        positions=positions,
-    )
+        positions = []
+        for engagement in ituser.engagements:
+            for org_unit in engagement.org_unit:
+                positions.append(
+                    Position(
+                        name=engagement.job_function.name,
+                        orgUnitUuid=org_unit.uuid,
+                        titleUuid=engagement.job_function.uuid if sync_titles else None,
+                    )
+                )
+        if len(positions) == 0:
+            # Do not sync users without any positions
+            raise WillNotSync("User has no valid positions (engagements)")
+
+        users.append(
+            User(
+                extUuid=ituser.external_id,
+                userId=sam_account_name,
+                name=name,
+                email=email,
+                positions=positions,
+            )
+        )
+    return users
 
 
 async def fetch_person_from_db(session: depends.Session, uuid: UUID) -> User | None:
@@ -104,7 +109,7 @@ async def sync_person(
     sync_titles: bool,
 ) -> None:
     try:
-        user = await get_person(
+        users = await get_person(
             mo,
             ldap_client,
             itsystem_user_key,
@@ -122,22 +127,30 @@ async def sync_person(
             periodic_sync.sync_soon()
         return
 
-    dbuser = await fetch_person_from_db(session, person_uuid)
+    for user in users:
+        dbuser = await fetch_person_from_db(
+            session, user.extUuid
+        )  # fetch by ituser UUID
 
-    if dbuser is None:
-        logger.info(
-            "Add new user", uuid=user.extUuid, name=user.name, samaccount=user.userId
-        )
+        if dbuser is None:
+            # add new user
+            session.add(user)
+            logger.info(
+                "Add new user",
+                uuid=user.extUuid,
+                name=user.name,
+                samaccount=user.userId,
+            )
+            continue
+
+        if user == dbuser:
+            continue  # no changes
+
+        # update existing user
+        await session.delete(dbuser)
         session.add(user)
-        periodic_sync.sync_soon()
-        return
+        logger.info(
+            "Update user", uuid=user.extUuid, name=user.name, samaccount=user.userId
+        )
 
-    if user == dbuser:
-        return
-
-    logger.info(
-        "Update user", uuid=user.extUuid, name=user.name, samaccount=user.userId
-    )
-    await session.delete(dbuser)
-    session.add(user)
     periodic_sync.sync_soon()
