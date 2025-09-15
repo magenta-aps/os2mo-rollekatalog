@@ -29,7 +29,7 @@ async def get_person(
     person_uuid: UUID,
     prefer_nickname: bool,
     sync_titles: bool,
-) -> User:
+) -> list[User]:
     result = await mo.get_person(
         person_uuid, root_org_unit, itsystem_user_key, datetime.now()
     )
@@ -74,22 +74,30 @@ async def get_person(
         # Do not sync users without any positions
         raise WillNotSync("User has no valid positions (engagements)")
 
-    return User(
-        extUuid=mo_person.uuid,
-        userId=sam_account_name,
-        name=name,
-        email=email,
-        positions=positions,
-    )
+    return [
+        User(
+            extUuid=mo_person.uuid,
+            userId=sam_account_name,
+            name=name,
+            email=email,
+            positions=positions,
+        )
+    ]
 
 
-async def fetch_person_from_db(session: depends.Session, uuid: UUID) -> User | None:
-    return await session.scalar(
+async def fetch_person_from_db(
+    session: depends.Session, uuid: UUID
+) -> list[User]:
+    stmt = (
         select(User)
         .options(selectinload(User.positions))
         .where(User.extUuid == uuid)
         .join(User.positions)
     )
+    scalar_result = await session.scalars(stmt)
+    users = scalar_result.all()
+
+    return [user for user in users]
 
 
 async def sync_person(
@@ -104,7 +112,7 @@ async def sync_person(
     sync_titles: bool,
 ) -> None:
     try:
-        user = await get_person(
+        users = await get_person(
             mo,
             ldap_client,
             itsystem_user_key,
@@ -121,23 +129,26 @@ async def sync_person(
             logger.info("Remove user", uuid=person_uuid)
             periodic_sync.sync_soon()
         return
+    for user in users:
+        dbuser = await fetch_person_from_db(session, person_uuid)
 
-    dbuser = await fetch_person_from_db(session, person_uuid)
+        if dbuser is None:
+            logger.info(
+                "Add new user",
+                uuid=user.extUuid,
+                name=user.name,
+                samaccount=user.userId,
+            )
+            session.add(user)
+            periodic_sync.sync_soon()
+            return
 
-    if dbuser is None:
+        if user == dbuser:
+            return
+
         logger.info(
-            "Add new user", uuid=user.extUuid, name=user.name, samaccount=user.userId
+            "Update user", uuid=user.extUuid, name=user.name, samaccount=user.userId
         )
+        await session.delete(dbuser)
         session.add(user)
         periodic_sync.sync_soon()
-        return
-
-    if user == dbuser:
-        return
-
-    logger.info(
-        "Update user", uuid=user.extUuid, name=user.name, samaccount=user.userId
-    )
-    await session.delete(dbuser)
-    session.add(user)
-    periodic_sync.sync_soon()
