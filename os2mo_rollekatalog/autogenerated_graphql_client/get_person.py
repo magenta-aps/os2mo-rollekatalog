@@ -33,6 +33,12 @@ class GetPersonEmployeesObjectsCurrentAddresses(BaseModel):
 
 class GetPersonEmployeesObjectsCurrentItusers(BaseModel):
     user_key: str
+    external_id: Optional[str]
+    itsystem: "GetPersonEmployeesObjectsCurrentItusersItsystem"
+
+
+class GetPersonEmployeesObjectsCurrentItusersItsystem(BaseModel):
+    user_key: str
 
 
 class GetPersonEmployeesObjectsCurrentEngagements(BaseModel):
@@ -55,6 +61,7 @@ GetPersonEmployeesObjects.update_forward_refs()
 GetPersonEmployeesObjectsCurrent.update_forward_refs()
 GetPersonEmployeesObjectsCurrentAddresses.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusers.update_forward_refs()
+GetPersonEmployeesObjectsCurrentItusersItsystem.update_forward_refs()
 GetPersonEmployeesObjectsCurrentEngagements.update_forward_refs()
 GetPersonEmployeesObjectsCurrentEngagementsOrgUnit.update_forward_refs()
 GetPersonEmployeesObjectsCurrentEngagementsJobFunction.update_forward_refs()
