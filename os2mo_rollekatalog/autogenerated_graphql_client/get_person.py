@@ -23,7 +23,6 @@ class GetPersonEmployeesObjectsCurrent(BaseModel):
     name: str
     addresses: List["GetPersonEmployeesObjectsCurrentAddresses"]
     itusers: List["GetPersonEmployeesObjectsCurrentItusers"]
-    engagements: List["GetPersonEmployeesObjectsCurrentEngagements"]
 
 
 class GetPersonEmployeesObjectsCurrentAddresses(BaseModel):
@@ -33,18 +32,25 @@ class GetPersonEmployeesObjectsCurrentAddresses(BaseModel):
 
 class GetPersonEmployeesObjectsCurrentItusers(BaseModel):
     user_key: str
+    external_id: Optional[str]
+    itsystem: "GetPersonEmployeesObjectsCurrentItusersItsystem"
+    engagements: Optional[List["GetPersonEmployeesObjectsCurrentItusersEngagements"]]
 
 
-class GetPersonEmployeesObjectsCurrentEngagements(BaseModel):
-    org_unit: List["GetPersonEmployeesObjectsCurrentEngagementsOrgUnit"]
-    job_function: "GetPersonEmployeesObjectsCurrentEngagementsJobFunction"
+class GetPersonEmployeesObjectsCurrentItusersItsystem(BaseModel):
+    user_key: str
 
 
-class GetPersonEmployeesObjectsCurrentEngagementsOrgUnit(BaseModel):
+class GetPersonEmployeesObjectsCurrentItusersEngagements(BaseModel):
+    org_unit: List["GetPersonEmployeesObjectsCurrentItusersEngagementsOrgUnit"]
+    job_function: "GetPersonEmployeesObjectsCurrentItusersEngagementsJobFunction"
+
+
+class GetPersonEmployeesObjectsCurrentItusersEngagementsOrgUnit(BaseModel):
     uuid: UUID
 
 
-class GetPersonEmployeesObjectsCurrentEngagementsJobFunction(BaseModel):
+class GetPersonEmployeesObjectsCurrentItusersEngagementsJobFunction(BaseModel):
     name: str
     uuid: UUID
 
@@ -55,6 +61,7 @@ GetPersonEmployeesObjects.update_forward_refs()
 GetPersonEmployeesObjectsCurrent.update_forward_refs()
 GetPersonEmployeesObjectsCurrentAddresses.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusers.update_forward_refs()
-GetPersonEmployeesObjectsCurrentEngagements.update_forward_refs()
-GetPersonEmployeesObjectsCurrentEngagementsOrgUnit.update_forward_refs()
-GetPersonEmployeesObjectsCurrentEngagementsJobFunction.update_forward_refs()
+GetPersonEmployeesObjectsCurrentItusersItsystem.update_forward_refs()
+GetPersonEmployeesObjectsCurrentItusersEngagements.update_forward_refs()
+GetPersonEmployeesObjectsCurrentItusersEngagementsOrgUnit.update_forward_refs()
+GetPersonEmployeesObjectsCurrentItusersEngagementsJobFunction.update_forward_refs()

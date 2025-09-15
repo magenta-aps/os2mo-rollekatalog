@@ -73,21 +73,21 @@ async def person(
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
     uuid: UUID,
-) -> dict:
+) -> list:
     """See how a person will be synced, or debug why it is not to be."""
     try:
         person = await get_person(
             mo,
             ldap_client,
-            settings.itsystem_user_key,
+            [settings.ad_itsystem_user_key, settings.fk_itsystem_user_key],
             settings.root_org_unit,
             uuid,
             settings.prefer_nickname,
             settings.sync_titles,
         )
     except WillNotSync as e:
-        return {"error": e.message}
-    return person.to_rollekatalog_payload()
+        return [{"error": e.message}]
+    return [per.to_rollekatalog_payload() for per in person]
 
 
 @router.post("/sync/person/{uuid}")
@@ -105,7 +105,7 @@ async def sync_person_on_demand(
         ldap_client,
         periodic_sync,
         session,
-        settings.itsystem_user_key,
+        [settings.ad_itsystem_user_key, settings.fk_itsystem_user_key],
         settings.root_org_unit,
         uuid,
         settings.prefer_nickname,
@@ -128,19 +128,19 @@ async def org_unit(
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
     uuid: UUID,
-) -> dict:
+) -> list:
     """See how an org unit will be synced, or debug why it is not to be."""
     try:
         org_unit = await get_org_unit(
             mo,
             ldap_client,
-            settings.itsystem_user_key,
+            [settings.ad_itsystem_user_key, settings.fk_itsystem_user_key],
             settings.root_org_unit,
             uuid,
         )
     except WillNotSync as e:
         return {"error": e.message}
-    return org_unit.to_rollekatalog_payload()
+    return [ou.to_rollekatalog_payload() for ou in org_unit]
 
 
 @router.post("/sync/org_unit/{uuid}")
@@ -158,7 +158,7 @@ async def sync_org_unit_on_demand(
         ldap_client,
         periodic_sync,
         session,
-        settings.itsystem_user_key,
+        [settings.ad_itsystem_user_key, settings.fk_itsystem_user_key],
         settings.root_org_unit,
         uuid,
     )

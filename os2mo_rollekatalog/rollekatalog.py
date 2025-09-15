@@ -102,9 +102,7 @@ class PeriodicSync:
                 users_from_db = (
                     (
                         await session.execute(
-                            select(User)
-                            .options(selectinload(User.positions))
-                            .join(User.positions)
+                            select(User).options(selectinload(User.positions))
                         )
                     )
                     .scalars()
@@ -112,6 +110,7 @@ class PeriodicSync:
                 )
                 org_units = [org.to_rollekatalog_payload() for org in org_units_from_db]
                 users = [user.to_rollekatalog_payload() for user in users_from_db]
+                print(users)
 
             if org_units == [] and users == []:
                 logger.warning("No data to upload")
