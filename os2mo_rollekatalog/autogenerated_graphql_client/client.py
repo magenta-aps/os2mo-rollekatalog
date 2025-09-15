@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List, Optional, Union
 from uuid import UUID
 
 from ._testing__create_employee import (
@@ -46,6 +47,7 @@ from ._testing__rename_org_unit import (
     TestingRenameOrgUnitOrgUnitUpdate,
 )
 from .async_base_client import AsyncBaseClient
+from .base_model import UNSET, UnsetType
 from .get_org_unit import GetOrgUnit, GetOrgUnitOrgUnits
 from .get_org_unit_uuid_for_kle import GetOrgUnitUuidForKle, GetOrgUnitUuidForKleKles
 from .get_org_unit_uuid_for_manager import (
@@ -95,12 +97,12 @@ class GraphQLClient(AsyncBaseClient):
         self,
         employee_uuid: UUID,
         root_uuid: UUID,
-        itsystem_user_key: str,
         now: datetime,
+        itsystem_user_keys: Union[Optional[List[str]], UnsetType] = UNSET,
     ) -> GetPersonEmployees:
         query = gql(
             """
-            query GetPerson($employee_uuid: UUID!, $root_uuid: UUID!, $itsystem_user_key: String!, $now: DateTime!) {
+            query GetPerson($employee_uuid: UUID!, $root_uuid: UUID!, $itsystem_user_keys: [String!], $now: DateTime!) {
               employees(filter: {uuids: [$employee_uuid], from_date: $now, to_date: null}) {
                 objects {
                   current {
@@ -115,9 +117,13 @@ class GraphQLClient(AsyncBaseClient):
                       value
                     }
                     itusers(
-                      filter: {itsystem: {user_keys: [$itsystem_user_key]}, from_date: $now, to_date: null}
+                      filter: {itsystem: {user_keys: $itsystem_user_keys}, from_date: $now, to_date: null}
                     ) {
                       user_key
+                      external_id
+                      itsystem {
+                        user_key
+                      }
                     }
                     engagements(filter: {from_date: $now, to_date: null}) {
                       org_unit(
@@ -139,7 +145,7 @@ class GraphQLClient(AsyncBaseClient):
         variables: dict[str, object] = {
             "employee_uuid": employee_uuid,
             "root_uuid": root_uuid,
-            "itsystem_user_key": itsystem_user_key,
+            "itsystem_user_keys": itsystem_user_keys,
             "now": now,
         }
         response = await self.execute(query=query, variables=variables)
@@ -213,11 +219,15 @@ class GraphQLClient(AsyncBaseClient):
         return GetPersonUuidForEngagement.parse_obj(data).engagements
 
     async def get_org_unit(
-        self, uuid: UUID, root_uuid: UUID, itsystem_user_key: str, now: datetime
+        self,
+        uuid: UUID,
+        root_uuid: UUID,
+        now: datetime,
+        itsystem_user_keys: Union[Optional[List[str]], UnsetType] = UNSET,
     ) -> GetOrgUnitOrgUnits:
         query = gql(
             """
-            query GetOrgUnit($uuid: UUID!, $root_uuid: UUID!, $itsystem_user_key: String!, $now: DateTime!) {
+            query GetOrgUnit($uuid: UUID!, $root_uuid: UUID!, $itsystem_user_keys: [String!], $now: DateTime!) {
               org_units(
                 filter: {uuids: [$uuid], ancestor: {uuids: [$root_uuid]}, from_date: $now, to_date: null}
               ) {
@@ -232,7 +242,7 @@ class GraphQLClient(AsyncBaseClient):
                       person(filter: {from_date: $now, to_date: null}) {
                         uuid
                         itusers(
-                          filter: {itsystem: {user_keys: [$itsystem_user_key]}, from_date: $now, to_date: null}
+                          filter: {itsystem: {user_keys: $itsystem_user_keys}, from_date: $now, to_date: null}
                         ) {
                           user_key
                         }
@@ -255,7 +265,7 @@ class GraphQLClient(AsyncBaseClient):
         variables: dict[str, object] = {
             "uuid": uuid,
             "root_uuid": root_uuid,
-            "itsystem_user_key": itsystem_user_key,
+            "itsystem_user_keys": itsystem_user_keys,
             "now": now,
         }
         response = await self.execute(query=query, variables=variables)

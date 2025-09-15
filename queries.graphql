@@ -16,11 +16,13 @@ query GetTitles {
 
 query GetPerson(
   $employee_uuid: UUID!
-  $root_uuid: UUID!,
-  $itsystem_user_key: String!
+  $root_uuid: UUID!
+  $itsystem_user_keys: [String!]
   $now: DateTime!
 ) {
-  employees(filter: { uuids: [$employee_uuid], from_date: $now, to_date: null}) {
+  employees(
+    filter: { uuids: [$employee_uuid], from_date: $now, to_date: null }
+  ) {
     objects {
       current {
         uuid
@@ -29,8 +31,9 @@ query GetPerson(
         name
         addresses(
           filter: {
-            address_type: { scope: "EMAIL" },
-            from_date: $now, to_date: null
+            address_type: { scope: "EMAIL" }
+            from_date: $now
+            to_date: null
           }
         ) {
           uuid
@@ -38,14 +41,25 @@ query GetPerson(
         }
         itusers(
           filter: {
-            itsystem: { user_keys: [$itsystem_user_key] },
-            from_date: $now, to_date: null
+            itsystem: { user_keys: $itsystem_user_keys }
+            from_date: $now
+            to_date: null
           }
         ) {
           user_key
+          external_id
+          itsystem {
+            user_key
+          }
         }
-        engagements(filter: {from_date: $now, to_date: null}){
-          org_unit(filter: {ancestor: {uuids: [$root_uuid]},from_date: $now, to_date: null}) {
+        engagements(filter: { from_date: $now, to_date: null }) {
+          org_unit(
+            filter: {
+              ancestor: { uuids: [$root_uuid] }
+              from_date: $now
+              to_date: null
+            }
+          ) {
             uuid
           }
           job_function {
@@ -100,7 +114,7 @@ query GetPersonUuidForEngagement($uuid: UUID!) {
 query GetOrgUnit(
   $uuid: UUID!
   $root_uuid: UUID!
-  $itsystem_user_key: String!
+  $itsystem_user_keys: [String!]
   $now: DateTime!
 ) {
   org_units(
@@ -121,7 +135,7 @@ query GetOrgUnit(
         managers(filter: {from_date: $now, to_date: null}){
           person(filter: {from_date: $now, to_date: null}){
             uuid
-            itusers(filter: { itsystem: { user_keys: [$itsystem_user_key] }, from_date: $now, to_date: null}) {
+            itusers(filter: { itsystem: { user_keys: $itsystem_user_keys }, from_date: $now, to_date: null}) {
               user_key
             }
           }

@@ -31,12 +31,12 @@ class ExpectedParent(Exception):
 async def get_org_unit(
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
-    itsystem_user_key: str,
+    itsystem_user_keys: list[str],
     root_org_unit: UUID,
     org_unit_uuid: UUID,
 ) -> OrgUnit:
     result = await mo.get_org_unit(
-        org_unit_uuid, root_org_unit, itsystem_user_key, datetime.now()
+        org_unit_uuid, root_org_unit, datetime.now(), itsystem_user_keys
     )
 
     if len(result.objects) == 0:
@@ -104,7 +104,7 @@ async def sync_org_unit(
     ldap_client: depends.LDAPClient,
     periodic_sync: depends.PeriodicSync,
     session: depends.Session,
-    itsystem_user_key: str,
+    itsystem_user_keys: list[str],
     root_org_unit: UUID,
     org_unit_uuid: UUID,
 ) -> None:
@@ -112,7 +112,7 @@ async def sync_org_unit(
         org_unit = await get_org_unit(
             mo,
             ldap_client,
-            itsystem_user_key,
+            itsystem_user_keys,
             root_org_unit,
             org_unit_uuid,
         )
@@ -144,7 +144,7 @@ async def sync_org_unit(
                 ldap_client,
                 periodic_sync,
                 session,
-                itsystem_user_key,
+                itsystem_user_keys,
                 root_org_unit,
                 child_uuid,
             )

@@ -24,14 +24,14 @@ logger = structlog.stdlib.get_logger(__name__)
 async def get_person(
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
-    itsystem_user_key: str,
+    itsystem_user_keys: list[str],
     root_org_unit: UUID,
     person_uuid: UUID,
     prefer_nickname: bool,
     sync_titles: bool,
 ) -> list[User]:
     result = await mo.get_person(
-        person_uuid, root_org_unit, itsystem_user_key, datetime.now()
+        person_uuid, root_org_unit, datetime.now(), itsystem_user_keys
     )
 
     if len(result.objects) == 0 or one(result.objects).current is None:
@@ -103,7 +103,7 @@ async def sync_person(
     ldap_client: depends.LDAPClient,
     periodic_sync: depends.PeriodicSync,
     session: depends.Session,
-    itsystem_user_key: str,
+    itsystem_user_keys: list[str],
     root_org_unit: UUID,
     person_uuid: UUID,
     prefer_nickname: bool,
@@ -113,7 +113,7 @@ async def sync_person(
         users = await get_person(
             mo,
             ldap_client,
-            itsystem_user_key,
+            itsystem_user_keys,
             root_org_unit,
             person_uuid,
             prefer_nickname,

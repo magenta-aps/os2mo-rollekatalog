@@ -79,7 +79,7 @@ async def person(
         users = await get_person(
             mo,
             ldap_client,
-            settings.itsystem_user_key,
+            [settings.ad_itsystem_user_key, settings.fk_itsystem_user_key],
             settings.root_org_unit,
             uuid,
             settings.prefer_nickname,
@@ -105,7 +105,7 @@ async def sync_person_on_demand(
         ldap_client,
         periodic_sync,
         session,
-        settings.itsystem_user_key,
+        [settings.ad_itsystem_user_key, settings.fk_itsystem_user_key],
         settings.root_org_unit,
         uuid,
         settings.prefer_nickname,
@@ -132,7 +132,7 @@ async def org_unit(
         org_unit = await get_org_unit(
             mo,
             ldap_client,
-            settings.itsystem_user_key,
+            [settings.ad_itsystem_user_key, settings.fk_itsystem_user_key],
             settings.root_org_unit,
             uuid,
         )
@@ -156,7 +156,7 @@ async def sync_org_unit_on_demand(
         ldap_client,
         periodic_sync,
         session,
-        settings.itsystem_user_key,
+        [settings.ad_itsystem_user_key, settings.fk_itsystem_user_key],
         settings.root_org_unit,
         uuid,
     )

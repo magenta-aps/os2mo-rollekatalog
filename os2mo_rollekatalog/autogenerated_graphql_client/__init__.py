@@ -95,6 +95,7 @@ from .get_person import (
     GetPersonEmployeesObjectsCurrentEngagementsJobFunction,
     GetPersonEmployeesObjectsCurrentEngagementsOrgUnit,
     GetPersonEmployeesObjectsCurrentItusers,
+    GetPersonEmployeesObjectsCurrentItusersItsystem,
 )
 from .get_person_uuid_for_address import (
     GetPersonUuidForAddress,
@@ -153,6 +154,7 @@ from .input_types import (
     EmployeesBoundManagerFilter,
     EmployeeTerminateInput,
     EmployeeUpdateInput,
+    EngagementBoundITUserFilter,
     EngagementCreateInput,
     EngagementFilter,
     EngagementRegistrationFilter,
@@ -296,6 +298,7 @@ __all__ = [
     "EmployeesBoundITUserFilter",
     "EmployeesBoundLeaveFilter",
     "EmployeesBoundManagerFilter",
+    "EngagementBoundITUserFilter",
     "EngagementCreateInput",
     "EngagementFilter",
     "EngagementRegistrationFilter",
@@ -343,6 +346,7 @@ __all__ = [
     "GetPersonEmployeesObjectsCurrentEngagementsJobFunction",
     "GetPersonEmployeesObjectsCurrentEngagementsOrgUnit",
     "GetPersonEmployeesObjectsCurrentItusers",
+    "GetPersonEmployeesObjectsCurrentItusersItsystem",
     "GetPersonUuidForAddress",
     "GetPersonUuidForAddressAddresses",
     "GetPersonUuidForAddressAddressesObjects",
