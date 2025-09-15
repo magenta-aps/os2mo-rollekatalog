@@ -63,6 +63,9 @@ class Position(Base):
             )
         raise NotImplementedError()
 
+    def __hash__(self):
+        return hash((self.name, self.orgUnitUuid, self.titleUuid))
+
     def to_rollekatalog_payload(self):
         result = {"name": self.name, "orgUnitUuid": self.orgUnitUuid}
         if self.titleUuid is not None:
@@ -74,7 +77,8 @@ class User(Base):
     __tablename__ = "user"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    extUuid: Mapped[UUID]
+    person: Mapped[UUID]
+    extUuid: Mapped[UUID] = mapped_column(unique=True)
     userId: Mapped[SamAccountName]
     name: Mapped[Name]
     email: Mapped[str | None]
@@ -83,12 +87,13 @@ class User(Base):
     )
 
     def __repr__(self) -> str:
-        return f"User({self.extUuid=}, {self.userId=}, {self.name=}, {self.email=}, {self.positions=})"
+        return f"User({self.person=},{self.extUuid=}, {self.userId=}, {self.name=}, {self.email=}, {self.positions=})"
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, User):
             return (
-                self.extUuid == other.extUuid
+                self.person == other.person
+                and self.extUuid == other.extUuid
                 and self.userId == other.userId
                 and self.name == other.name
                 and self.email == other.email
@@ -96,9 +101,23 @@ class User(Base):
             )
         raise NotImplementedError()
 
+    def __hash__(self):
+        # Positions must be a frozenset to be hashable
+        return hash(
+            (
+                self.person,
+                self.extUuid,
+                self.userId,
+                self.name,
+                self.email,
+                frozenset(self.positions),
+            )
+        )
+
     def to_rollekatalog_payload(self):
         return jsonable_encoder(
             {
+                "person": self.person,
                 "extUuid": self.extUuid,
                 "userId": self.userId,
                 "name": self.name,
