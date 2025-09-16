@@ -85,9 +85,7 @@ async def get_person(
     ]
 
 
-async def fetch_person_from_db(
-    session: depends.Session, uuid: UUID
-) -> list[User]:
+async def fetch_person_from_db(session: depends.Session, uuid: UUID) -> list[User]:
     stmt = (
         select(User)
         .options(selectinload(User.positions))
@@ -130,7 +128,8 @@ async def sync_person(
             periodic_sync.sync_soon()
         return
     for user in users:
-        dbuser = await fetch_person_from_db(session, person_uuid)
+        dbusers = await fetch_person_from_db(session, person_uuid)
+        dbuser = dbusers[0] if dbusers else None
 
         if dbuser is None:
             logger.info(
