@@ -102,9 +102,7 @@ class PeriodicSync:
                 users_from_db = (
                     (
                         await session.execute(
-                            select(User)
-                            .options(selectinload(User.positions))
-                            .join(User.positions)
+                            select(User).options(selectinload(User.positions))
                         )
                     )
                     .scalars()

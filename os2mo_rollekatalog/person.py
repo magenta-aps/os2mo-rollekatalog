@@ -91,12 +91,7 @@ async def get_person(
 
 
 async def fetch_person_from_db(session: depends.Session, uuid: UUID) -> list[User]:
-    stmt = (
-        select(User)
-        .options(selectinload(User.positions))
-        .where(User.extUuid == uuid)
-        .join(User.positions)
-    )
+    stmt = select(User).options(selectinload(User.positions)).where(User.person == uuid)
     scalar_result = await session.scalars(stmt)
     users = scalar_result.all()
 
