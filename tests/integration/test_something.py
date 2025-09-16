@@ -181,25 +181,29 @@ async def test_too_much(
             await test_client.get(f"/debug/person/{user_without_sam_account}")
         ).json() == {"error": "No SAM Account"}
 
-        assert (await test_client.get(f"/cache/person/{joakim}")).json() is None
-        assert (await test_client.get(f"/cache/person/{anders_and}")).json() == {
-            "extUuid": str(anders_and),
-            "userId": "AA",
-            "name": "Anders And",
-            "email": None,
-            "positions": [
-                {"name": job_function.user_key, "orgUnitUuid": str(layer1_2)}
-            ],
-        }
-        assert (await test_client.get(f"/cache/person/{fedtmule}")).json() == {
-            "extUuid": str(fedtmule),
-            "userId": "FM",
-            "name": "Fedt mule",
-            "email": None,
-            "positions": [
-                {"name": job_function.user_key, "orgUnitUuid": str(layer3_1)}
-            ],
-        }
+        assert (await test_client.get(f"/cache/person/{joakim}")).json() == []
+        assert (await test_client.get(f"/cache/person/{anders_and}")).json() == [
+            {
+                "extUuid": str(anders_and),
+                "userId": "AA",
+                "name": "Anders And",
+                "email": None,
+                "positions": [
+                    {"name": job_function.user_key, "orgUnitUuid": str(layer1_2)}
+                ],
+            }
+        ]
+        assert (await test_client.get(f"/cache/person/{fedtmule}")).json() == [
+            {
+                "extUuid": str(fedtmule),
+                "userId": "FM",
+                "name": "Fedt mule",
+                "email": None,
+                "positions": [
+                    {"name": job_function.user_key, "orgUnitUuid": str(layer3_1)}
+                ],
+            }
+        ]
 
     await verify_users()
 
@@ -208,9 +212,9 @@ async def test_too_much(
 
     @retry()
     async def verify_removal() -> None:
-        assert (await test_client.get(f"/cache/person/{joakim}")).json() is None
-        assert (await test_client.get(f"/cache/person/{anders_and}")).json() is None
-        assert (await test_client.get(f"/cache/person/{fedtmule}")).json() is None
+        assert (await test_client.get(f"/cache/person/{joakim}")).json() == []
+        assert (await test_client.get(f"/cache/person/{anders_and}")).json() == []
+        assert (await test_client.get(f"/cache/person/{fedtmule}")).json() == []
         assert (await test_client.get(f"/cache/org_unit/{layer1_2}")).json() is None
         assert (await test_client.get(f"/cache/org_unit/{layer2_1}")).json() is None
         assert (await test_client.get(f"/cache/org_unit/{layer3_1}")).json() is None
