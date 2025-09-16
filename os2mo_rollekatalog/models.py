@@ -87,7 +87,7 @@ class User(Base):
     )
 
     def __repr__(self) -> str:
-        return f"User({self.person=},{self.extUuid=}, {self.userId=}, {self.name=}, {self.email=}, {self.positions=})"
+        return f"User({self.person=}, {self.extUuid=}, {self.userId=}, {self.name=}, {self.email=}, {self.positions=})"
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, User):

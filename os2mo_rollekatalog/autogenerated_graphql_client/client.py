@@ -118,21 +118,28 @@ class GraphQLClient(AsyncBaseClient):
                     itusers(
                       filter: {itsystem: {user_keys: [$ad_itsystem_user_key, $fk_itsystem_user_key]}, from_date: $now, to_date: null}
                     ) {
+                      uuid
                       user_key
                       external_id
                       itsystem {
                         user_key
                       }
-                    }
-                    engagements(filter: {from_date: $now, to_date: null}) {
-                      org_unit(
-                        filter: {ancestor: {uuids: [$root_uuid]}, from_date: $now, to_date: null}
-                      ) {
-                        uuid
+                      validity {
+                        from
+                        to
                       }
-                      job_function {
-                        name
-                        uuid
+                      engagements(filter: {from_date: $now, to_date: null}) {
+                        current {
+                          org_unit(
+                            filter: {ancestor: {uuids: [$root_uuid]}, from_date: $now, to_date: null}
+                          ) {
+                            uuid
+                          }
+                          job_function {
+                            name
+                            uuid
+                          }
+                        }
                       }
                     }
                   }
