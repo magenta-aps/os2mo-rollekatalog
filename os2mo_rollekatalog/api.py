@@ -32,7 +32,7 @@ async def titles(mo: depends.GraphQLClient) -> list[Title]:
 
 
 @router.get("/cache/stikprøve/person")
-async def random_users(session: depends.Session, count: int = 5):
+async def random_users(session: depends.Session, count: int = 5) -> list:
     """
     Get a random sample of users from the cache.
     """
@@ -50,7 +50,7 @@ async def random_users(session: depends.Session, count: int = 5):
 
 
 @router.get("/cache/stikprøve/org_unit")
-async def random_org_units(session: depends.Session, count: int = 5):
+async def random_org_units(session: depends.Session, count: int = 5) -> list:
     """
     Get a random sample of org units from the cache.
     """
@@ -73,10 +73,10 @@ async def person(
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
     uuid: UUID,
-) -> dict:
+) -> list | dict:
     """See how a person will be synced, or debug why it is not to be."""
     try:
-        person = await get_person(
+        users = await get_person(
             mo,
             ldap_client,
             settings.itsystem_user_key,
@@ -87,7 +87,7 @@ async def person(
         )
     except WillNotSync as e:
         return {"error": e.message}
-    return person.to_rollekatalog_payload()
+    return [u.to_rollekatalog_payload() for u in users]
 
 
 @router.post("/sync/person/{uuid}")
@@ -114,12 +114,10 @@ async def sync_person_on_demand(
 
 
 @router.get("/cache/person/{uuid}")
-async def person_from_cache(session: depends.Session, uuid: UUID) -> dict | None:
+async def person_from_cache(session: depends.Session, uuid: UUID) -> list:
     """Inspect a person from the cache."""
-    user = await fetch_person_from_db(session, uuid)
-    if user is None:
-        return None
-    return user.to_rollekatalog_payload()
+    users = await fetch_person_from_db(session, uuid)
+    return [u.to_rollekatalog_payload() for u in users]
 
 
 @router.get("/debug/org_unit/{uuid}")
