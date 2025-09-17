@@ -96,6 +96,7 @@ from .get_person import (
     GetPersonEmployeesObjectsCurrentItusersEngagementsCurrent,
     GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentJobFunction,
     GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnit,
+    GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnitValidity,
     GetPersonEmployeesObjectsCurrentItusersItsystem,
     GetPersonEmployeesObjectsCurrentItusersValidity,
 )
@@ -349,6 +350,7 @@ __all__ = [
     "GetPersonEmployeesObjectsCurrentItusersEngagementsCurrent",
     "GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentJobFunction",
     "GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnit",
+    "GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnitValidity",
     "GetPersonEmployeesObjectsCurrentItusersItsystem",
     "GetPersonEmployeesObjectsCurrentItusersValidity",
     "GetPersonUuidForAddress",

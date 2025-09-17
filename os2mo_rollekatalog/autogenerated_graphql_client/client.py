@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List, Optional, Union
 from uuid import UUID
 
 from ._testing__create_employee import (
@@ -46,6 +47,7 @@ from ._testing__rename_org_unit import (
     TestingRenameOrgUnitOrgUnitUpdate,
 )
 from .async_base_client import AsyncBaseClient
+from .base_model import UNSET, UnsetType
 from .get_org_unit import GetOrgUnit, GetOrgUnitOrgUnits
 from .get_org_unit_uuid_for_kle import GetOrgUnitUuidForKle, GetOrgUnitUuidForKleKles
 from .get_org_unit_uuid_for_manager import (
@@ -134,6 +136,10 @@ class GraphQLClient(AsyncBaseClient):
                             filter: {ancestor: {uuids: [$root_uuid]}, from_date: $now, to_date: null}
                           ) {
                             uuid
+                            validity {
+                              from
+                              to
+                            }
                           }
                           job_function {
                             name

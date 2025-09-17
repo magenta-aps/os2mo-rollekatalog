@@ -72,58 +72,57 @@ def resolve_samaccounts(
     itusers: list[GetPersonEmployeesObjectsCurrentItusers],
     ad_itsystem_user_key: str,
     fk_itsystem_user_key: str,
-) -> list[GetPersonEmployeesObjectsCurrentItusers]:
+) -> tuple[list[GetPersonEmployeesObjectsCurrentItusers], dict[str, UUID]]:
     """
     Resolve SAM accounts for IT-users.
 
-    For each AD IT-user, if their `external_id` matches an FK IT-user's `user_key`,
-    the AD user's `external_id` is updated to the FK user's `external_id`.
+    For each AD IT-user, look up a matching FK IT-user.
+    Build a mapping {ad.user_key: resolved_external_id}.
 
-    Returns a list of AD IT-users with updated `external_id` where applicable.
-    Returns an empty list if no AD users exist.
+    Returns:
+        (ad_itusers, samaccounts)
+        - ad_itusers: list of AD IT-users
+        - samaccounts: dict mapping AD user_key -> external_id (resolved if match found)
     """
     ad_itusers = [it for it in itusers if it.itsystem.user_key == ad_itsystem_user_key]
     if not ad_itusers:
-        return []
+        return [], {}
 
     fk_itusers = {
-        it.user_key: it
+        it.user_key: UUID(it.external_id)
         for it in itusers
-        if it.itsystem.user_key == fk_itsystem_user_key
+        if it.itsystem.user_key == fk_itsystem_user_key and it.external_id
     }
-
+    samaccounts: dict[str, UUID] = {}
     for ad in ad_itusers:
-        fk = fk_itusers.get(ad.external_id) if ad.external_id else None
-        if fk:
-            ad.external_id = fk.external_id
+        if ad.external_id and ad.external_id in fk_itusers:
+            samaccounts[ad.user_key] = fk_itusers[ad.external_id]
 
-    return ad_itusers
+    return ad_itusers, samaccounts
 
 
-def select_relevant_itusers(
-    itusers: list[GetPersonEmployeesObjectsCurrentItusers],
-) -> list[GetPersonEmployeesObjectsCurrentItusers]:
+def select_relevant(
+    objects: list,
+) -> list:
     """
     Pick the current version of each IT-user if available,
     otherwise pick the earliest future version.
     """
 
     now = datetime.now(ZoneInfo("Europe/Copenhagen"))
-    grouped: dict[UUID, list[GetPersonEmployeesObjectsCurrentItusers]] = defaultdict(
-        list
-    )
-    for ituser in itusers:
-        grouped[ituser.uuid].append(ituser)
+    grouped: dict[UUID, list] = defaultdict(list)
+    for object in objects:
+        grouped[object.uuid].append(object)
 
-    result: list[GetPersonEmployeesObjectsCurrentItusers] = []
+    result: list = []
 
     for uuid, versions in grouped.items():
         # Pick current ituser
         current = [
-            it
-            for it in versions
-            if it.validity.from_ <= now
-            and (it.validity.to is None or now < it.validity.to)
+            version
+            for version in versions
+            if version.validity.from_ <= now
+            and (version.validity.to is None or now < version.validity.to)
         ]
 
         if current:
@@ -131,8 +130,8 @@ def select_relevant_itusers(
             continue
 
         # Otherwise pick the soonest future version, if any
-        future = [it for it in versions if it.validity.from_ > now]
+        future = [version for version in versions if version.validity.from_ > now]
         if future:
-            result.append(min(future, key=lambda it: it.validity.from_))
+            result.append(min(future, key=lambda version: version.validity.from_))
 
     return result

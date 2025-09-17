@@ -67,6 +67,10 @@ query GetPerson(
                 }
               ) {
                 uuid
+                validity {
+                  from
+                  to
+                }
               }
               job_function {
                 name

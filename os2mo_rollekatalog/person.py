@@ -12,7 +12,7 @@ from sqlalchemy.orm import selectinload
 from os2mo_rollekatalog import depends
 from os2mo_rollekatalog.junkyard import WillNotSync
 from os2mo_rollekatalog.junkyard import resolve_samaccounts
-from os2mo_rollekatalog.junkyard import select_relevant_itusers
+from os2mo_rollekatalog.junkyard import select_relevant
 from os2mo_rollekatalog.models import Name
 from os2mo_rollekatalog.models import Position
 from os2mo_rollekatalog.models import User
@@ -58,36 +58,38 @@ async def get_person(
         name = Name(mo_person.name)
 
     users = []
-    itusers = resolve_samaccounts(
+    itusers, samaccounts = resolve_samaccounts(
         mo_person.itusers, ad_itsystem_user_key, fk_itsystem_user_key
     )
+
     if not itusers:
         # Do not sync users without an AD account
         raise WillNotSync("No SAM Account")
 
-    relevant_itusers = select_relevant_itusers(itusers)
+    relevant_itusers = select_relevant(itusers)
 
     for ituser in relevant_itusers:
+        extUuid = samaccounts.get(ituser.user_key)
+        if extUuid is None:
+            continue
+
         positions = [
             Position(
                 name=eng.current.job_function.name,
-                orgUnitUuid=ou.uuid,
+                orgUnitUuid=one(select_relevant(eng.current.org_unit)).uuid,
                 titleUuid=eng.current.job_function.uuid if sync_titles else None,
             )
             for eng in ituser.engagements or []
-            if eng.current
-            for ou in eng.current.org_unit
+            if eng.current and eng.current.org_unit
         ]
         if len(positions) == 0:
-            # Do not sync users without any positions
-            raise WillNotSync("User has no valid positions (engagements)")
+            # Skip itusers without valid engagements
+            continue
+
         users.append(
             User(
-                # TODO: remove mo_person
                 person=mo_person.uuid,
-                extUuid=UUID(ituser.external_id)
-                if ituser.external_id
-                else mo_person.uuid,
+                extUuid=extUuid,
                 userId=ituser.user_key,
                 name=name,
                 email=email,

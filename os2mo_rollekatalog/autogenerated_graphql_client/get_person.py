@@ -62,6 +62,14 @@ class GetPersonEmployeesObjectsCurrentItusersEngagementsCurrent(BaseModel):
 
 class GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnit(BaseModel):
     uuid: UUID
+    validity: "GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnitValidity"
+
+
+class GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnitValidity(
+    BaseModel
+):
+    from_: datetime = Field(alias="from")
+    to: Optional[datetime]
 
 
 class GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentJobFunction(BaseModel):
@@ -80,4 +88,5 @@ GetPersonEmployeesObjectsCurrentItusersValidity.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusersEngagements.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusersEngagementsCurrent.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnit.update_forward_refs()
+GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnitValidity.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentJobFunction.update_forward_refs()
