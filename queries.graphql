@@ -243,8 +243,8 @@ mutation _Testing_CreateItSystem($name: String!) {
 }
 
 
-mutation _Testing_CreateItUser($itsystem: UUID!, $person: UUID!, $name: String!) {
-  ituser_create(input: {user_key: $name, itsystem: $itsystem, person: $person, validity: {from: "2015-02-08"}}) {
+mutation _Testing_CreateItUser($itsystem: UUID!, $person: UUID!, $name: String!, $engagements: [UUID!]) {
+  ituser_create(input: {user_key: $name, itsystem: $itsystem, person: $person, engagements: $engagements, validity: {from: "2015-02-08"}}) {
     uuid
   }
 }

@@ -443,13 +443,17 @@ class GraphQLClient(AsyncBaseClient):
         return TestingCreateItSystem.parse_obj(data).itsystem_create
 
     async def _testing__create_it_user(
-        self, itsystem: UUID, person: UUID, name: str
+        self,
+        itsystem: UUID,
+        person: UUID,
+        name: str,
+        engagements: Union[Optional[List[UUID]], UnsetType] = UNSET,
     ) -> TestingCreateItUserItuserCreate:
         query = gql(
             """
-            mutation _Testing_CreateItUser($itsystem: UUID!, $person: UUID!, $name: String!) {
+            mutation _Testing_CreateItUser($itsystem: UUID!, $person: UUID!, $name: String!, $engagements: [UUID!]) {
               ituser_create(
-                input: {user_key: $name, itsystem: $itsystem, person: $person, validity: {from: "2015-02-08"}}
+                input: {user_key: $name, itsystem: $itsystem, person: $person, engagements: $engagements, validity: {from: "2015-02-08"}}
               ) {
                 uuid
               }
@@ -460,6 +464,7 @@ class GraphQLClient(AsyncBaseClient):
             "itsystem": itsystem,
             "person": person,
             "name": name,
+            "engagements": engagements,
         }
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)

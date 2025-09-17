@@ -144,12 +144,6 @@ async def test_too_much(
         )
     ).uuid
 
-    # Create Active Directory IT system and users
-    AD = (await graphql_client._testing__create_it_system("Active Directory")).uuid
-    await graphql_client._testing__create_it_user(AD, anders_and, "AA")
-    await graphql_client._testing__create_it_user(AD, fedtmule, "FM")
-    await graphql_client._testing__create_it_user(AD, joakim, "JvA")
-
     # Create engagements ("positions"). Note that Joakim does not work.
     engagement_type = (
         (await graphql_client._testing__get_engagement_type())
@@ -162,15 +156,24 @@ async def test_too_much(
         .objects[0]
         .current.classes[0]  # type: ignore
     )
-    await graphql_client._testing__create_engagement(
-        layer1_2, anders_and, engagement_type, job_function.uuid
+    anders_and_eng = (
+        await graphql_client._testing__create_engagement(
+            layer1_2, anders_and, engagement_type, job_function.uuid
+        )
+    ).uuid
+    fedtmule_eng = (
+        await graphql_client._testing__create_engagement(
+            layer3_1, fedtmule, engagement_type, job_function.uuid
+        )
+    ).uuid
+
+    # Create Active Directory IT system and users
+    AD = (await graphql_client._testing__create_it_system("Active Directory")).uuid
+    await graphql_client._testing__create_it_user(
+        AD, anders_and, "AA", [anders_and_eng]
     )
-    await graphql_client._testing__create_engagement(
-        layer3_1, fedtmule, engagement_type, job_function.uuid
-    )
-    await graphql_client._testing__create_engagement(
-        layer2_1, user_without_sam_account, engagement_type, job_function.uuid
-    )
+    await graphql_client._testing__create_it_user(AD, fedtmule, "FM", [fedtmule_eng])
+    await graphql_client._testing__create_it_user(AD, joakim, "JvA", [])
 
     @retry()
     async def verify_users() -> None:
@@ -181,26 +184,33 @@ async def test_too_much(
             await test_client.get(f"/debug/person/{user_without_sam_account}")
         ).json() == {"error": "No SAM Account"}
 
-        assert (await test_client.get(f"/cache/person/{joakim}")).json() == []
         assert (await test_client.get(f"/cache/person/{anders_and}")).json() == [
             {
                 "extUuid": str(anders_and),
+                "person": str(anders_and),
                 "userId": "AA",
                 "name": "Anders And",
                 "email": None,
                 "positions": [
-                    {"name": job_function.user_key, "orgUnitUuid": str(layer1_2)}
+                    {
+                        "name": job_function.user_key,
+                        "orgUnitUuid": str(layer1_2),
+                    }
                 ],
             }
         ]
         assert (await test_client.get(f"/cache/person/{fedtmule}")).json() == [
             {
                 "extUuid": str(fedtmule),
+                "person": str(fedtmule),
                 "userId": "FM",
                 "name": "Fedt mule",
                 "email": None,
                 "positions": [
-                    {"name": job_function.user_key, "orgUnitUuid": str(layer3_1)}
+                    {
+                        "name": job_function.user_key,
+                        "orgUnitUuid": str(layer3_1),
+                    }
                 ],
             }
         ]
