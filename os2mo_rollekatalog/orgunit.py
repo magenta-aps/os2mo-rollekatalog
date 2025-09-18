@@ -13,12 +13,12 @@ from sqlalchemy.orm import selectinload
 from os2mo_rollekatalog import depends
 from os2mo_rollekatalog.junkyard import NoSuitableSamAccount
 from os2mo_rollekatalog.junkyard import WillNotSync
-from os2mo_rollekatalog.junkyard import pick_samaccount
 from os2mo_rollekatalog.models import Manager
 from os2mo_rollekatalog.models import OrgUnit
 from os2mo_rollekatalog.models import OrgUnitName
 from os2mo_rollekatalog.models import Position
 from os2mo_rollekatalog.models import User
+from os2mo_rollekatalog.models import SamAccountName
 
 
 logger = structlog.stdlib.get_logger(__name__)
@@ -63,13 +63,13 @@ async def get_org_unit(
                 continue
             for person in manager.person:
                 with suppress(NoSuitableSamAccount):
+                    if not person.itusers:
+                        raise NoSuitableSamAccount(
+                            f"no suitable SAM-Account found for {person.itusers=}"
+                        )
                     return Manager(
                         uuid=person.uuid,
-                        userId=(
-                            await pick_samaccount(
-                                ldap_client, person.uuid, person.itusers
-                            )
-                        ),
+                        userId=SamAccountName(person.itusers[-1].user_key),
                     )
         return None
 
