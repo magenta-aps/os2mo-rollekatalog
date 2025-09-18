@@ -46,6 +46,10 @@ from ._testing__rename_org_unit import (
     TestingRenameOrgUnit,
     TestingRenameOrgUnitOrgUnitUpdate,
 )
+from ._testing__update_it_user import (
+    TestingUpdateItUser,
+    TestingUpdateItUserItuserUpdate,
+)
 from .async_base_client import AsyncBaseClient
 from .base_model import UNSET, UnsetType
 from .get_org_unit import GetOrgUnit, GetOrgUnitOrgUnits
@@ -451,15 +455,17 @@ class GraphQLClient(AsyncBaseClient):
     async def _testing__create_it_user(
         self,
         itsystem: UUID,
+        external_id: str,
         person: UUID,
         name: str,
         engagements: Union[Optional[List[UUID]], UnsetType] = UNSET,
+        from_: Union[Optional[datetime], UnsetType] = UNSET,
     ) -> TestingCreateItUserItuserCreate:
         query = gql(
             """
-            mutation _Testing_CreateItUser($itsystem: UUID!, $person: UUID!, $name: String!, $engagements: [UUID!]) {
+            mutation _Testing_CreateItUser($itsystem: UUID!, $external_id: String!, $person: UUID!, $name: String!, $engagements: [UUID!], $from: DateTime = "2025-02-08") {
               ituser_create(
-                input: {user_key: $name, itsystem: $itsystem, person: $person, engagements: $engagements, validity: {from: "2015-02-08"}}
+                input: {user_key: $name, external_id: $external_id, itsystem: $itsystem, person: $person, engagements: $engagements, validity: {from: $from}}
               ) {
                 uuid
               }
@@ -468,13 +474,34 @@ class GraphQLClient(AsyncBaseClient):
         )
         variables: dict[str, object] = {
             "itsystem": itsystem,
+            "external_id": external_id,
             "person": person,
             "name": name,
             "engagements": engagements,
+            "from": from_,
         }
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return TestingCreateItUser.parse_obj(data).ituser_create
+
+    async def _testing__update_it_user(
+        self, uuid: UUID, from_: datetime
+    ) -> TestingUpdateItUserItuserUpdate:
+        query = gql(
+            """
+            mutation _Testing_UpdateItUser($uuid: UUID!, $from: DateTime!) {
+              ituser_update(
+                input: {uuid: $uuid, user_key: "Updated name", validity: {from: $from}}
+              ) {
+                uuid
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {"uuid": uuid, "from": from_}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return TestingUpdateItUser.parse_obj(data).ituser_update
 
     async def _testing__create_engagement(
         self, orgunit: UUID, person: UUID, engagement_type: UUID, job_function: UUID

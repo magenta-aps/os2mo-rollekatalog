@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
-from uuid import UUID
+import uuid
+from datetime import datetime, timedelta
 
 import pytest
 from fastramqpi.pytest_util import retry
@@ -18,7 +19,7 @@ async def test_dummy() -> None:
 async def test_too_much(
     test_client: AsyncClient,
     graphql_client: GraphQLClient,
-    root_uuid: UUID,
+    root_uuid: uuid.UUID,
 ) -> None:
     # Create org hierarchy
     org_unit_type_uuid = (
@@ -143,6 +144,12 @@ async def test_too_much(
             last_name="Mangler",
         )
     ).uuid
+    fætter_højben = (
+        await graphql_client._testing__create_employee(
+            first_name="Fætter",
+            last_name="Højben",
+        )
+    ).uuid
 
     # Create engagements ("positions"). Note that Joakim does not work.
     engagement_type = (
@@ -166,25 +173,77 @@ async def test_too_much(
             layer3_1, fedtmule, engagement_type, job_function.uuid
         )
     ).uuid
+    fætter_eng = (
+        await graphql_client._testing__create_engagement(
+            layer3_1, fætter_højben, engagement_type, job_function.uuid
+        )
+    ).uuid
 
     # Create Active Directory IT system and users
     AD = (await graphql_client._testing__create_it_system("Active Directory")).uuid
+    FK = (await graphql_client._testing__create_it_system("FK ORG")).uuid
+
     await graphql_client._testing__create_it_user(
-        AD, anders_and, "AA", [anders_and_eng]
+        AD, str(uuid.uuid4()), joakim, "JvA", []
     )
-    await graphql_client._testing__create_it_user(AD, fedtmule, "FM", [fedtmule_eng])
-    await graphql_client._testing__create_it_user(AD, joakim, "JvA", [])
+
+    anders_object_guid = uuid.uuid4()
+    anders_external_id = uuid.uuid4()
+    await graphql_client._testing__create_it_user(
+        AD, str(anders_object_guid), anders_and, "AA", [anders_and_eng]
+    )
+    await graphql_client._testing__create_it_user(
+        FK,
+        str(anders_external_id),
+        anders_and,
+        str(anders_object_guid),
+        [anders_and_eng],
+    )
+
+    fedtmule_object_guid = uuid.uuid4()
+    fedtmule_external_id = uuid.uuid4()
+    fedtmule_ad_ituser = await graphql_client._testing__create_it_user(
+        AD, str(fedtmule_object_guid), fedtmule, "FM", [fedtmule_eng]
+    )
+    await graphql_client._testing__create_it_user(
+        FK,
+        str(fedtmule_external_id),
+        fedtmule,
+        str(fedtmule_object_guid),
+        [fedtmule_eng],
+    )
+    await graphql_client._testing__update_it_user(
+        fedtmule_ad_ituser.uuid, datetime.now() + timedelta(days=365)
+    )
+
+    fætter_object_guid = uuid.uuid4()
+    fætter_external_id = uuid.uuid4()
+    await graphql_client._testing__create_it_user(
+        AD,
+        str(fætter_object_guid),
+        fætter_højben,
+        "FH",
+        [fætter_eng],
+        datetime.now() + timedelta(days=365),
+    )
+    await graphql_client._testing__create_it_user(
+        FK,
+        str(fætter_external_id),
+        fætter_højben,
+        str(fætter_object_guid),
+        [fætter_eng],
+    )
 
     @retry()
     async def verify_users() -> None:
-        assert (await test_client.get(f"/debug/person/{joakim}")).json() == []
         assert (
             await test_client.get(f"/debug/person/{user_without_sam_account}")
         ).json() == {"error": "No SAM Account"}
+        assert (await test_client.get(f"/debug/person/{joakim}")).json() == []
 
         assert (await test_client.get(f"/cache/person/{anders_and}")).json() == [
             {
-                "extUuid": str(anders_and),
+                "extUuid": str(anders_external_id),
                 "person": str(anders_and),
                 "userId": "AA",
                 "name": "Anders And",
@@ -199,10 +258,25 @@ async def test_too_much(
         ]
         assert (await test_client.get(f"/cache/person/{fedtmule}")).json() == [
             {
-                "extUuid": str(fedtmule),
+                "extUuid": str(fedtmule_external_id),
                 "person": str(fedtmule),
                 "userId": "FM",
                 "name": "Fedt mule",
+                "email": None,
+                "positions": [
+                    {
+                        "name": job_function.user_key,
+                        "orgUnitUuid": str(layer3_1),
+                    }
+                ],
+            }
+        ]
+        assert (await test_client.get(f"/cache/person/{fætter_højben}")).json() == [
+            {
+                "extUuid": str(fætter_external_id),
+                "person": str(fætter_højben),
+                "userId": "FH",
+                "name": "Fætter Højben",
                 "email": None,
                 "positions": [
                     {

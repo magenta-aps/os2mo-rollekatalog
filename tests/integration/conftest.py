@@ -26,6 +26,7 @@ async def _app(monkeypatch: MonkeyPatch, root_uuid: UUID) -> FastAPI:
     monkeypatch.setenv("ROLLEKATALOG_URL", "http://example.org")
     monkeypatch.setenv("API_KEY", "dummy")
     monkeypatch.setenv("ROOT_ORG_UNIT", str(root_uuid))
+    monkeypatch.setenv("SYNC_TITLES", "false")
     monkeypatch.setenv("AD_ITSYSTEM_USER_KEY", "Active Directory")
     monkeypatch.setenv("FK_ITSYSTEM_USER_KEY", "FK ORG")
 
