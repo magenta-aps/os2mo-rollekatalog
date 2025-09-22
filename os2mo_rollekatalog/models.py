@@ -63,9 +63,6 @@ class Position(Base):
             )
         raise NotImplementedError()
 
-    def __hash__(self):
-        return hash((self.name, self.orgUnitUuid, self.titleUuid))
-
     def to_rollekatalog_payload(self):
         result = {"name": self.name, "orgUnitUuid": self.orgUnitUuid}
         if self.titleUuid is not None:
@@ -101,23 +98,9 @@ class User(Base):
             )
         raise NotImplementedError()
 
-    def __hash__(self):
-        # Positions must be a frozenset to be hashable
-        return hash(
-            (
-                self.person,
-                self.extUuid,
-                self.userId,
-                self.name,
-                self.email,
-                frozenset(self.positions),
-            )
-        )
-
     def to_rollekatalog_payload(self):
         return jsonable_encoder(
             {
-                "person": self.person,
                 "extUuid": self.extUuid,
                 "userId": self.userId,
                 "name": self.name,

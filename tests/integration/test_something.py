@@ -244,7 +244,6 @@ async def test_too_much(
         assert (await test_client.get(f"/cache/person/{anders_and}")).json() == [
             {
                 "extUuid": str(anders_external_id),
-                "person": str(anders_and),
                 "userId": "AA",
                 "name": "Anders And",
                 "email": None,
@@ -259,7 +258,6 @@ async def test_too_much(
         assert (await test_client.get(f"/cache/person/{fedtmule}")).json() == [
             {
                 "extUuid": str(fedtmule_external_id),
-                "person": str(fedtmule),
                 "userId": "FM",
                 "name": "Fedt mule",
                 "email": None,
@@ -274,7 +272,6 @@ async def test_too_much(
         assert (await test_client.get(f"/cache/person/{fætter_højben}")).json() == [
             {
                 "extUuid": str(fætter_external_id),
-                "person": str(fætter_højben),
                 "userId": "FH",
                 "name": "Fætter Højben",
                 "email": None,

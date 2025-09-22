@@ -94,7 +94,6 @@ async def handle_ituser(
                     periodic_sync,
                     session,
                     settings.ad_itsystem_user_key,
-                    settings.fk_itsystem_user_key,
                     settings.root_org_unit,
                     engagement.org_unit_uuid,
                 )
@@ -166,7 +165,6 @@ async def handle_org_unit(
         periodic_sync,
         session,
         settings.ad_itsystem_user_key,
-        settings.fk_itsystem_user_key,
         settings.root_org_unit,
         org_unit_uuid,
     )
@@ -189,7 +187,6 @@ async def handle_kle(
             periodic_sync,
             session,
             settings.ad_itsystem_user_key,
-            settings.fk_itsystem_user_key,
             settings.root_org_unit,
             kle.org_unit_uuid,
         )
@@ -212,7 +209,6 @@ async def handle_manager(
             periodic_sync,
             session,
             settings.ad_itsystem_user_key,
-            settings.fk_itsystem_user_key,
             settings.root_org_unit,
             manager.org_unit_uuid,
         )

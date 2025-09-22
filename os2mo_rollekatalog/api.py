@@ -12,7 +12,7 @@ from os2mo_rollekatalog.junkyard import WillNotSync
 from os2mo_rollekatalog.models import Title
 from os2mo_rollekatalog.models import User
 from os2mo_rollekatalog.models import OrgUnit
-from os2mo_rollekatalog.person import fetch_person_from_db
+from os2mo_rollekatalog.person import fetch_users_from_db
 from os2mo_rollekatalog.person import get_person
 from os2mo_rollekatalog.person import sync_person
 from os2mo_rollekatalog.orgunit import fetch_org_unit_from_db
@@ -118,7 +118,7 @@ async def sync_person_on_demand(
 @router.get("/cache/person/{uuid}")
 async def person_from_cache(session: depends.Session, uuid: UUID) -> list:
     """Inspect a person from the cache."""
-    users = await fetch_person_from_db(session, uuid)
+    users = await fetch_users_from_db(session, uuid)
     return [u.to_rollekatalog_payload() for u in users]
 
 
@@ -135,7 +135,6 @@ async def org_unit(
             mo,
             ldap_client,
             settings.ad_itsystem_user_key,
-            settings.fk_itsystem_user_key,
             settings.root_org_unit,
             uuid,
         )
@@ -160,7 +159,6 @@ async def sync_org_unit_on_demand(
         periodic_sync,
         session,
         settings.ad_itsystem_user_key,
-        settings.fk_itsystem_user_key,
         settings.root_org_unit,
         uuid,
     )

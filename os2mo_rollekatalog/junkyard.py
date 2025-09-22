@@ -105,7 +105,7 @@ def select_relevant(
     objects: list,
 ) -> list:
     """
-    Pick the current version of each IT-user if available,
+    Pick the current version of each object if available,
     otherwise pick the earliest future version.
     """
 
@@ -133,5 +133,9 @@ def select_relevant(
         future = [version for version in versions if version.validity.from_ > now]
         if future:
             result.append(min(future, key=lambda version: version.validity.from_))
+        else:
+            raise NotImplementedError(
+                f"No current or future found for {uuid} with versions: {versions}"
+            )
 
     return result

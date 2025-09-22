@@ -99,7 +99,7 @@ async def get_person(
     return users
 
 
-async def fetch_person_from_db(session: depends.Session, uuid: UUID) -> list[User]:
+async def fetch_users_from_db(session: depends.Session, uuid: UUID) -> list[User]:
     stmt = select(User).options(selectinload(User.positions)).where(User.person == uuid)
     scalar_result = await session.scalars(stmt)
     users = scalar_result.all()
@@ -140,7 +140,7 @@ async def sync_person(
         return
 
     mo_map = {u.extUuid: u for u in users}
-    dbusers = await fetch_person_from_db(session, person_uuid)
+    dbusers = await fetch_users_from_db(session, person_uuid)
     db_map = {u.extUuid: u for u in dbusers}
 
     mo_keys = set(mo_map.keys())
@@ -160,6 +160,7 @@ async def sync_person(
             name=old_user.name,
             samaccount=old_user.userId,
         )
+        periodic_sync.sync_soon()
 
     # add new accounts
     for key in to_add:
@@ -171,6 +172,7 @@ async def sync_person(
             name=new_user.name,
             samaccount=new_user.userId,
         )
+        periodic_sync.sync_soon()
 
     # update changed accounts
     for key in to_check:
@@ -180,40 +182,19 @@ async def sync_person(
         if incoming == existing:
             logger.info(
                 "User unchanged",
-                uuid=incoming.extUuid,
-                name=incoming.name,
-                samaccount=incoming.userId,
+                uuid=existing.extUuid,
+                name=existing.name,
+                samaccount=existing.userId,
             )
             continue
 
-        existing.person = incoming.person
-        existing.name = incoming.name
-        existing.extUuid = incoming.extUuid
-        existing.userId = incoming.userId
-        existing.email = incoming.email
-
-        # Clone positions instead of reusing, because SQLAlchemy only allows each Position to belong to a single User
-        incoming_set = {(p.orgUnitUuid, p.titleUuid) for p in incoming.positions}
-        existing_set = {(p.orgUnitUuid, p.titleUuid) for p in existing.positions}
-        # remove old
-        for pos in list(existing.positions):
-            if (pos.orgUnitUuid, pos.titleUuid) not in incoming_set:
-                existing.positions.remove(pos)
-        # add new
-        for pos in incoming.positions:
-            if (pos.orgUnitUuid, pos.titleUuid) not in existing_set:
-                existing.positions.append(
-                    Position(
-                        name=pos.name,
-                        orgUnitUuid=pos.orgUnitUuid,
-                        titleUuid=pos.titleUuid,
-                    )
-                )
-
+        await session.delete(existing)
+        await session.flush()
+        session.add(incoming)
+        periodic_sync.sync_soon()
         logger.info(
             "Update user",
             uuid=incoming.extUuid,
             name=incoming.name,
             samaccount=incoming.userId,
         )
-    periodic_sync.sync_soon()

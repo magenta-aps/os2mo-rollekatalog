@@ -32,7 +32,6 @@ async def get_org_unit(
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
     ad_itsystem_user_key: str,
-    fk_itsystem_user_key: str,
     root_org_unit: UUID,
     org_unit_uuid: UUID,
 ) -> OrgUnit:
@@ -40,7 +39,6 @@ async def get_org_unit(
         org_unit_uuid,
         root_org_unit,
         ad_itsystem_user_key,
-        fk_itsystem_user_key,
         datetime.now(),
     )
 
@@ -110,7 +108,6 @@ async def sync_org_unit(
     periodic_sync: depends.PeriodicSync,
     session: depends.Session,
     ad_itsystem_user_key: str,
-    fk_itsystem_user_key: str,
     root_org_unit: UUID,
     org_unit_uuid: UUID,
 ) -> None:
@@ -119,7 +116,6 @@ async def sync_org_unit(
             mo,
             ldap_client,
             ad_itsystem_user_key,
-            fk_itsystem_user_key,
             root_org_unit,
             org_unit_uuid,
         )
@@ -152,7 +148,6 @@ async def sync_org_unit(
                 periodic_sync,
                 session,
                 ad_itsystem_user_key,
-                fk_itsystem_user_key,
                 root_org_unit,
                 child_uuid,
             )
