@@ -53,6 +53,10 @@ from ._testing__update_it_user import (
     TestingUpdateItUser,
     TestingUpdateItUserItuserUpdate,
 )
+from ._testing__update_it_user_engagements import (
+    TestingUpdateItUserEngagements,
+    TestingUpdateItUserEngagementsItuserUpdate,
+)
 from .async_base_client import AsyncBaseClient
 from .base_model import BaseModel
 from .client import GraphQLClient
@@ -491,6 +495,8 @@ __all__ = [
     "TestingRenameOrgUnit",
     "TestingRenameOrgUnitOrgUnitUpdate",
     "TestingUpdateItUser",
+    "TestingUpdateItUserEngagements",
+    "TestingUpdateItUserEngagementsItuserUpdate",
     "TestingUpdateItUserItuserUpdate",
     "UuidsBoundClassFilter",
     "UuidsBoundEmployeeFilter",

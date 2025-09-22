@@ -258,6 +258,11 @@ mutation _Testing_UpdateItUser($uuid: UUID!, $from: DateTime!) {
   }
 }
 
+mutation _Testing_UpdateItUserEngagements($uuid: UUID!, $engagements: [UUID!] $from: DateTime!) {
+  ituser_update(input: {uuid: $uuid, validity: {from: $from}, engagements: $engagements}) {
+    uuid
+  }
+}
 
 mutation _Testing_CreateEngagement($orgunit: UUID!, $person: UUID!, $engagement_type: UUID!, $job_function: UUID!) {
   engagement_create(

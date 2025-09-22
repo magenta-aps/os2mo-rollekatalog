@@ -173,9 +173,14 @@ async def test_too_much(
             layer3_1, fedtmule, engagement_type, job_function.uuid
         )
     ).uuid
-    fætter_eng = (
+    fætter_eng_1 = (
         await graphql_client._testing__create_engagement(
             layer3_1, fætter_højben, engagement_type, job_function.uuid
+        )
+    ).uuid
+    fætter_eng_2 = (
+        await graphql_client._testing__create_engagement(
+            layer1_2, fætter_højben, engagement_type, job_function.uuid
         )
     ).uuid
 
@@ -218,20 +223,22 @@ async def test_too_much(
 
     fætter_object_guid = uuid.uuid4()
     fætter_external_id = uuid.uuid4()
-    await graphql_client._testing__create_it_user(
-        AD,
-        str(fætter_object_guid),
-        fætter_højben,
-        "FH",
-        [fætter_eng],
-        datetime.now() + timedelta(days=365),
-    )
+    fætter_højben_ad_ituser = (
+        await graphql_client._testing__create_it_user(
+            AD,
+            str(fætter_object_guid),
+            fætter_højben,
+            "FH",
+            [fætter_eng_1, fætter_eng_2],
+            datetime.now() + timedelta(days=365),
+        )
+    ).uuid
     await graphql_client._testing__create_it_user(
         FK,
         str(fætter_external_id),
         fætter_højben,
         str(fætter_object_guid),
-        [fætter_eng],
+        [fætter_eng_1, fætter_eng_2],
     )
 
     @retry()
@@ -269,6 +276,34 @@ async def test_too_much(
                 ],
             }
         ]
+
+        assert (await test_client.get(f"/cache/person/{fætter_højben}")).json() == [
+            {
+                "extUuid": str(fætter_external_id),
+                "userId": "FH",
+                "name": "Fætter Højben",
+                "email": None,
+                "positions": [
+                    {
+                        "name": job_function.user_key,
+                        "orgUnitUuid": str(layer1_2),
+                    },
+                    {
+                        "name": job_function.user_key,
+                        "orgUnitUuid": str(layer3_1),
+                    },
+                ],
+            }
+        ]
+
+    await verify_users()
+
+    await graphql_client._testing__update_it_user_engagements(
+        fætter_højben_ad_ituser, datetime.now(), [fætter_eng_1]
+    )
+
+    @retry()
+    async def verify_users_post_update() -> None:
         assert (await test_client.get(f"/cache/person/{fætter_højben}")).json() == [
             {
                 "extUuid": str(fætter_external_id),
@@ -284,7 +319,7 @@ async def test_too_much(
             }
         ]
 
-    await verify_users()
+    await verify_users_post_update()
 
     # Move org out of synced tree. This should also remove our users from cache
     await graphql_client._testing__move_org_unit_to_root(layer1_2)
@@ -294,6 +329,7 @@ async def test_too_much(
         assert (await test_client.get(f"/cache/person/{joakim}")).json() == []
         assert (await test_client.get(f"/cache/person/{anders_and}")).json() == []
         assert (await test_client.get(f"/cache/person/{fedtmule}")).json() == []
+        assert (await test_client.get(f"/cache/person/{fætter_højben}")).json() == []
         assert (await test_client.get(f"/cache/org_unit/{layer1_2}")).json() is None
         assert (await test_client.get(f"/cache/org_unit/{layer2_1}")).json() is None
         assert (await test_client.get(f"/cache/org_unit/{layer3_1}")).json() is None
