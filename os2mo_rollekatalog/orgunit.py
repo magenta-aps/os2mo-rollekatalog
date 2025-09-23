@@ -13,12 +13,12 @@ from sqlalchemy.orm import selectinload
 from os2mo_rollekatalog import depends
 from os2mo_rollekatalog.junkyard import NoSuitableSamAccount
 from os2mo_rollekatalog.junkyard import WillNotSync
-from os2mo_rollekatalog.junkyard import pick_samaccount
 from os2mo_rollekatalog.models import Manager
 from os2mo_rollekatalog.models import OrgUnit
 from os2mo_rollekatalog.models import OrgUnitName
 from os2mo_rollekatalog.models import Position
 from os2mo_rollekatalog.models import User
+from os2mo_rollekatalog.models import SamAccountName
 
 
 logger = structlog.stdlib.get_logger(__name__)
@@ -31,12 +31,15 @@ class ExpectedParent(Exception):
 async def get_org_unit(
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
-    itsystem_user_key: str,
+    ad_itsystem_user_key: str,
     root_org_unit: UUID,
     org_unit_uuid: UUID,
 ) -> OrgUnit:
     result = await mo.get_org_unit(
-        org_unit_uuid, root_org_unit, itsystem_user_key, datetime.now()
+        org_unit_uuid,
+        root_org_unit,
+        ad_itsystem_user_key,
+        datetime.now(),
     )
 
     if len(result.objects) == 0:
@@ -58,13 +61,13 @@ async def get_org_unit(
                 continue
             for person in manager.person:
                 with suppress(NoSuitableSamAccount):
+                    if not person.itusers:
+                        raise NoSuitableSamAccount(
+                            f"no suitable SAM-Account found for {person.itusers=}"
+                        )
                     return Manager(
                         uuid=person.uuid,
-                        userId=(
-                            await pick_samaccount(
-                                ldap_client, person.uuid, person.itusers
-                            )
-                        ),
+                        userId=SamAccountName(person.itusers[-1].user_key),
                     )
         return None
 
@@ -104,7 +107,7 @@ async def sync_org_unit(
     ldap_client: depends.LDAPClient,
     periodic_sync: depends.PeriodicSync,
     session: depends.Session,
-    itsystem_user_key: str,
+    ad_itsystem_user_key: str,
     root_org_unit: UUID,
     org_unit_uuid: UUID,
 ) -> None:
@@ -112,7 +115,7 @@ async def sync_org_unit(
         org_unit = await get_org_unit(
             mo,
             ldap_client,
-            itsystem_user_key,
+            ad_itsystem_user_key,
             root_org_unit,
             org_unit_uuid,
         )
@@ -144,7 +147,7 @@ async def sync_org_unit(
                 ldap_client,
                 periodic_sync,
                 session,
-                itsystem_user_key,
+                ad_itsystem_user_key,
                 root_org_unit,
                 child_uuid,
             )

@@ -49,6 +49,14 @@ from ._testing__rename_org_unit import (
     TestingRenameOrgUnit,
     TestingRenameOrgUnitOrgUnitUpdate,
 )
+from ._testing__update_it_user import (
+    TestingUpdateItUser,
+    TestingUpdateItUserItuserUpdate,
+)
+from ._testing__update_it_user_engagements import (
+    TestingUpdateItUserEngagements,
+    TestingUpdateItUserEngagementsItuserUpdate,
+)
 from .async_base_client import AsyncBaseClient
 from .base_model import BaseModel
 from .client import GraphQLClient
@@ -91,10 +99,14 @@ from .get_person import (
     GetPersonEmployeesObjects,
     GetPersonEmployeesObjectsCurrent,
     GetPersonEmployeesObjectsCurrentAddresses,
-    GetPersonEmployeesObjectsCurrentEngagements,
-    GetPersonEmployeesObjectsCurrentEngagementsJobFunction,
-    GetPersonEmployeesObjectsCurrentEngagementsOrgUnit,
     GetPersonEmployeesObjectsCurrentItusers,
+    GetPersonEmployeesObjectsCurrentItusersEngagements,
+    GetPersonEmployeesObjectsCurrentItusersEngagementsCurrent,
+    GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentJobFunction,
+    GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnit,
+    GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnitValidity,
+    GetPersonEmployeesObjectsCurrentItusersItsystem,
+    GetPersonEmployeesObjectsCurrentItusersValidity,
 )
 from .get_person_uuid_for_address import (
     GetPersonUuidForAddress,
@@ -153,6 +165,7 @@ from .input_types import (
     EmployeesBoundManagerFilter,
     EmployeeTerminateInput,
     EmployeeUpdateInput,
+    EngagementBoundITUserFilter,
     EngagementCreateInput,
     EngagementFilter,
     EngagementRegistrationFilter,
@@ -296,6 +309,7 @@ __all__ = [
     "EmployeesBoundITUserFilter",
     "EmployeesBoundLeaveFilter",
     "EmployeesBoundManagerFilter",
+    "EngagementBoundITUserFilter",
     "EngagementCreateInput",
     "EngagementFilter",
     "EngagementRegistrationFilter",
@@ -339,10 +353,14 @@ __all__ = [
     "GetPersonEmployeesObjects",
     "GetPersonEmployeesObjectsCurrent",
     "GetPersonEmployeesObjectsCurrentAddresses",
-    "GetPersonEmployeesObjectsCurrentEngagements",
-    "GetPersonEmployeesObjectsCurrentEngagementsJobFunction",
-    "GetPersonEmployeesObjectsCurrentEngagementsOrgUnit",
     "GetPersonEmployeesObjectsCurrentItusers",
+    "GetPersonEmployeesObjectsCurrentItusersEngagements",
+    "GetPersonEmployeesObjectsCurrentItusersEngagementsCurrent",
+    "GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentJobFunction",
+    "GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnit",
+    "GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnitValidity",
+    "GetPersonEmployeesObjectsCurrentItusersItsystem",
+    "GetPersonEmployeesObjectsCurrentItusersValidity",
     "GetPersonUuidForAddress",
     "GetPersonUuidForAddressAddresses",
     "GetPersonUuidForAddressAddressesObjects",
@@ -476,6 +494,10 @@ __all__ = [
     "TestingMoveOrgUnitToRootOrgUnitUpdate",
     "TestingRenameOrgUnit",
     "TestingRenameOrgUnitOrgUnitUpdate",
+    "TestingUpdateItUser",
+    "TestingUpdateItUserEngagements",
+    "TestingUpdateItUserEngagementsItuserUpdate",
+    "TestingUpdateItUserItuserUpdate",
     "UuidsBoundClassFilter",
     "UuidsBoundEmployeeFilter",
     "UuidsBoundEngagementFilter",

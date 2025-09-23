@@ -1,5 +1,8 @@
+from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
+
+from pydantic import Field
 
 from .base_model import BaseModel
 
@@ -23,7 +26,6 @@ class GetPersonEmployeesObjectsCurrent(BaseModel):
     name: str
     addresses: List["GetPersonEmployeesObjectsCurrentAddresses"]
     itusers: List["GetPersonEmployeesObjectsCurrentItusers"]
-    engagements: List["GetPersonEmployeesObjectsCurrentEngagements"]
 
 
 class GetPersonEmployeesObjectsCurrentAddresses(BaseModel):
@@ -32,19 +34,45 @@ class GetPersonEmployeesObjectsCurrentAddresses(BaseModel):
 
 
 class GetPersonEmployeesObjectsCurrentItusers(BaseModel):
+    uuid: UUID
+    user_key: str
+    external_id: Optional[str]
+    itsystem: "GetPersonEmployeesObjectsCurrentItusersItsystem"
+    validity: "GetPersonEmployeesObjectsCurrentItusersValidity"
+    engagements: List["GetPersonEmployeesObjectsCurrentItusersEngagements"]
+
+
+class GetPersonEmployeesObjectsCurrentItusersItsystem(BaseModel):
     user_key: str
 
 
-class GetPersonEmployeesObjectsCurrentEngagements(BaseModel):
-    org_unit: List["GetPersonEmployeesObjectsCurrentEngagementsOrgUnit"]
-    job_function: "GetPersonEmployeesObjectsCurrentEngagementsJobFunction"
+class GetPersonEmployeesObjectsCurrentItusersValidity(BaseModel):
+    from_: datetime = Field(alias="from")
+    to: Optional[datetime]
 
 
-class GetPersonEmployeesObjectsCurrentEngagementsOrgUnit(BaseModel):
+class GetPersonEmployeesObjectsCurrentItusersEngagements(BaseModel):
+    current: Optional["GetPersonEmployeesObjectsCurrentItusersEngagementsCurrent"]
+
+
+class GetPersonEmployeesObjectsCurrentItusersEngagementsCurrent(BaseModel):
+    org_unit: List["GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnit"]
+    job_function: "GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentJobFunction"
+
+
+class GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnit(BaseModel):
     uuid: UUID
+    validity: "GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnitValidity"
 
 
-class GetPersonEmployeesObjectsCurrentEngagementsJobFunction(BaseModel):
+class GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnitValidity(
+    BaseModel
+):
+    from_: datetime = Field(alias="from")
+    to: Optional[datetime]
+
+
+class GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentJobFunction(BaseModel):
     name: str
     uuid: UUID
 
@@ -55,6 +83,10 @@ GetPersonEmployeesObjects.update_forward_refs()
 GetPersonEmployeesObjectsCurrent.update_forward_refs()
 GetPersonEmployeesObjectsCurrentAddresses.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusers.update_forward_refs()
-GetPersonEmployeesObjectsCurrentEngagements.update_forward_refs()
-GetPersonEmployeesObjectsCurrentEngagementsOrgUnit.update_forward_refs()
-GetPersonEmployeesObjectsCurrentEngagementsJobFunction.update_forward_refs()
+GetPersonEmployeesObjectsCurrentItusersItsystem.update_forward_refs()
+GetPersonEmployeesObjectsCurrentItusersValidity.update_forward_refs()
+GetPersonEmployeesObjectsCurrentItusersEngagements.update_forward_refs()
+GetPersonEmployeesObjectsCurrentItusersEngagementsCurrent.update_forward_refs()
+GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnit.update_forward_refs()
+GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnitValidity.update_forward_refs()
+GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentJobFunction.update_forward_refs()
