@@ -45,8 +45,11 @@ class _Settings(BaseSettings):
         description="Root in OS2mo. Only sync this org unit, and units below."
     )
 
-    itsystem_user_key: str = Field(
+    ad_itsystem_user_key: str = Field(
         description="Designed to sync AD GUIDs to Rollekatalog, this value represents the user key of the AD itsystem in OS2mo."
+    )
+    fk_itsystem_user_key: str = Field(
+        description="Designed to sync AD GUIDs to Rollekatalog, this value represents the user key of the FK itsystem in OS2mo."
     )
     prefer_nickname: bool = Field(
         False,
