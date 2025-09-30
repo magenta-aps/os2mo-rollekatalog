@@ -1,5 +1,8 @@
+from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
+
+from pydantic import Field
 
 from .base_model import BaseModel
 
@@ -38,7 +41,20 @@ class GetOrgUnitOrgUnitsObjectsCurrentManagersPerson(BaseModel):
 
 
 class GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusers(BaseModel):
+    uuid: UUID
     user_key: str
+    external_id: Optional[str]
+    itsystem: "GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersItsystem"
+    validity: "GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersValidity"
+
+
+class GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersItsystem(BaseModel):
+    user_key: str
+
+
+class GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersValidity(BaseModel):
+    from_: datetime = Field(alias="from")
+    to: Optional[datetime]
 
 
 class GetOrgUnitOrgUnitsObjectsCurrentKles(BaseModel):
@@ -62,6 +78,8 @@ GetOrgUnitOrgUnitsObjectsCurrentParent.update_forward_refs()
 GetOrgUnitOrgUnitsObjectsCurrentManagers.update_forward_refs()
 GetOrgUnitOrgUnitsObjectsCurrentManagersPerson.update_forward_refs()
 GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusers.update_forward_refs()
+GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersItsystem.update_forward_refs()
+GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersValidity.update_forward_refs()
 GetOrgUnitOrgUnitsObjectsCurrentKles.update_forward_refs()
 GetOrgUnitOrgUnitsObjectsCurrentKlesKleNumber.update_forward_refs()
 GetOrgUnitOrgUnitsObjectsCurrentKlesKleAspects.update_forward_refs()
