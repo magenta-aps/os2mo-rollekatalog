@@ -277,24 +277,27 @@ async def test_too_much(
             }
         ]
 
-        assert (await test_client.get(f"/cache/person/{fætter_højben}")).json() == [
+        fh_response = (await test_client.get(f"/cache/person/{fætter_højben}")).json()
+        for user in fh_response:
+            user["positions"] = sorted(
+                user["positions"], key=lambda p: p["orgUnitUuid"]
+            )
+        expected_fh_response = [
             {
                 "extUuid": str(fætter_external_id),
                 "userId": "FH",
                 "name": "Fætter Højben",
                 "email": None,
-                "positions": [
-                    {
-                        "name": job_function.user_key,
-                        "orgUnitUuid": str(layer1_2),
-                    },
-                    {
-                        "name": job_function.user_key,
-                        "orgUnitUuid": str(layer3_1),
-                    },
-                ],
+                "positions": sorted(
+                    [
+                        {"name": job_function.user_key, "orgUnitUuid": str(layer1_2)},
+                        {"name": job_function.user_key, "orgUnitUuid": str(layer3_1)},
+                    ],
+                    key=lambda p: p["orgUnitUuid"],
+                ),
             }
         ]
+        assert fh_response == expected_fh_response
 
     await verify_users()
 
