@@ -14,6 +14,10 @@ from ._testing__create_it_user import (
     TestingCreateItUser,
     TestingCreateItUserItuserCreate,
 )
+from ._testing__create_manager import (
+    TestingCreateManager,
+    TestingCreateManagerManagerCreate,
+)
 from ._testing__create_org_unit import (
     TestingCreateOrgUnit,
     TestingCreateOrgUnitOrgUnitCreate,
@@ -35,6 +39,21 @@ from ._testing__get_job_function import (
     TestingGetJobFunctionFacetsObjects,
     TestingGetJobFunctionFacetsObjectsCurrent,
     TestingGetJobFunctionFacetsObjectsCurrentClasses,
+)
+from ._testing__get_manager_level import (
+    TestingGetManagerLevel,
+    TestingGetManagerLevelClasses,
+    TestingGetManagerLevelClassesObjects,
+)
+from ._testing__get_manager_responsibility import (
+    TestingGetManagerResponsibility,
+    TestingGetManagerResponsibilityClasses,
+    TestingGetManagerResponsibilityClassesObjects,
+)
+from ._testing__get_manager_type import (
+    TestingGetManagerType,
+    TestingGetManagerTypeClasses,
+    TestingGetManagerTypeClassesObjects,
 )
 from ._testing__get_org_unit_type import (
     TestingGetOrgUnitType,
@@ -79,6 +98,8 @@ from .get_org_unit import (
     GetOrgUnitOrgUnitsObjectsCurrentManagers,
     GetOrgUnitOrgUnitsObjectsCurrentManagersPerson,
     GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusers,
+    GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersItsystem,
+    GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersValidity,
     GetOrgUnitOrgUnitsObjectsCurrentParent,
 )
 from .get_org_unit_uuid_for_kle import (
@@ -339,6 +360,8 @@ __all__ = [
     "GetOrgUnitOrgUnitsObjectsCurrentManagers",
     "GetOrgUnitOrgUnitsObjectsCurrentManagersPerson",
     "GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusers",
+    "GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersItsystem",
+    "GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersValidity",
     "GetOrgUnitOrgUnitsObjectsCurrentParent",
     "GetOrgUnitUuidForKle",
     "GetOrgUnitUuidForKleKles",
@@ -473,6 +496,8 @@ __all__ = [
     "TestingCreateItSystemItsystemCreate",
     "TestingCreateItUser",
     "TestingCreateItUserItuserCreate",
+    "TestingCreateManager",
+    "TestingCreateManagerManagerCreate",
     "TestingCreateOrgUnit",
     "TestingCreateOrgUnitOrgUnitCreate",
     "TestingCreateOrgUnitRoot",
@@ -487,6 +512,15 @@ __all__ = [
     "TestingGetJobFunctionFacetsObjects",
     "TestingGetJobFunctionFacetsObjectsCurrent",
     "TestingGetJobFunctionFacetsObjectsCurrentClasses",
+    "TestingGetManagerLevel",
+    "TestingGetManagerLevelClasses",
+    "TestingGetManagerLevelClassesObjects",
+    "TestingGetManagerResponsibility",
+    "TestingGetManagerResponsibilityClasses",
+    "TestingGetManagerResponsibilityClassesObjects",
+    "TestingGetManagerType",
+    "TestingGetManagerTypeClasses",
+    "TestingGetManagerTypeClassesObjects",
     "TestingGetOrgUnitType",
     "TestingGetOrgUnitTypeClasses",
     "TestingGetOrgUnitTypeClassesObjects",

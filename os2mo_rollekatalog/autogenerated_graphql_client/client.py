@@ -18,6 +18,10 @@ from ._testing__create_it_user import (
     TestingCreateItUser,
     TestingCreateItUserItuserCreate,
 )
+from ._testing__create_manager import (
+    TestingCreateManager,
+    TestingCreateManagerManagerCreate,
+)
 from ._testing__create_org_unit import (
     TestingCreateOrgUnit,
     TestingCreateOrgUnitOrgUnitCreate,
@@ -33,6 +37,18 @@ from ._testing__get_engagement_type import (
 from ._testing__get_job_function import (
     TestingGetJobFunction,
     TestingGetJobFunctionFacets,
+)
+from ._testing__get_manager_level import (
+    TestingGetManagerLevel,
+    TestingGetManagerLevelClasses,
+)
+from ._testing__get_manager_responsibility import (
+    TestingGetManagerResponsibility,
+    TestingGetManagerResponsibilityClasses,
+)
+from ._testing__get_manager_type import (
+    TestingGetManagerType,
+    TestingGetManagerTypeClasses,
 )
 from ._testing__get_org_unit_type import (
     TestingGetOrgUnitType,
@@ -240,11 +256,16 @@ class GraphQLClient(AsyncBaseClient):
         return GetPersonUuidForEngagement.parse_obj(data).engagements
 
     async def get_org_unit(
-        self, uuid: UUID, root_uuid: UUID, ad_itsystem_user_key: str, now: datetime
+        self,
+        uuid: UUID,
+        root_uuid: UUID,
+        ad_itsystem_user_key: str,
+        fk_itsystem_user_key: str,
+        now: datetime,
     ) -> GetOrgUnitOrgUnits:
         query = gql(
             """
-            query GetOrgUnit($uuid: UUID!, $root_uuid: UUID!, $ad_itsystem_user_key: String!, $now: DateTime!) {
+            query GetOrgUnit($uuid: UUID!, $root_uuid: UUID!, $ad_itsystem_user_key: String!, $fk_itsystem_user_key: String!, $now: DateTime!) {
               org_units(
                 filter: {uuids: [$uuid], ancestor: {uuids: [$root_uuid]}, from_date: $now, to_date: null}
               ) {
@@ -259,9 +280,18 @@ class GraphQLClient(AsyncBaseClient):
                       person(filter: {from_date: $now, to_date: null}) {
                         uuid
                         itusers(
-                          filter: {itsystem: {user_keys: [$ad_itsystem_user_key]}, from_date: $now, to_date: null}
+                          filter: {itsystem: {user_keys: [$ad_itsystem_user_key, $fk_itsystem_user_key]}, from_date: $now, to_date: null}
                         ) {
+                          uuid
                           user_key
+                          external_id
+                          itsystem {
+                            user_key
+                          }
+                          validity {
+                            from
+                            to
+                          }
                         }
                       }
                     }
@@ -283,6 +313,7 @@ class GraphQLClient(AsyncBaseClient):
             "uuid": uuid,
             "root_uuid": root_uuid,
             "ad_itsystem_user_key": ad_itsystem_user_key,
+            "fk_itsystem_user_key": fk_itsystem_user_key,
             "now": now,
         }
         response = await self.execute(query=query, variables=variables)
@@ -345,6 +376,59 @@ class GraphQLClient(AsyncBaseClient):
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return TestingGetOrgUnitType.parse_obj(data).classes
+
+    async def _testing__get_manager_level(self) -> TestingGetManagerLevelClasses:
+        query = gql(
+            """
+            query _Testing_GetManagerLevel {
+              classes(filter: {facet_user_keys: "manager_level"}) {
+                objects {
+                  uuid
+                }
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return TestingGetManagerLevel.parse_obj(data).classes
+
+    async def _testing__get_manager_type(self) -> TestingGetManagerTypeClasses:
+        query = gql(
+            """
+            query _Testing_GetManagerType {
+              classes(filter: {facet_user_keys: "manager_type"}) {
+                objects {
+                  uuid
+                }
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return TestingGetManagerType.parse_obj(data).classes
+
+    async def _testing__get_manager_responsibility(
+        self,
+    ) -> TestingGetManagerResponsibilityClasses:
+        query = gql(
+            """
+            query _Testing_GetManagerResponsibility {
+              classes(filter: {facet_user_keys: "responsibility"}) {
+                objects {
+                  uuid
+                }
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return TestingGetManagerResponsibility.parse_obj(data).classes
 
     async def _testing__create_org_unit_root(
         self, name: str, root_uuid: UUID, org_unit_type: UUID
@@ -550,6 +634,40 @@ class GraphQLClient(AsyncBaseClient):
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return TestingCreateEngagement.parse_obj(data).engagement_create
+
+    async def _testing__create_manager(
+        self,
+        orgunit: UUID,
+        person: UUID,
+        manager_level: UUID,
+        manager_type: UUID,
+        responsibility: UUID,
+        from_: Union[Optional[datetime], UnsetType] = UNSET,
+        to: Union[Optional[datetime], UnsetType] = UNSET,
+    ) -> TestingCreateManagerManagerCreate:
+        query = gql(
+            """
+            mutation _Testing_CreateManager($orgunit: UUID!, $person: UUID!, $manager_level: UUID!, $manager_type: UUID!, $responsibility: UUID!, $from: DateTime = "2016-05-05", $to: DateTime = null) {
+              manager_create(
+                input: {org_unit: $orgunit, manager_level: $manager_level, manager_type: $manager_type, responsibility: [$responsibility], person: $person, validity: {from: $from, to: $to}}
+              ) {
+                uuid
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {
+            "orgunit": orgunit,
+            "person": person,
+            "manager_level": manager_level,
+            "manager_type": manager_type,
+            "responsibility": responsibility,
+            "from": from_,
+            "to": to,
+        }
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return TestingCreateManager.parse_obj(data).manager_create
 
     async def _testing__get_engagement_type(self) -> TestingGetEngagementTypeFacets:
         query = gql(

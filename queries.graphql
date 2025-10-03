@@ -127,6 +127,7 @@ query GetOrgUnit(
   $uuid: UUID!
   $root_uuid: UUID!
   $ad_itsystem_user_key: String!
+  $fk_itsystem_user_key: String!
   $now: DateTime!
 ) {
   org_units(
@@ -147,8 +148,17 @@ query GetOrgUnit(
         managers(filter: {from_date: $now, to_date: null}){
           person(filter: {from_date: $now, to_date: null}){
             uuid
-            itusers(filter: { itsystem: { user_keys: [$ad_itsystem_user_key] }, from_date: $now, to_date: null}) {
+            itusers(filter: { itsystem: { user_keys: [$ad_itsystem_user_key, $fk_itsystem_user_key] }, from_date: $now, to_date: null}) {
+              uuid
               user_key
+              external_id
+              itsystem {
+                user_key
+              }
+              validity {
+                from
+                to
+              }
             }
           }
         }
@@ -190,6 +200,31 @@ query GetOrgUnitUuidForManager($uuid: UUID!) {
 
 query _Testing_GetOrgUnitType {
   classes(filter: {facet_user_keys: "org_unit_type"}) {
+    objects {
+      uuid
+    }
+  }
+}
+
+query _Testing_GetManagerLevel {
+  classes(filter: {facet_user_keys: "manager_level"}) {
+    objects {
+      uuid
+    }
+  }
+}
+
+
+query _Testing_GetManagerType {
+  classes(filter: {facet_user_keys: "manager_type"}) {
+    objects {
+      uuid
+    }
+  }
+}
+
+query _Testing_GetManagerResponsibility {
+  classes(filter: {facet_user_keys: "responsibility"}) {
     objects {
       uuid
     }
@@ -267,6 +302,29 @@ mutation _Testing_UpdateItUserEngagements($uuid: UUID!, $engagements: [UUID!] $f
 mutation _Testing_CreateEngagement($orgunit: UUID!, $person: UUID!, $engagement_type: UUID!, $job_function: UUID!) {
   engagement_create(
     input: {org_unit: $orgunit, engagement_type: $engagement_type, job_function: $job_function, person: $person, validity: {from: "2016-05-05"}}
+  ) {
+    uuid
+  }
+}
+
+mutation _Testing_CreateManager(
+  $orgunit: UUID!
+  $person: UUID!
+  $manager_level: UUID!
+  $manager_type: UUID!
+  $responsibility: UUID!
+  $from: DateTime = "2016-05-05"
+  $to: DateTime = null
+) {
+  manager_create(
+    input: {
+      org_unit: $orgunit
+      manager_level: $manager_level
+      manager_type: $manager_type
+      responsibility: [$responsibility]
+      person: $person
+      validity: { from: $from, to: $to }
+    }
   ) {
     uuid
   }

@@ -135,6 +135,7 @@ async def org_unit(
             mo,
             ldap_client,
             settings.ad_itsystem_user_key,
+            settings.fk_itsystem_user_key,
             settings.root_org_unit,
             uuid,
         )
@@ -159,6 +160,7 @@ async def sync_org_unit_on_demand(
         periodic_sync,
         session,
         settings.ad_itsystem_user_key,
+        settings.fk_itsystem_user_key,
         settings.root_org_unit,
         uuid,
     )

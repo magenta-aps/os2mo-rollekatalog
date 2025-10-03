@@ -16,3 +16,15 @@ facets:
     Ansat:
       title: "Ansat"
       scope: "TEXT"
+  manager_level:
+    Niveau 1:
+      title: "Niveau 1"
+      scope: "TEXT"
+  manager_type:
+    Leder:
+      title: "Leder"
+      scope: "TEXT"
+  responsibility:
+    MUS:
+      title: "MUS"
+      scope: "TEXT"

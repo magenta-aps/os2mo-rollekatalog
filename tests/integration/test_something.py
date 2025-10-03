@@ -277,24 +277,27 @@ async def test_too_much(
             }
         ]
 
-        assert (await test_client.get(f"/cache/person/{fætter_højben}")).json() == [
+        fh_response = (await test_client.get(f"/cache/person/{fætter_højben}")).json()
+        for user in fh_response:
+            user["positions"] = sorted(
+                user["positions"], key=lambda p: p["orgUnitUuid"]
+            )
+        expected_fh_response = [
             {
                 "extUuid": str(fætter_external_id),
                 "userId": "FH",
                 "name": "Fætter Højben",
                 "email": None,
-                "positions": [
-                    {
-                        "name": job_function.user_key,
-                        "orgUnitUuid": str(layer1_2),
-                    },
-                    {
-                        "name": job_function.user_key,
-                        "orgUnitUuid": str(layer3_1),
-                    },
-                ],
+                "positions": sorted(
+                    [
+                        {"name": job_function.user_key, "orgUnitUuid": str(layer1_2)},
+                        {"name": job_function.user_key, "orgUnitUuid": str(layer3_1)},
+                    ],
+                    key=lambda p: p["orgUnitUuid"],
+                ),
             }
         ]
+        assert fh_response == expected_fh_response
 
     await verify_users()
 
@@ -320,6 +323,34 @@ async def test_too_much(
         ]
 
     await verify_users_post_update()
+
+    manager_level = (await graphql_client._testing__get_manager_level()).objects[0].uuid
+
+    manager_type = (await graphql_client._testing__get_manager_type()).objects[0].uuid
+    responsibility = (
+        (await graphql_client._testing__get_manager_responsibility()).objects[0].uuid
+    )
+    await graphql_client._testing__create_manager(
+        layer1_2, anders_and, manager_level, manager_type, responsibility
+    )
+
+    @retry()
+    async def verify_manager() -> None:
+        assert (await test_client.get(f"/cache/org_unit/{layer1_2}")).json() == {
+            "uuid": str(layer1_2),
+            "name": "Layer 1 - Unit 2",
+            "parentOrgUnitUuid": str(root_uuid),
+            "manager": {
+                "id": 1,
+                "org_unit_id": 7,
+                "uuid": str(anders_external_id),
+                "userId": "AA",
+            },
+            "klePerforming": [],
+            "kleInterest": [],
+        }
+
+    await verify_manager()
 
     # Move org out of synced tree. This should also remove our users from cache
     await graphql_client._testing__move_org_unit_to_root(layer1_2)

@@ -13,6 +13,8 @@ from sqlalchemy.orm import selectinload
 from os2mo_rollekatalog import depends
 from os2mo_rollekatalog.junkyard import NoSuitableSamAccount
 from os2mo_rollekatalog.junkyard import WillNotSync
+from os2mo_rollekatalog.junkyard import resolve_samaccounts
+from os2mo_rollekatalog.junkyard import select_relevant
 from os2mo_rollekatalog.models import Manager
 from os2mo_rollekatalog.models import OrgUnit
 from os2mo_rollekatalog.models import OrgUnitName
@@ -32,6 +34,7 @@ async def get_org_unit(
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
     ad_itsystem_user_key: str,
+    fk_itsystem_user_key: str,
     root_org_unit: UUID,
     org_unit_uuid: UUID,
 ) -> OrgUnit:
@@ -39,6 +42,7 @@ async def get_org_unit(
         org_unit_uuid,
         root_org_unit,
         ad_itsystem_user_key,
+        fk_itsystem_user_key,
         datetime.now(),
     )
 
@@ -65,9 +69,15 @@ async def get_org_unit(
                         raise NoSuitableSamAccount(
                             f"no suitable SAM-Account found for {person.itusers=}"
                         )
+                    itusers, samaccounts = resolve_samaccounts(
+                        person.itusers, ad_itsystem_user_key, fk_itsystem_user_key
+                    )
+                    relevant_itusers = select_relevant(itusers)
+                    extUuid = samaccounts.get(one(relevant_itusers).user_key)
+
                     return Manager(
-                        uuid=person.uuid,
-                        userId=SamAccountName(person.itusers[-1].user_key),
+                        uuid=extUuid,
+                        userId=SamAccountName(one(relevant_itusers).user_key),
                     )
         return None
 
@@ -108,6 +118,7 @@ async def sync_org_unit(
     periodic_sync: depends.PeriodicSync,
     session: depends.Session,
     ad_itsystem_user_key: str,
+    fk_itsystem_user_key: str,
     root_org_unit: UUID,
     org_unit_uuid: UUID,
 ) -> None:
@@ -116,6 +127,7 @@ async def sync_org_unit(
             mo,
             ldap_client,
             ad_itsystem_user_key,
+            fk_itsystem_user_key,
             root_org_unit,
             org_unit_uuid,
         )
@@ -148,6 +160,7 @@ async def sync_org_unit(
                 periodic_sync,
                 session,
                 ad_itsystem_user_key,
+                fk_itsystem_user_key,
                 root_org_unit,
                 child_uuid,
             )
