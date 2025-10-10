@@ -159,6 +159,18 @@ query GetOrgUnit(
                 from
                 to
               }
+              engagements(filter: { org_unit: {uuids: $uuid}}, from_date: $now, to_date: null }) {
+                current {
+                  org_unit(
+                    filter: {
+                      from_date: $now
+                      to_date: null
+                    }
+                  ) {
+                      uuid
+                  }
+                }
+              }
             }
           }
         }
@@ -281,8 +293,8 @@ mutation _Testing_CreateItSystem($name: String!) {
 }
 
 
-mutation _Testing_CreateItUser($itsystem: UUID!, $external_id: String!, $person: UUID!, $name: String!, $engagements: [UUID!], $from: DateTime = "2025-02-08") {
-  ituser_create(input: {user_key: $name, external_id: $external_id, itsystem: $itsystem, person: $person, engagements: $engagements, validity: {from: $from}}) {
+mutation _Testing_CreateItUser($uuid: UUID, $itsystem: UUID!, $external_id: String!, $person: UUID!, $name: String!, $engagements: [UUID!], $from: DateTime = "2025-02-08") {
+  ituser_create(input: {uuid: $uuid, user_key: $name, external_id: $external_id, itsystem: $itsystem, person: $person, engagements: $engagements, validity: {from: $from}}) {
     uuid
   }
 }

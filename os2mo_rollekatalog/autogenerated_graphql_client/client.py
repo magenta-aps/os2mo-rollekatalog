@@ -292,6 +292,13 @@ class GraphQLClient(AsyncBaseClient):
                             from
                             to
                           }
+                          engagements(filter: {from_date: $now, to_date: null}) {
+                            current {
+                              org_unit(filter: {from_date: $now, to_date: null}) {
+                                uuid
+                              }
+                            }
+                          }
                         }
                       }
                     }
@@ -540,14 +547,15 @@ class GraphQLClient(AsyncBaseClient):
         external_id: str,
         person: UUID,
         name: str,
+        uuid: Union[Optional[UUID], UnsetType] = UNSET,
         engagements: Union[Optional[List[UUID]], UnsetType] = UNSET,
         from_: Union[Optional[datetime], UnsetType] = UNSET,
     ) -> TestingCreateItUserItuserCreate:
         query = gql(
             """
-            mutation _Testing_CreateItUser($itsystem: UUID!, $external_id: String!, $person: UUID!, $name: String!, $engagements: [UUID!], $from: DateTime = "2025-02-08") {
+            mutation _Testing_CreateItUser($uuid: UUID, $itsystem: UUID!, $external_id: String!, $person: UUID!, $name: String!, $engagements: [UUID!], $from: DateTime = "2025-02-08") {
               ituser_create(
-                input: {user_key: $name, external_id: $external_id, itsystem: $itsystem, person: $person, engagements: $engagements, validity: {from: $from}}
+                input: {uuid: $uuid, user_key: $name, external_id: $external_id, itsystem: $itsystem, person: $person, engagements: $engagements, validity: {from: $from}}
               ) {
                 uuid
               }
@@ -555,6 +563,7 @@ class GraphQLClient(AsyncBaseClient):
             """
         )
         variables: dict[str, object] = {
+            "uuid": uuid,
             "itsystem": itsystem,
             "external_id": external_id,
             "person": person,

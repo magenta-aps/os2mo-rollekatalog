@@ -73,11 +73,20 @@ async def get_org_unit(
                         person.itusers, ad_itsystem_user_key, fk_itsystem_user_key
                     )
                     relevant_itusers = select_relevant(itusers)
-                    extUuid = samaccounts.get(one(relevant_itusers).user_key)
+                    sorted_itusers = sorted(
+                        relevant_itusers, key=lambda iu: str(iu.uuid)
+                    )
+                    chosen_ituser = sorted_itusers[0]
+                    if not chosen_ituser.engagements:
+                        continue
+
+                    extUuid = samaccounts.get(chosen_ituser.user_key)
+                    if extUuid is None:
+                        continue
 
                     return Manager(
                         uuid=extUuid,
-                        userId=SamAccountName(one(relevant_itusers).user_key),
+                        userId=SamAccountName(chosen_ituser.user_key),
                     )
         return None
 
