@@ -163,6 +163,11 @@ async def test_too_much(
         .objects[0]
         .current.classes[0]  # type: ignore
     )
+    joakim_eng = (
+        await graphql_client._testing__create_engagement(
+            layer2_1, joakim, engagement_type, job_function.uuid
+        )
+    ).uuid
     anders_and_eng = (
         await graphql_client._testing__create_engagement(
             layer1_2, anders_and, engagement_type, job_function.uuid
@@ -188,33 +193,60 @@ async def test_too_much(
     AD = (await graphql_client._testing__create_it_system("Active Directory")).uuid
     FK = (await graphql_client._testing__create_it_system("FK ORG")).uuid
 
+    joakim_object_guid = uuid.uuid4()
     await graphql_client._testing__create_it_user(
-        AD, str(uuid.uuid4()), joakim, "JvA", []
+        AD, str(joakim_object_guid), joakim, "JvA", None, [joakim_eng]
+    )
+    await graphql_client._testing__create_it_user(
+        FK, "", joakim, str(joakim_object_guid), None, [joakim_eng]
     )
 
     anders_object_guid = uuid.uuid4()
     anders_external_id = uuid.uuid4()
     await graphql_client._testing__create_it_user(
-        AD, str(anders_object_guid), anders_and, "AA", [anders_and_eng]
+        AD,
+        str(anders_object_guid),
+        anders_and,
+        "AA",
+        uuid.UUID("00000000-0000-0000-0000-000000000002"),
+        [anders_and_eng],
     )
     await graphql_client._testing__create_it_user(
         FK,
         str(anders_external_id),
         anders_and,
         str(anders_object_guid),
+        None,
         [anders_and_eng],
+    )
+
+    await graphql_client._testing__create_it_user(
+        AD,
+        str(anders_object_guid),
+        anders_and,
+        "AA2",
+        uuid.UUID("00000000-0000-0000-0000-000000000001"),
+        [anders_and_eng],
+    )
+    await graphql_client._testing__create_it_user(
+        FK,
+        str(anders_external_id),
+        anders_and,
+        str(anders_object_guid),
+        engagements=[anders_and_eng],
     )
 
     fedtmule_object_guid = uuid.uuid4()
     fedtmule_external_id = uuid.uuid4()
     fedtmule_ad_ituser = await graphql_client._testing__create_it_user(
-        AD, str(fedtmule_object_guid), fedtmule, "FM", [fedtmule_eng]
+        AD, str(fedtmule_object_guid), fedtmule, "FM", None, [fedtmule_eng]
     )
     await graphql_client._testing__create_it_user(
         FK,
         str(fedtmule_external_id),
         fedtmule,
         str(fedtmule_object_guid),
+        None,
         [fedtmule_eng],
     )
     await graphql_client._testing__update_it_user(
@@ -229,6 +261,7 @@ async def test_too_much(
             str(fætter_object_guid),
             fætter_højben,
             "FH",
+            None,
             [fætter_eng_1, fætter_eng_2],
             datetime.now() + timedelta(days=365),
         )
@@ -238,6 +271,7 @@ async def test_too_much(
         str(fætter_external_id),
         fætter_højben,
         str(fætter_object_guid),
+        None,
         [fætter_eng_1, fætter_eng_2],
     )
 
@@ -330,12 +364,24 @@ async def test_too_much(
     responsibility = (
         (await graphql_client._testing__get_manager_responsibility()).objects[0].uuid
     )
+    # Create manager WITHOUT extUuid (Should be skipped)
+    await graphql_client._testing__create_manager(
+        layer2_1, joakim, manager_level, manager_type, responsibility
+    )
     await graphql_client._testing__create_manager(
         layer1_2, anders_and, manager_level, manager_type, responsibility
     )
 
     @retry()
     async def verify_manager() -> None:
+        assert (await test_client.get(f"/cache/org_unit/{layer2_1}")).json() == {
+            "uuid": str(layer2_1),
+            "name": "Layer 2 - Unit 1",
+            "parentOrgUnitUuid": str(layer1_2),
+            "manager": None,
+            "klePerforming": [],
+            "kleInterest": [],
+        }
         assert (await test_client.get(f"/cache/org_unit/{layer1_2}")).json() == {
             "uuid": str(layer1_2),
             "name": "Layer 1 - Unit 2",
@@ -344,7 +390,7 @@ async def test_too_much(
                 "id": 1,
                 "org_unit_id": 7,
                 "uuid": str(anders_external_id),
-                "userId": "AA",
+                "userId": "AA2",
             },
             "klePerforming": [],
             "kleInterest": [],

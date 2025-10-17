@@ -46,6 +46,9 @@ class GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusers(BaseModel):
     external_id: Optional[str]
     itsystem: "GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersItsystem"
     validity: "GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersValidity"
+    engagements: List[
+        "GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersEngagements"
+    ]
 
 
 class GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersItsystem(BaseModel):
@@ -55,6 +58,26 @@ class GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersItsystem(BaseModel):
 class GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersValidity(BaseModel):
     from_: datetime = Field(alias="from")
     to: Optional[datetime]
+
+
+class GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersEngagements(BaseModel):
+    current: Optional[
+        "GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersEngagementsCurrent"
+    ]
+
+
+class GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersEngagementsCurrent(
+    BaseModel
+):
+    org_unit: List[
+        "GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersEngagementsCurrentOrgUnit"
+    ]
+
+
+class GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersEngagementsCurrentOrgUnit(
+    BaseModel
+):
+    uuid: UUID
 
 
 class GetOrgUnitOrgUnitsObjectsCurrentKles(BaseModel):
@@ -80,6 +103,9 @@ GetOrgUnitOrgUnitsObjectsCurrentManagersPerson.update_forward_refs()
 GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusers.update_forward_refs()
 GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersItsystem.update_forward_refs()
 GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersValidity.update_forward_refs()
+GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersEngagements.update_forward_refs()
+GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersEngagementsCurrent.update_forward_refs()
+GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersEngagementsCurrentOrgUnit.update_forward_refs()
 GetOrgUnitOrgUnitsObjectsCurrentKles.update_forward_refs()
 GetOrgUnitOrgUnitsObjectsCurrentKlesKleNumber.update_forward_refs()
 GetOrgUnitOrgUnitsObjectsCurrentKlesKleAspects.update_forward_refs()
