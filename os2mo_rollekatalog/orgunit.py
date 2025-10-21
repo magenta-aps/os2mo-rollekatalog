@@ -76,6 +76,8 @@ async def get_org_unit(
                     sorted_itusers = sorted(
                         relevant_itusers, key=lambda iu: str(iu.uuid)
                     )
+                    if not len(sorted_itusers):
+                        continue
                     chosen_ituser = sorted_itusers[0]
                     if not chosen_ituser.engagements:
                         continue

@@ -126,7 +126,7 @@ def select_relevant(
     otherwise pick the earliest future version.
     """
 
-    now = datetime.now(ZoneInfo("Europe/Copenhagen"))
+    now = datetime.now(ZoneInfo("Europe/Copenhagen")).date()
     grouped: dict[UUID, list] = defaultdict(list)
     for object in objects:
         grouped[object.uuid].append(object)
@@ -138,8 +138,8 @@ def select_relevant(
         current = [
             version
             for version in versions
-            if version.validity.from_ <= now
-            and (version.validity.to is None or now < version.validity.to)
+            if version.validity.from_.date() <= now
+            and (version.validity.to is None or now < version.validity.to.date())
         ]
 
         if current:
@@ -147,7 +147,9 @@ def select_relevant(
             continue
 
         # Otherwise pick the soonest future version, if any
-        future = [version for version in versions if version.validity.from_ > now]
+        future = [
+            version for version in versions if version.validity.from_.date() > now
+        ]
         if future:
             result.append(min(future, key=lambda version: version.validity.from_))
         else:
