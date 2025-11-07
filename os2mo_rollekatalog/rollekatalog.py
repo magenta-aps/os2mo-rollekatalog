@@ -126,6 +126,7 @@ class PeriodicSync:
                     "/api/organisation/v3",
                     payload,
                 )
+                logger.info("Upload successful")
                 dipex_last_success_timestamp.set_to_current_time()
             except HTTPStatusError as e:
                 logger.warning("Failed to upload organisation", exception=str(e))
