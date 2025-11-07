@@ -33,11 +33,13 @@ RollekatalogClient = NewType("RollekatalogClient", AsyncClient)
 
 
 def create_authenticated_client(
-    sync_enabled: bool, base_url: AnyHttpUrl, api_key: SecretStr
+    sync_enabled: bool, base_url: AnyHttpUrl, api_key: SecretStr, httpx_timeout: int
 ) -> RollekatalogClient:
     if sync_enabled:
         client = AsyncClient(
-            base_url=base_url, headers={"ApiKey": api_key.get_secret_value()}
+            base_url=base_url,
+            headers={"ApiKey": api_key.get_secret_value()},
+            timeout=httpx_timeout,
         )
     else:
 
