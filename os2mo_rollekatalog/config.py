@@ -62,3 +62,4 @@ class _Settings(BaseSettings):
     ldap_url: AnyHttpUrl | None = Field(
         None, description="Optional base url for LDAP integration."
     )
+    httpx_timeout: int = Field(30, description="Timeout when we sync to Rollekatalog.")

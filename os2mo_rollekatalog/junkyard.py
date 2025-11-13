@@ -11,9 +11,12 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from collections import defaultdict
 from more_itertools import one
+import structlog
 
 from httpx import AsyncClient
 from pydantic import AnyHttpUrl
+
+logger = structlog.stdlib.get_logger(__name__)
 
 
 T = TypeVar("T", covariant=True)
@@ -153,8 +156,9 @@ def select_relevant(
         if future:
             result.append(min(future, key=lambda version: version.validity.from_))
         else:
-            raise NotImplementedError(
+            logger.info(
                 f"No current or future found for {uuid} with versions: {versions}"
             )
+            continue
 
     return result
