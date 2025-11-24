@@ -18,7 +18,7 @@ variables:
   IMAGE_SHA: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}
 
   PRODUCT: os2mo
-  COMPONENT: rollekatalog
+  COMPONENT: os2mo-rollekatalog
 
   PYTEST_COV_MODULE: os2mo_rollekatalog
   PYTEST_COV_FAIL_UNDER: 0
@@ -50,7 +50,7 @@ include:
       - gitlab-ci-templates/common/docker-build.v1.yml
       - gitlab-ci-templates/common/docker-release.v1.yml
       - gitlab-ci-templates/common/config-updater-salt.v1.yml
-      - gitlab-ci-templates/common/config-updater-flux.v1.yml
+      # - gitlab-ci-templates/common/config-updater-flux.v1.yml
   - project: labs/salt-automation
     file:
       - gitlab-ci-templates/common/pre-commit.v1.yml
