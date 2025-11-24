@@ -18,7 +18,7 @@ variables:
   IMAGE_SHA: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}
 
   PRODUCT: os2mo
-  COMPONENT: rollekatalog
+  COMPONENT: os2mo-rollekatalog
 
   PYTEST_COV_MODULE: os2mo_rollekatalog
   PYTEST_COV_FAIL_UNDER: 0
