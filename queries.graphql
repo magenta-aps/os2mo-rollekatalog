@@ -145,6 +145,15 @@ query GetOrgUnit(
         parent {
           uuid
         }
+        unit_type {
+          uuid
+        }
+        ancestors {
+          uuid
+          unit_type {
+            uuid
+          }
+        }
         managers(filter: {from_date: $now, to_date: null}){
           person(filter: {from_date: $now, to_date: null}){
             uuid
@@ -159,7 +168,7 @@ query GetOrgUnit(
                 from
                 to
               }
-              engagements(filter: { org_unit: {uuids: $uuid}}, from_date: $now, to_date: null }) {
+              engagements(filter: { org_unit: {uuids: [$uuid]}, from_date: $now, to_date: null }) {
                 current {
                   org_unit(
                     filter: {
@@ -215,6 +224,22 @@ query _Testing_GetOrgUnitType {
     objects {
       uuid
     }
+  }
+}
+
+query _Testing_GetOrgUnitTypeFacetUUID {
+  facets(filter: {user_keys: "org_unit_type"}) {
+    objects {
+      uuid
+    }
+  }
+}
+
+mutation _Testing_CreateOrgUnitType($facet_uuid: UUID!, $uuid: UUID!) {
+  class_create(
+    input: {name: "Udgået", user_key: "Udgået", facet_uuid: $facet_uuid, uuid: $uuid, validity: {from: "2010-02-03"}}
+  ) {
+    uuid
   }
 }
 

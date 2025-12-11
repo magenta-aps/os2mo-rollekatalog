@@ -137,6 +137,7 @@ async def org_unit(
             settings.ad_itsystem_user_key,
             settings.fk_itsystem_user_key,
             settings.root_org_unit,
+            settings.exclude_unit_type,
             uuid,
         )
     except WillNotSync as e:
@@ -162,6 +163,7 @@ async def sync_org_unit_on_demand(
         settings.ad_itsystem_user_key,
         settings.fk_itsystem_user_key,
         settings.root_org_unit,
+        settings.exclude_unit_type,
         uuid,
     )
 
