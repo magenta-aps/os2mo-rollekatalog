@@ -23,11 +23,16 @@ class GetOrgUnitOrgUnitsObjectsCurrent(BaseModel):
     uuid: UUID
     name: str
     parent: Optional["GetOrgUnitOrgUnitsObjectsCurrentParent"]
+    unit_type: Optional["GetOrgUnitOrgUnitsObjectsCurrentUnitType"]
     managers: List["GetOrgUnitOrgUnitsObjectsCurrentManagers"]
     kles: List["GetOrgUnitOrgUnitsObjectsCurrentKles"]
 
 
 class GetOrgUnitOrgUnitsObjectsCurrentParent(BaseModel):
+    uuid: UUID
+
+
+class GetOrgUnitOrgUnitsObjectsCurrentUnitType(BaseModel):
     uuid: UUID
 
 
@@ -98,6 +103,7 @@ GetOrgUnitOrgUnits.update_forward_refs()
 GetOrgUnitOrgUnitsObjects.update_forward_refs()
 GetOrgUnitOrgUnitsObjectsCurrent.update_forward_refs()
 GetOrgUnitOrgUnitsObjectsCurrentParent.update_forward_refs()
+GetOrgUnitOrgUnitsObjectsCurrentUnitType.update_forward_refs()
 GetOrgUnitOrgUnitsObjectsCurrentManagers.update_forward_refs()
 GetOrgUnitOrgUnitsObjectsCurrentManagersPerson.update_forward_refs()
 GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusers.update_forward_refs()

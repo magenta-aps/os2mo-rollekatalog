@@ -36,6 +36,7 @@ async def get_org_unit(
     ad_itsystem_user_key: str,
     fk_itsystem_user_key: str,
     root_org_unit: UUID,
+    filter_unit_type: UUID,
     org_unit_uuid: UUID,
 ) -> OrgUnit:
     result = await mo.get_org_unit(
@@ -52,6 +53,15 @@ async def get_org_unit(
     org_unit = one(result.objects).current
     if org_unit is None:
         raise WillNotSync("Org unit does not exist now or in the future.")
+
+    if (
+        filter_unit_type
+        and org_unit.unit_type
+        and org_unit.unit_type.uuid == filter_unit_type
+    ):
+        raise WillNotSync(
+            f"Skipping sync for org_unit, due to unit_type filter: {org_unit.uuid}"
+        )
 
     if org_unit.uuid == root_org_unit or org_unit.parent is None:
         parent_uuid = None
@@ -131,6 +141,7 @@ async def sync_org_unit(
     ad_itsystem_user_key: str,
     fk_itsystem_user_key: str,
     root_org_unit: UUID,
+    filter_unit_type: UUID,
     org_unit_uuid: UUID,
 ) -> None:
     try:
@@ -140,6 +151,7 @@ async def sync_org_unit(
             ad_itsystem_user_key,
             fk_itsystem_user_key,
             root_org_unit,
+            filter_unit_type,
             org_unit_uuid,
         )
     except WillNotSync:
@@ -173,6 +185,7 @@ async def sync_org_unit(
                 ad_itsystem_user_key,
                 fk_itsystem_user_key,
                 root_org_unit,
+                filter_unit_type,
                 child_uuid,
             )
 
