@@ -98,6 +98,7 @@ async def handle_ituser(
                     settings.root_org_unit,
                     settings.exclude_unit_type,
                     engagement.org_unit_uuid,
+                    settings.external_roots,
                 )
 
 
@@ -171,6 +172,7 @@ async def handle_org_unit(
         settings.root_org_unit,
         settings.exclude_unit_type,
         org_unit_uuid,
+        settings.external_roots,
     )
 
 
@@ -195,6 +197,7 @@ async def handle_kle(
             settings.root_org_unit,
             settings.exclude_unit_type,
             kle.org_unit_uuid,
+            settings.external_roots,
         )
 
 
@@ -219,4 +222,5 @@ async def handle_manager(
             settings.root_org_unit,
             settings.exclude_unit_type,
             manager.org_unit_uuid,
+            settings.external_roots,
         )

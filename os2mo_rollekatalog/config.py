@@ -45,6 +45,11 @@ class _Settings(BaseSettings):
         description="Root in OS2mo. Only sync this org unit, and units below."
     )
 
+    external_roots: list[UUID] = Field(
+        [],
+        description="List of external pseudo root UUIDs. Pseudo roots will be placed under ROOT_ORG_UNIT in Rollekatalog.",
+    )
+
     ad_itsystem_user_key: str = Field(
         description="Designed to sync AD GUIDs to Rollekatalog, this value represents the user key of the AD itsystem in OS2mo."
     )
