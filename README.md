@@ -26,8 +26,8 @@ can be given as JSON strings, as specified by Pydantic's settings parser.
 In development, Rollekatalog is started on http://localhost:8090 and
 SimpleSAMLphp on http://localhost:8050. The dev environment is configured for
 OS2mos "Kolding" test dataset. In there, the user Ludvig is expected to be
-syncronised to Rollekatalog. Run `./dev-environment/devtool` to force sync
-Ludvig and make him administrator in Rollekatalog.
+syncronised to Rollekatalog. Run `./dev-environment/devtool` to make the needed changes
+to his IT-users, force sync of Ludvig and make him administrator in Rollekatalog.
 
 
 ## Full synchronization

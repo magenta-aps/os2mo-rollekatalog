@@ -2,6 +2,105 @@
 
 set -eo pipefail
 
+printf "Sleeping for Rollekatalog, this could take a while...\n";
+until curl --silent --output /dev/null http://localhost:8090/; do
+    sleep 1;
+done
+
+REALM="mo"
+BASEURL="http://localhost:5000/auth"
+TOKEN_URL="${BASEURL}/realms/${REALM}/protocol/openid-connect/token"
+CLIENT_ID="dipex"
+CLIENT_SECRET="603f1c82-d012-4d04-9382-dbe659c533fb"
+GRAPHQL_URL="http://localhost:5000/graphql/v25"
+
+# --- Helper Function for GraphQL ---
+# Arguments: $1 = GraphQL Query String
+run_graphql() {
+    local QUERY="$1"
+    local PAYLOAD
+
+    # Safely create JSON payload using jq
+    PAYLOAD=$(jq -n --arg q "$QUERY" '{query: $q}')
+
+    printf "Sending GraphQL Mutation...\n"
+
+    # Run curl, capture response
+    local RESPONSE
+    RESPONSE=$(curl -s -X POST "${GRAPHQL_URL}" \
+      -H "Authorization: bearer ${TOKEN}" \
+      -H "Content-Type: application/json" \
+      -d "$PAYLOAD")
+
+    # Check if the response contains "errors"
+    # We use printf "%s" to pipe the variable safely into jq
+    if printf "%s" "$RESPONSE" | jq -e '.errors' > /dev/null; then
+        printf "Error in GraphQL response:\n"
+        printf "%s" "$RESPONSE" | jq .
+        exit 1
+    fi
+
+    printf "%s" "$RESPONSE" | jq '.'
+}
+
+printf "Requesting Token...\n"
+
+AUTH_RESPONSE=$(curl -s -X POST "${TOKEN_URL}" \
+  -d "grant_type=client_credentials" \
+  -d "client_id=${CLIENT_ID}" \
+  -d "client_secret=${CLIENT_SECRET}")
+
+# Extract token using printf to pipe safely to jq
+TOKEN=$(printf "%s" "$AUTH_RESPONSE" | jq -r '.access_token')
+
+if [ "$TOKEN" == "null" ] || [ -z "$TOKEN" ]; then
+  printf "Error fetching token:\n"
+  printf "%s" "$AUTH_RESPONSE" | jq .
+  exit 1
+fi
+printf "Token received.\n"
+
+
+# Mutation 1: Update AD IT-User
+MUTATION_1='
+mutation {
+  ituser_update(
+    input: {
+      uuid: "7e92809a-ad18-44b1-a521-3158ee64c7f7"
+      validity: {from: "1997-09-13"}
+      engagement: "9a850987-0dda-4f98-8e22-c6267d4834c5"
+      external_id: "3c6c1b1f-a697-449f-9479-4d86fbb5a3b7"
+    }
+  ) {
+    uuid
+  }
+}
+'
+
+# Mutation 2: Update FK IT-User
+MUTATION_2='
+mutation {
+  ituser_update(
+    input: {
+      uuid: "70827886-040b-4897-b138-3247f4291753"
+      validity: {from: "1997-09-13"}
+      user_key: "3c6c1b1f-a697-449f-9479-4d86fbb5a3b7"
+      external_id: "5028c151-0919-4452-8220-fa8d32f00fe2"
+    }
+  ) {
+    uuid
+  }
+}
+'
+
+printf "Executing Mutation 1 (AD)\n"
+run_graphql "$MUTATION_1"
+
+printf "Executing Mutation 2 (FK) \n"
+run_graphql "$MUTATION_2"
+
+printf "GraphQL adjustments completed.\n"
+
 printf "Requesting sync of Ludvigs OU\n"
 syncorg=$(curl -s -X POST 'http://localhost:8000/sync/org_unit/7a8e45f7-4de0-44c8-990f-43c0565ee505')
 if [ "$syncorg" != "null" ]; then
