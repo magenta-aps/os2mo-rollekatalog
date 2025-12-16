@@ -21,6 +21,7 @@ async def test_too_much(
     graphql_client: GraphQLClient,
     root_uuid: uuid.UUID,
     exclude_unit_type: uuid.UUID,
+    external_roots: list[uuid.UUID],
 ) -> None:
     # Create org hierarchy
     org_unit_type_uuid = (
@@ -83,6 +84,20 @@ async def test_too_much(
             org_unit_type=org_unit_type_uuid,
         )
     ).uuid
+    external_root = (
+        await graphql_client._testing__create_org_unit_root(
+            name="External root",
+            root_uuid=external_roots[0],
+            org_unit_type=org_unit_type_uuid,
+        )
+    ).uuid
+    external_layer1_1 = (
+        await graphql_client._testing__create_org_unit(
+            name="External Layer 1 - Unit 1",
+            parent=external_root,
+            org_unit_type=org_unit_type_uuid,
+        )
+    ).uuid
 
     @retry()
     async def validate_hierarchy() -> None:
@@ -128,6 +143,24 @@ async def test_too_much(
         }
         assert (await test_client.get(f"/cache/org_unit/{layer1_3}")).json() is None
         assert (await test_client.get(f"/cache/org_unit/{layer2_3}")).json() is None
+        assert (await test_client.get(f"/cache/org_unit/{external_root}")).json() == {
+            "uuid": str(external_root),
+            "name": "External root",
+            "parentOrgUnitUuid": str(root_uuid),
+            "manager": None,
+            "klePerforming": [],
+            "kleInterest": [],
+        }
+        assert (
+            await test_client.get(f"/cache/org_unit/{external_layer1_1}")
+        ).json() == {
+            "uuid": str(external_layer1_1),
+            "name": "External Layer 1 - Unit 1",
+            "parentOrgUnitUuid": str(external_root),
+            "manager": None,
+            "klePerforming": [],
+            "kleInterest": [],
+        }
 
     await validate_hierarchy()
 
@@ -415,7 +448,7 @@ async def test_too_much(
             "parentOrgUnitUuid": str(root_uuid),
             "manager": {
                 "id": 1,
-                "org_unit_id": 7,
+                "org_unit_id": 9,
                 "uuid": str(anders_external_id),
                 "userId": "AA2",
             },
