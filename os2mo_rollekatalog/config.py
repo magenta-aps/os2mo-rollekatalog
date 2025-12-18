@@ -51,6 +51,10 @@ class _Settings(BaseSettings):
     fk_itsystem_user_key: str = Field(
         description="Designed to sync AD GUIDs to Rollekatalog, this value represents the user key of the FK itsystem in OS2mo."
     )
+    exclude_unit_type: UUID | None = Field(
+        None,
+        description="UUID of `unit_type` to ignore. If a unit has this type the unit (including it's children) will not be synced",
+    )
     prefer_nickname: bool = Field(
         False,
         description="Whether to sync the *name* or *nickname* of OS2mo to Rollekatalog.",

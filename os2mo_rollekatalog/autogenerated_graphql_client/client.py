@@ -30,6 +30,10 @@ from ._testing__create_org_unit_root import (
     TestingCreateOrgUnitRoot,
     TestingCreateOrgUnitRootOrgUnitCreate,
 )
+from ._testing__create_org_unit_type import (
+    TestingCreateOrgUnitType,
+    TestingCreateOrgUnitTypeClassCreate,
+)
 from ._testing__get_engagement_type import (
     TestingGetEngagementType,
     TestingGetEngagementTypeFacets,
@@ -53,6 +57,10 @@ from ._testing__get_manager_type import (
 from ._testing__get_org_unit_type import (
     TestingGetOrgUnitType,
     TestingGetOrgUnitTypeClasses,
+)
+from ._testing__get_org_unit_type_facet_u_u_i_d import (
+    TestingGetOrgUnitTypeFacetUUID,
+    TestingGetOrgUnitTypeFacetUUIDFacets,
 )
 from ._testing__move_org_unit_to_root import (
     TestingMoveOrgUnitToRoot,
@@ -276,6 +284,15 @@ class GraphQLClient(AsyncBaseClient):
                     parent {
                       uuid
                     }
+                    unit_type {
+                      uuid
+                    }
+                    ancestors {
+                      uuid
+                      unit_type {
+                        uuid
+                      }
+                    }
                     managers(filter: {from_date: $now, to_date: null}) {
                       person(filter: {from_date: $now, to_date: null}) {
                         uuid
@@ -292,7 +309,9 @@ class GraphQLClient(AsyncBaseClient):
                             from
                             to
                           }
-                          engagements(filter: {from_date: $now, to_date: null}) {
+                          engagements(
+                            filter: {org_unit: {uuids: [$uuid]}, from_date: $now, to_date: null}
+                          ) {
                             current {
                               org_unit(filter: {from_date: $now, to_date: null}) {
                                 uuid
@@ -383,6 +402,44 @@ class GraphQLClient(AsyncBaseClient):
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return TestingGetOrgUnitType.parse_obj(data).classes
+
+    async def _testing__get_org_unit_type_facet_u_u_i_d(
+        self,
+    ) -> TestingGetOrgUnitTypeFacetUUIDFacets:
+        query = gql(
+            """
+            query _Testing_GetOrgUnitTypeFacetUUID {
+              facets(filter: {user_keys: "org_unit_type"}) {
+                objects {
+                  uuid
+                }
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return TestingGetOrgUnitTypeFacetUUID.parse_obj(data).facets
+
+    async def _testing__create_org_unit_type(
+        self, facet_uuid: UUID, uuid: UUID
+    ) -> TestingCreateOrgUnitTypeClassCreate:
+        query = gql(
+            """
+            mutation _Testing_CreateOrgUnitType($facet_uuid: UUID!, $uuid: UUID!) {
+              class_create(
+                input: {name: "Udgået", user_key: "Udgået", facet_uuid: $facet_uuid, uuid: $uuid, validity: {from: "2010-02-03"}}
+              ) {
+                uuid
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {"facet_uuid": facet_uuid, "uuid": uuid}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return TestingCreateOrgUnitType.parse_obj(data).class_create
 
     async def _testing__get_manager_level(self) -> TestingGetManagerLevelClasses:
         query = gql(

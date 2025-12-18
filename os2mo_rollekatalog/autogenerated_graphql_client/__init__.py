@@ -26,6 +26,10 @@ from ._testing__create_org_unit_root import (
     TestingCreateOrgUnitRoot,
     TestingCreateOrgUnitRootOrgUnitCreate,
 )
+from ._testing__create_org_unit_type import (
+    TestingCreateOrgUnitType,
+    TestingCreateOrgUnitTypeClassCreate,
+)
 from ._testing__get_engagement_type import (
     TestingGetEngagementType,
     TestingGetEngagementTypeFacets,
@@ -60,6 +64,11 @@ from ._testing__get_org_unit_type import (
     TestingGetOrgUnitTypeClasses,
     TestingGetOrgUnitTypeClassesObjects,
 )
+from ._testing__get_org_unit_type_facet_u_u_i_d import (
+    TestingGetOrgUnitTypeFacetUUID,
+    TestingGetOrgUnitTypeFacetUUIDFacets,
+    TestingGetOrgUnitTypeFacetUUIDFacetsObjects,
+)
 from ._testing__move_org_unit_to_root import (
     TestingMoveOrgUnitToRoot,
     TestingMoveOrgUnitToRootOrgUnitUpdate,
@@ -92,6 +101,8 @@ from .get_org_unit import (
     GetOrgUnitOrgUnits,
     GetOrgUnitOrgUnitsObjects,
     GetOrgUnitOrgUnitsObjectsCurrent,
+    GetOrgUnitOrgUnitsObjectsCurrentAncestors,
+    GetOrgUnitOrgUnitsObjectsCurrentAncestorsUnitType,
     GetOrgUnitOrgUnitsObjectsCurrentKles,
     GetOrgUnitOrgUnitsObjectsCurrentKlesKleAspects,
     GetOrgUnitOrgUnitsObjectsCurrentKlesKleNumber,
@@ -104,6 +115,7 @@ from .get_org_unit import (
     GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersItsystem,
     GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersValidity,
     GetOrgUnitOrgUnitsObjectsCurrentParent,
+    GetOrgUnitOrgUnitsObjectsCurrentUnitType,
 )
 from .get_org_unit_uuid_for_kle import (
     GetOrgUnitUuidForKle,
@@ -357,6 +369,8 @@ __all__ = [
     "GetOrgUnitOrgUnits",
     "GetOrgUnitOrgUnitsObjects",
     "GetOrgUnitOrgUnitsObjectsCurrent",
+    "GetOrgUnitOrgUnitsObjectsCurrentAncestors",
+    "GetOrgUnitOrgUnitsObjectsCurrentAncestorsUnitType",
     "GetOrgUnitOrgUnitsObjectsCurrentKles",
     "GetOrgUnitOrgUnitsObjectsCurrentKlesKleAspects",
     "GetOrgUnitOrgUnitsObjectsCurrentKlesKleNumber",
@@ -369,6 +383,7 @@ __all__ = [
     "GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersItsystem",
     "GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusersValidity",
     "GetOrgUnitOrgUnitsObjectsCurrentParent",
+    "GetOrgUnitOrgUnitsObjectsCurrentUnitType",
     "GetOrgUnitUuidForKle",
     "GetOrgUnitUuidForKleKles",
     "GetOrgUnitUuidForKleKlesObjects",
@@ -508,6 +523,8 @@ __all__ = [
     "TestingCreateOrgUnitOrgUnitCreate",
     "TestingCreateOrgUnitRoot",
     "TestingCreateOrgUnitRootOrgUnitCreate",
+    "TestingCreateOrgUnitType",
+    "TestingCreateOrgUnitTypeClassCreate",
     "TestingGetEngagementType",
     "TestingGetEngagementTypeFacets",
     "TestingGetEngagementTypeFacetsObjects",
@@ -530,6 +547,9 @@ __all__ = [
     "TestingGetOrgUnitType",
     "TestingGetOrgUnitTypeClasses",
     "TestingGetOrgUnitTypeClassesObjects",
+    "TestingGetOrgUnitTypeFacetUUID",
+    "TestingGetOrgUnitTypeFacetUUIDFacets",
+    "TestingGetOrgUnitTypeFacetUUIDFacetsObjects",
     "TestingMoveOrgUnitToRoot",
     "TestingMoveOrgUnitToRootOrgUnitUpdate",
     "TestingRenameOrgUnit",

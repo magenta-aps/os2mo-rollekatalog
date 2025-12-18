@@ -20,11 +20,22 @@ async def test_too_much(
     test_client: AsyncClient,
     graphql_client: GraphQLClient,
     root_uuid: uuid.UUID,
+    exclude_unit_type: uuid.UUID,
 ) -> None:
     # Create org hierarchy
     org_unit_type_uuid = (
         (await graphql_client._testing__get_org_unit_type()).objects[0].uuid
     )
+    org_unit_type_facet_uuid = (
+        (await graphql_client._testing__get_org_unit_type_facet_u_u_i_d())
+        .objects[0]
+        .uuid
+    )
+    exclude_unit_type_uuid = (
+        await graphql_client._testing__create_org_unit_type(
+            org_unit_type_facet_uuid, exclude_unit_type
+        )
+    ).uuid
     await graphql_client._testing__create_org_unit_root(
         root_uuid=root_uuid,
         name="Root",
@@ -55,6 +66,20 @@ async def test_too_much(
         await graphql_client._testing__create_org_unit(
             name="Layer 3 - Unit 1",
             parent=layer2_1,
+            org_unit_type=org_unit_type_uuid,
+        )
+    ).uuid
+    layer1_3 = (
+        await graphql_client._testing__create_org_unit(
+            name="Layer 1 - Unit 3",
+            parent=root_uuid,
+            org_unit_type=exclude_unit_type_uuid,
+        )
+    ).uuid
+    layer2_3 = (
+        await graphql_client._testing__create_org_unit(
+            name="Layer 2 - Unit 3",
+            parent=layer1_3,
             org_unit_type=org_unit_type_uuid,
         )
     ).uuid
@@ -101,6 +126,8 @@ async def test_too_much(
             "klePerforming": [],
             "kleInterest": [],
         }
+        assert (await test_client.get(f"/cache/org_unit/{layer1_3}")).json() is None
+        assert (await test_client.get(f"/cache/org_unit/{layer2_3}")).json() is None
 
     await validate_hierarchy()
 
