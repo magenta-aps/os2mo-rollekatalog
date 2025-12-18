@@ -139,6 +139,7 @@ async def org_unit(
             settings.root_org_unit,
             settings.exclude_unit_type,
             uuid,
+            settings.external_roots,
         )
     except WillNotSync as e:
         return {"error": e.message}
@@ -165,6 +166,7 @@ async def sync_org_unit_on_demand(
         settings.root_org_unit,
         settings.exclude_unit_type,
         uuid,
+        settings.external_roots,
     )
 
 
@@ -179,4 +181,7 @@ async def org_unit_from_cache(session: depends.Session, uuid: UUID) -> dict | No
 
 @router.post("/trigger/all")
 async def trigger_refresh_all(settings: depends.Settings, mo: depends.GraphQLClient):
-    await mo.refresh_all(settings.fastramqpi.amqp.exchange, settings.root_org_unit)
+    await mo.refresh_all(
+        settings.fastramqpi.amqp.exchange,
+        None if settings.external_roots else [settings.root_org_unit],
+    )

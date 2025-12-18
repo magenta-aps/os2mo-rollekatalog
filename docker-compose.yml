@@ -30,6 +30,7 @@ services:
       FK_ITSYSTEM_USER_KEY: "Office365"
       EXCLUDE_UNIT_TYPE: "5dc9a658-3dce-4815-a114-b3a6cd0dd05a" # Institutionsafsnit
       ROOT_ORG_UNIT: "7a8e45f7-4de0-44c8-990f-43c0565ee505"  # Skole og Børn
+      EXTERNAL_ROOTS: '["0a946185-4712-5c4b-9bbf-b0894603b9a3", "23a2ace2-52ca-458d-bead-d1a42080579f"]'  # Borgmesterens afdeling (LØN) + Teknik og Miljø
       SYNC_TITLES: "true"
       HTTPX_TIMEOUT: "5"
     networks:

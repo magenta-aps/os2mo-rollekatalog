@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
+import json
 from collections.abc import AsyncIterator
 from uuid import uuid4
 from uuid import UUID
@@ -27,8 +28,16 @@ def exclude_unit_type():
 
 
 @pytest.fixture
+def external_roots():
+    return [str(uuid4())]
+
+
+@pytest.fixture
 async def _app(
-    monkeypatch: MonkeyPatch, root_uuid: UUID, exclude_unit_type: UUID
+    monkeypatch: MonkeyPatch,
+    root_uuid: UUID,
+    exclude_unit_type: UUID,
+    external_roots: list[UUID],
 ) -> FastAPI:
     monkeypatch.setenv("ROLLEKATALOG_URL", "http://example.org")
     monkeypatch.setenv("API_KEY", "dummy")
@@ -37,6 +46,7 @@ async def _app(
     monkeypatch.setenv("AD_ITSYSTEM_USER_KEY", "Active Directory")
     monkeypatch.setenv("FK_ITSYSTEM_USER_KEY", "FK ORG")
     monkeypatch.setenv("EXCLUDE_UNIT_TYPE", str(exclude_unit_type))
+    monkeypatch.setenv("EXTERNAL_ROOTS", json.dumps(external_roots))
 
     app = create_app()
     return app

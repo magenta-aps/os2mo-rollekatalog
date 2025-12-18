@@ -266,16 +266,16 @@ class GraphQLClient(AsyncBaseClient):
     async def get_org_unit(
         self,
         uuid: UUID,
-        root_uuid: UUID,
+        root_uuids: List[UUID],
         ad_itsystem_user_key: str,
         fk_itsystem_user_key: str,
         now: datetime,
     ) -> GetOrgUnitOrgUnits:
         query = gql(
             """
-            query GetOrgUnit($uuid: UUID!, $root_uuid: UUID!, $ad_itsystem_user_key: String!, $fk_itsystem_user_key: String!, $now: DateTime!) {
+            query GetOrgUnit($uuid: UUID!, $root_uuids: [UUID!]!, $ad_itsystem_user_key: String!, $fk_itsystem_user_key: String!, $now: DateTime!) {
               org_units(
-                filter: {uuids: [$uuid], ancestor: {uuids: [$root_uuid]}, from_date: $now, to_date: null}
+                filter: {uuids: [$uuid], ancestor: {uuids: $root_uuids}, from_date: $now, to_date: null}
               ) {
                 objects {
                   current {
@@ -337,7 +337,7 @@ class GraphQLClient(AsyncBaseClient):
         )
         variables: dict[str, object] = {
             "uuid": uuid,
-            "root_uuid": root_uuid,
+            "root_uuids": root_uuids,
             "ad_itsystem_user_key": ad_itsystem_user_key,
             "fk_itsystem_user_key": fk_itsystem_user_key,
             "now": now,
@@ -797,14 +797,16 @@ class GraphQLClient(AsyncBaseClient):
         data = self.get_data(response)
         return TestingMoveOrgUnitToRoot.parse_obj(data).org_unit_update
 
-    async def refresh_all(self, exchange: str, root_uuid: UUID) -> RefreshAll:
+    async def refresh_all(
+        self, exchange: str, root_uuid: Union[Optional[List[UUID]], UnsetType] = UNSET
+    ) -> RefreshAll:
         query = gql(
             """
-            mutation RefreshAll($exchange: String!, $root_uuid: UUID!) {
+            mutation RefreshAll($exchange: String!, $root_uuid: [UUID!]) {
               employee_refresh(exchange: $exchange) {
                 objects
               }
-              org_unit_refresh(exchange: $exchange, filter: {ancestor: {uuids: [$root_uuid]}}) {
+              org_unit_refresh(exchange: $exchange, filter: {ancestor: {uuids: $root_uuid}}) {
                 objects
               }
               class_refresh(

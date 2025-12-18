@@ -38,10 +38,11 @@ async def get_org_unit(
     root_org_unit: UUID,
     exclude_unit_type: UUID | None,
     org_unit_uuid: UUID,
+    external_roots: list[UUID],
 ) -> OrgUnit:
     result = await mo.get_org_unit(
         org_unit_uuid,
-        root_org_unit,
+        [root_org_unit] + external_roots,
         ad_itsystem_user_key,
         fk_itsystem_user_key,
         datetime.now(),
@@ -70,9 +71,12 @@ async def get_org_unit(
                     f"Skipping sync for org_unit {org_unit.uuid}, because ancestor {ancestor.uuid} has excluded unit_type."
                 )
 
-    if org_unit.uuid == root_org_unit or org_unit.parent is None:
+    if org_unit.uuid == root_org_unit:
         parent_uuid = None
+    elif org_unit.uuid in external_roots:
+        parent_uuid = root_org_unit
     else:
+        assert org_unit.parent is not None
         parent_uuid = org_unit.parent.uuid
 
     async def get_manager() -> Manager | None:
@@ -150,6 +154,7 @@ async def sync_org_unit(
     root_org_unit: UUID,
     exclude_unit_type: UUID | None,
     org_unit_uuid: UUID,
+    external_roots: list[UUID],
 ) -> None:
     try:
         org_unit = await get_org_unit(
@@ -160,6 +165,7 @@ async def sync_org_unit(
             root_org_unit,
             exclude_unit_type or None,
             org_unit_uuid,
+            external_roots,
         )
     except WillNotSync:
         delete_result = await session.execute(
@@ -194,6 +200,7 @@ async def sync_org_unit(
                 root_org_unit,
                 exclude_unit_type,
                 child_uuid,
+                external_roots,
             )
 
         periodic_sync.sync_soon()
