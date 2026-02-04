@@ -19,6 +19,8 @@ query GetPerson(
   $root_uuid: UUID!
   $ad_itsystem_user_key: String!
   $fk_itsystem_user_key: String!
+  $employee_email_user_key: String!
+  $mit_id_user_key: String!
   $now: DateTime!
 ) {
   employees(
@@ -30,14 +32,22 @@ query GetPerson(
         user_key
         nickname
         name
-        addresses(
+        email: addresses(
           filter: {
-            address_type: { scope: "EMAIL" }
+            address_type: {user_keys: [$employee_email_user_key]}
             from_date: $now
             to_date: null
           }
         ) {
-          uuid
+          value
+        }
+        mitid: addresses(
+          filter: {
+            address_type: {user_keys: [$mit_id_user_key]}
+            from_date: $now
+            to_date: null
+          }
+        ) {
           value
         }
         itusers(
@@ -311,6 +321,13 @@ mutation _Testing_CreateEmployee($first_name: String!, $last_name: String!) {
   }
 }
 
+mutation _Testing_CreateAddress($person: UUID!, $value: String!, $address_type: UUID!) {
+  address_create(
+    input: {person: $person, value: $value, address_type: $address_type, validity: {from: "2014-01-01"}}
+  ) {
+    uuid
+  }
+}
 
 mutation _Testing_CreateItSystem($name: String!) {
   itsystem_create(input: {user_key: $name, name: $name, validity: {from: "2014-02-01"}}) {
@@ -387,6 +404,19 @@ query _Testing_GetJobFunction {
     objects {
       current {
         classes {
+          uuid
+          user_key
+        }
+      }
+    }
+  }
+}
+
+query _Testing_GetMitID {
+  facets(filter: {user_keys: "employee_address_type"}) {
+    objects {
+      current {
+        classes(filter: {user_keys: "MitIDEmployee"}) {
           uuid
           user_key
         }

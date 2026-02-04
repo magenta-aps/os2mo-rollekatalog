@@ -28,3 +28,7 @@ facets:
     MUS:
       title: "MUS"
       scope: "TEXT"
+  employee_address_type:
+    MitIDEmployee:
+      title: "MitID UUID"
+      scope: "UUID"

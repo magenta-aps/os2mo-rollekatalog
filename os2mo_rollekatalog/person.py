@@ -26,6 +26,8 @@ async def get_person(
     ldap_client: depends.LDAPClient,
     ad_itsystem_user_key: str,
     fk_itsystem_user_key: str,
+    employee_email_user_key: str,
+    mit_id_user_key: str,
     root_org_unit: UUID,
     person_uuid: UUID,
     prefer_nickname: bool,
@@ -36,6 +38,8 @@ async def get_person(
         root_org_unit,
         ad_itsystem_user_key,
         fk_itsystem_user_key,
+        employee_email_user_key,
+        mit_id_user_key,
         datetime.now(),
     )
 
@@ -48,9 +52,14 @@ async def get_person(
         raise WillNotSync("Not found")
     try:
         # Behaviour of the old integration 🤷
-        email = list(mo_person.addresses)[-1].value
+        email = list(mo_person.email)[-1].value
     except IndexError:
         email = None
+
+    try:
+        mit_id = list(mo_person.mitid)[-1].value
+    except IndexError:
+        mit_id = None
 
     if prefer_nickname and mo_person.nickname:
         name = Name(mo_person.nickname)
@@ -90,6 +99,7 @@ async def get_person(
             User(
                 person=mo_person.uuid,
                 extUuid=extUuid,
+                nemloginUuid=mit_id,
                 userId=ituser.user_key,
                 name=name,
                 email=email,
@@ -114,6 +124,8 @@ async def sync_person(
     session: depends.Session,
     ad_itsystem_user_key: str,
     fk_itsystem_user_key: str,
+    employee_email_user_key: str,
+    mit_id_user_key: str,
     root_org_unit: UUID,
     person_uuid: UUID,
     prefer_nickname: bool,
@@ -125,6 +137,8 @@ async def sync_person(
             ldap_client,
             ad_itsystem_user_key,
             fk_itsystem_user_key,
+            employee_email_user_key,
+            mit_id_user_key,
             root_org_unit,
             person_uuid,
             prefer_nickname,
