@@ -2,6 +2,10 @@ from datetime import datetime
 from typing import List, Optional, Union
 from uuid import UUID
 
+from ._testing__create_address import (
+    TestingCreateAddress,
+    TestingCreateAddressAddressCreate,
+)
 from ._testing__create_class import TestingCreateClass, TestingCreateClassClassCreate
 from ._testing__create_employee import (
     TestingCreateEmployee,
@@ -51,6 +55,7 @@ from ._testing__get_manager_type import (
     TestingGetManagerType,
     TestingGetManagerTypeClasses,
 )
+from ._testing__get_mit_i_d import TestingGetMitID, TestingGetMitIDFacets
 from ._testing__get_org_unit_level_facet_u_u_i_d import (
     TestingGetOrgUnitLevelFacetUUID,
     TestingGetOrgUnitLevelFacetUUIDFacets,
@@ -128,11 +133,13 @@ class GraphQLClient(AsyncBaseClient):
         root_uuid: UUID,
         ad_itsystem_user_key: str,
         fk_itsystem_user_key: str,
+        employee_email_user_key: str,
+        mit_id_user_key: str,
         now: datetime,
     ) -> GetPersonEmployees:
         query = gql(
             """
-            query GetPerson($employee_uuid: UUID!, $root_uuid: UUID!, $ad_itsystem_user_key: String!, $fk_itsystem_user_key: String!, $now: DateTime!) {
+            query GetPerson($employee_uuid: UUID!, $root_uuid: UUID!, $ad_itsystem_user_key: String!, $fk_itsystem_user_key: String!, $employee_email_user_key: String!, $mit_id_user_key: String!, $now: DateTime!) {
               employees(filter: {uuids: [$employee_uuid], from_date: $now, to_date: null}) {
                 objects {
                   current {
@@ -140,10 +147,14 @@ class GraphQLClient(AsyncBaseClient):
                     user_key
                     nickname
                     name
-                    addresses(
-                      filter: {address_type: {scope: "EMAIL"}, from_date: $now, to_date: null}
+                    email: addresses(
+                      filter: {address_type: {user_keys: [$employee_email_user_key]}, from_date: $now, to_date: null}
                     ) {
-                      uuid
+                      value
+                    }
+                    mitid: addresses(
+                      filter: {address_type: {user_keys: [$mit_id_user_key]}, from_date: $now, to_date: null}
+                    ) {
                       value
                     }
                     itusers(
@@ -188,6 +199,8 @@ class GraphQLClient(AsyncBaseClient):
             "root_uuid": root_uuid,
             "ad_itsystem_user_key": ad_itsystem_user_key,
             "fk_itsystem_user_key": fk_itsystem_user_key,
+            "employee_email_user_key": employee_email_user_key,
+            "mit_id_user_key": mit_id_user_key,
             "now": now,
         }
         response = await self.execute(query=query, variables=variables)
@@ -588,6 +601,29 @@ class GraphQLClient(AsyncBaseClient):
         data = self.get_data(response)
         return TestingCreateEmployee.parse_obj(data).employee_create
 
+    async def _testing__create_address(
+        self, person: UUID, value: str, address_type: UUID
+    ) -> TestingCreateAddressAddressCreate:
+        query = gql(
+            """
+            mutation _Testing_CreateAddress($person: UUID!, $value: String!, $address_type: UUID!) {
+              address_create(
+                input: {person: $person, value: $value, address_type: $address_type, validity: {from: "2014-01-01"}}
+              ) {
+                uuid
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {
+            "person": person,
+            "value": value,
+            "address_type": address_type,
+        }
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return TestingCreateAddress.parse_obj(data).address_create
+
     async def _testing__create_it_system(
         self, name: str
     ) -> TestingCreateItSystemItsystemCreate:
@@ -786,6 +822,28 @@ class GraphQLClient(AsyncBaseClient):
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return TestingGetJobFunction.parse_obj(data).facets
+
+    async def _testing__get_mit_i_d(self) -> TestingGetMitIDFacets:
+        query = gql(
+            """
+            query _Testing_GetMitID {
+              facets(filter: {user_keys: "employee_address_type"}) {
+                objects {
+                  current {
+                    classes(filter: {user_keys: "MitIDEmployee"}) {
+                      uuid
+                      user_key
+                    }
+                  }
+                }
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return TestingGetMitID.parse_obj(data).facets
 
     async def _testing__move_org_unit_to_root(
         self, uuid: UUID

@@ -224,6 +224,13 @@ async def test_too_much(
         .objects[0]
         .current.classes[0]  # type: ignore
     )
+
+    mit_id_class = (
+        (await graphql_client._testing__get_mit_i_d())
+        .objects[0]
+        .current.classes[0]  # type: ignore
+        .uuid
+    )
     joakim_eng = (
         await graphql_client._testing__create_engagement(
             layer2_1, joakim, engagement_type, job_function.uuid
@@ -264,6 +271,11 @@ async def test_too_much(
 
     anders_object_guid = uuid.uuid4()
     anders_external_id = uuid.uuid4()
+    anders_mit_id = uuid.uuid4()
+
+    await graphql_client._testing__create_address(
+        anders_and, str(anders_mit_id), mit_id_class
+    )
     await graphql_client._testing__create_it_user(
         AD,
         str(anders_object_guid),
@@ -346,6 +358,7 @@ async def test_too_much(
         assert (await test_client.get(f"/cache/person/{anders_and}")).json() == [
             {
                 "extUuid": str(anders_external_id),
+                "nemloginUuid": str(anders_mit_id),
                 "userId": "AA",
                 "name": "Anders And",
                 "email": None,
@@ -360,6 +373,7 @@ async def test_too_much(
         assert (await test_client.get(f"/cache/person/{fedtmule}")).json() == [
             {
                 "extUuid": str(fedtmule_external_id),
+                "nemloginUuid": None,
                 "userId": "FM",
                 "name": "Fedt mule",
                 "email": None,
@@ -380,6 +394,7 @@ async def test_too_much(
         expected_fh_response = [
             {
                 "extUuid": str(fætter_external_id),
+                "nemloginUuid": None,
                 "userId": "FH",
                 "name": "Fætter Højben",
                 "email": None,
@@ -405,6 +420,7 @@ async def test_too_much(
         assert (await test_client.get(f"/cache/person/{fætter_højben}")).json() == [
             {
                 "extUuid": str(fætter_external_id),
+                "nemloginUuid": None,
                 "userId": "FH",
                 "name": "Fætter Højben",
                 "email": None,

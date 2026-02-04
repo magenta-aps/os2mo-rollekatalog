@@ -76,6 +76,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     person: Mapped[UUID]
     extUuid: Mapped[UUID] = mapped_column(unique=True)
+    nemloginUuid: Mapped[UUID | None] = mapped_column(unique=True)
     userId: Mapped[SamAccountName]
     name: Mapped[Name]
     email: Mapped[str | None]
@@ -84,13 +85,14 @@ class User(Base):
     )
 
     def __repr__(self) -> str:
-        return f"User({self.person=}, {self.extUuid=}, {self.userId=}, {self.name=}, {self.email=}, {self.positions=})"
+        return f"User({self.person=}, {self.extUuid=}, {self.nemloginUuid=}, {self.userId=}, {self.name=}, {self.email=}, {self.positions=})"
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, User):
             return (
                 self.person == other.person
                 and self.extUuid == other.extUuid
+                and self.nemloginUuid == other.nemloginUuid
                 and self.userId == other.userId
                 and self.name == other.name
                 and self.email == other.email
@@ -102,6 +104,7 @@ class User(Base):
         return jsonable_encoder(
             {
                 "extUuid": self.extUuid,
+                "nemloginUuid": self.nemloginUuid,
                 "userId": self.userId,
                 "name": self.name,
                 "email": self.email,

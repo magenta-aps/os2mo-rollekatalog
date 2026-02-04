@@ -56,6 +56,12 @@ class _Settings(BaseSettings):
     fk_itsystem_user_key: str = Field(
         description="Designed to sync AD GUIDs to Rollekatalog, this value represents the user key of the FK itsystem in OS2mo."
     )
+    employee_email_user_key: str = Field(
+        "EmailEmployee", description="User_key of the employee-email address-type"
+    )
+    mit_id_user_key: str = Field(
+        "MitIDEmployee", description="User_key of the MitID address-type"
+    )
     exclude_org_unit_level: UUID | None = Field(
         None,
         description="UUID of `org_unit_level` to ignore. If a unit has this level the unit (including it's children) will not be synced",

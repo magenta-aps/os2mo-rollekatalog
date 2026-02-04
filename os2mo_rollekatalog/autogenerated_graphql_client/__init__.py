@@ -1,3 +1,7 @@
+from ._testing__create_address import (
+    TestingCreateAddress,
+    TestingCreateAddressAddressCreate,
+)
 from ._testing__create_class import TestingCreateClass, TestingCreateClassClassCreate
 from ._testing__create_employee import (
     TestingCreateEmployee,
@@ -55,6 +59,13 @@ from ._testing__get_manager_type import (
     TestingGetManagerType,
     TestingGetManagerTypeClasses,
     TestingGetManagerTypeClassesObjects,
+)
+from ._testing__get_mit_i_d import (
+    TestingGetMitID,
+    TestingGetMitIDFacets,
+    TestingGetMitIDFacetsObjects,
+    TestingGetMitIDFacetsObjectsCurrent,
+    TestingGetMitIDFacetsObjectsCurrentClasses,
 )
 from ._testing__get_org_unit_level_facet_u_u_i_d import (
     TestingGetOrgUnitLevelFacetUUID,
@@ -131,7 +142,7 @@ from .get_person import (
     GetPersonEmployees,
     GetPersonEmployeesObjects,
     GetPersonEmployeesObjectsCurrent,
-    GetPersonEmployeesObjectsCurrentAddresses,
+    GetPersonEmployeesObjectsCurrentEmail,
     GetPersonEmployeesObjectsCurrentItusers,
     GetPersonEmployeesObjectsCurrentItusersEngagements,
     GetPersonEmployeesObjectsCurrentItusersEngagementsCurrent,
@@ -140,6 +151,7 @@ from .get_person import (
     GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnitValidity,
     GetPersonEmployeesObjectsCurrentItusersItsystem,
     GetPersonEmployeesObjectsCurrentItusersValidity,
+    GetPersonEmployeesObjectsCurrentMitid,
 )
 from .get_person_uuid_for_address import (
     GetPersonUuidForAddress,
@@ -393,7 +405,7 @@ __all__ = [
     "GetPersonEmployees",
     "GetPersonEmployeesObjects",
     "GetPersonEmployeesObjectsCurrent",
-    "GetPersonEmployeesObjectsCurrentAddresses",
+    "GetPersonEmployeesObjectsCurrentEmail",
     "GetPersonEmployeesObjectsCurrentItusers",
     "GetPersonEmployeesObjectsCurrentItusersEngagements",
     "GetPersonEmployeesObjectsCurrentItusersEngagementsCurrent",
@@ -402,6 +414,7 @@ __all__ = [
     "GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnitValidity",
     "GetPersonEmployeesObjectsCurrentItusersItsystem",
     "GetPersonEmployeesObjectsCurrentItusersValidity",
+    "GetPersonEmployeesObjectsCurrentMitid",
     "GetPersonUuidForAddress",
     "GetPersonUuidForAddressAddresses",
     "GetPersonUuidForAddressAddressesObjects",
@@ -506,6 +519,8 @@ __all__ = [
     "RoleBindingTerminateInput",
     "RoleBindingUpdateInput",
     "RoleRegistrationFilter",
+    "TestingCreateAddress",
+    "TestingCreateAddressAddressCreate",
     "TestingCreateClass",
     "TestingCreateClassClassCreate",
     "TestingCreateEmployee",
@@ -541,6 +556,11 @@ __all__ = [
     "TestingGetManagerType",
     "TestingGetManagerTypeClasses",
     "TestingGetManagerTypeClassesObjects",
+    "TestingGetMitID",
+    "TestingGetMitIDFacets",
+    "TestingGetMitIDFacetsObjects",
+    "TestingGetMitIDFacetsObjectsCurrent",
+    "TestingGetMitIDFacetsObjectsCurrentClasses",
     "TestingGetOrgUnitLevelFacetUUID",
     "TestingGetOrgUnitLevelFacetUUIDFacets",
     "TestingGetOrgUnitLevelFacetUUIDFacetsObjects",
