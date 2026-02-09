@@ -60,6 +60,7 @@ async def handle_person(
         person_uuid,
         settings.prefer_nickname,
         settings.sync_titles,
+        settings.external_roots,
     )
 
 
@@ -90,6 +91,7 @@ async def handle_ituser(
                 person.uuid,
                 settings.prefer_nickname,
                 settings.sync_titles,
+                settings.external_roots,
             )
             for engagement in person.engagements:
                 await sync_org_unit(
@@ -131,6 +133,7 @@ async def handle_address(
                 address.employee_uuid,
                 settings.prefer_nickname,
                 settings.sync_titles,
+                settings.external_roots,
             )
 
 
@@ -158,6 +161,7 @@ async def handle_engagement(
             engagement.employee_uuid,
             settings.prefer_nickname,
             settings.sync_titles,
+            settings.external_roots,
         )
 
 

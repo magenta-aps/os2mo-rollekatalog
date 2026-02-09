@@ -32,10 +32,11 @@ async def get_person(
     person_uuid: UUID,
     prefer_nickname: bool,
     sync_titles: bool,
+    external_roots: list[UUID],
 ) -> list[User]:
     result = await mo.get_person(
         person_uuid,
-        root_org_unit,
+        [root_org_unit] + external_roots,
         ad_itsystem_user_key,
         fk_itsystem_user_key,
         employee_email_user_key,
@@ -130,6 +131,7 @@ async def sync_person(
     person_uuid: UUID,
     prefer_nickname: bool,
     sync_titles: bool,
+    external_roots: list[UUID],
 ) -> None:
     try:
         users = await get_person(
@@ -143,6 +145,7 @@ async def sync_person(
             person_uuid,
             prefer_nickname,
             sync_titles,
+            external_roots,
         )
     except WillNotSync:
         delete_result = await session.execute(

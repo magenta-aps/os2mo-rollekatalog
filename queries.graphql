@@ -16,7 +16,7 @@ query GetTitles {
 
 query GetPerson(
   $employee_uuid: UUID!
-  $root_uuid: UUID!
+  $root_uuids: [UUID!]!
   $ad_itsystem_user_key: String!
   $fk_itsystem_user_key: String!
   $employee_email_user_key: String!
@@ -71,7 +71,7 @@ query GetPerson(
             current {
               org_unit(
                 filter: {
-                  ancestor: { uuids: [$root_uuid] }
+                  ancestor: { uuids: $root_uuids }
                   from_date: $now
                   to_date: null
                 }
