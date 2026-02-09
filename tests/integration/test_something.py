@@ -243,7 +243,7 @@ async def test_too_much(
     ).uuid
     fedtmule_eng = (
         await graphql_client._testing__create_engagement(
-            layer3_1, fedtmule, engagement_type, job_function.uuid
+            external_layer1_1, fedtmule, engagement_type, job_function.uuid
         )
     ).uuid
     fætter_eng_1 = (
@@ -380,7 +380,7 @@ async def test_too_much(
                 "positions": [
                     {
                         "name": job_function.user_key,
-                        "orgUnitUuid": str(layer3_1),
+                        "orgUnitUuid": str(external_layer1_1),
                     }
                 ],
             }
@@ -477,6 +477,7 @@ async def test_too_much(
 
     # Move org out of synced tree. This should also remove our users from cache
     await graphql_client._testing__move_org_unit_to_root(layer1_2)
+    await graphql_client._testing__move_org_unit_to_root(external_layer1_1)
 
     @retry()
     async def verify_removal() -> None:
@@ -487,5 +488,8 @@ async def test_too_much(
         assert (await test_client.get(f"/cache/org_unit/{layer1_2}")).json() is None
         assert (await test_client.get(f"/cache/org_unit/{layer2_1}")).json() is None
         assert (await test_client.get(f"/cache/org_unit/{layer3_1}")).json() is None
+        assert (
+            await test_client.get(f"/cache/org_unit/{external_layer1_1}")
+        ).json() is None
 
     await verify_removal()

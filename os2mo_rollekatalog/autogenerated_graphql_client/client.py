@@ -130,7 +130,7 @@ class GraphQLClient(AsyncBaseClient):
     async def get_person(
         self,
         employee_uuid: UUID,
-        root_uuid: UUID,
+        root_uuids: List[UUID],
         ad_itsystem_user_key: str,
         fk_itsystem_user_key: str,
         employee_email_user_key: str,
@@ -139,7 +139,7 @@ class GraphQLClient(AsyncBaseClient):
     ) -> GetPersonEmployees:
         query = gql(
             """
-            query GetPerson($employee_uuid: UUID!, $root_uuid: UUID!, $ad_itsystem_user_key: String!, $fk_itsystem_user_key: String!, $employee_email_user_key: String!, $mit_id_user_key: String!, $now: DateTime!) {
+            query GetPerson($employee_uuid: UUID!, $root_uuids: [UUID!]!, $ad_itsystem_user_key: String!, $fk_itsystem_user_key: String!, $employee_email_user_key: String!, $mit_id_user_key: String!, $now: DateTime!) {
               employees(filter: {uuids: [$employee_uuid], from_date: $now, to_date: null}) {
                 objects {
                   current {
@@ -173,7 +173,7 @@ class GraphQLClient(AsyncBaseClient):
                       engagements(filter: {from_date: $now, to_date: null}) {
                         current {
                           org_unit(
-                            filter: {ancestor: {uuids: [$root_uuid]}, from_date: $now, to_date: null}
+                            filter: {ancestor: {uuids: $root_uuids}, from_date: $now, to_date: null}
                           ) {
                             uuid
                             validity {
@@ -196,7 +196,7 @@ class GraphQLClient(AsyncBaseClient):
         )
         variables: dict[str, object] = {
             "employee_uuid": employee_uuid,
-            "root_uuid": root_uuid,
+            "root_uuids": root_uuids,
             "ad_itsystem_user_key": ad_itsystem_user_key,
             "fk_itsystem_user_key": fk_itsystem_user_key,
             "employee_email_user_key": employee_email_user_key,
