@@ -22,7 +22,7 @@ class TestingGetJobFunctionFacetsObjectsCurrent(BaseModel):
 
 class TestingGetJobFunctionFacetsObjectsCurrentClasses(BaseModel):
     uuid: UUID
-    user_key: str
+    name: str
 
 
 TestingGetJobFunction.update_forward_refs()

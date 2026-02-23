@@ -114,7 +114,7 @@ class GraphQLClient(AsyncBaseClient):
               classes(filter: {facet: {user_keys: "engagement_job_function"}}) {
                 objects {
                   current {
-                    user_key
+                    name
                     uuid
                   }
                 }
@@ -810,7 +810,7 @@ class GraphQLClient(AsyncBaseClient):
                   current {
                     classes {
                       uuid
-                      user_key
+                      name
                     }
                   }
                 }

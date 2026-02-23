@@ -17,7 +17,7 @@ class GetTitlesClassesObjects(BaseModel):
 
 
 class GetTitlesClassesObjectsCurrent(BaseModel):
-    user_key: str
+    name: str
     uuid: UUID
 
 
