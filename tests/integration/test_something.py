@@ -364,7 +364,7 @@ async def test_too_much(
                 "email": None,
                 "positions": [
                     {
-                        "name": job_function.user_key,
+                        "name": job_function.name,
                         "orgUnitUuid": str(layer1_2),
                     }
                 ],
@@ -379,7 +379,7 @@ async def test_too_much(
                 "email": None,
                 "positions": [
                     {
-                        "name": job_function.user_key,
+                        "name": job_function.name,
                         "orgUnitUuid": str(external_layer1_1),
                     }
                 ],
@@ -400,8 +400,8 @@ async def test_too_much(
                 "email": None,
                 "positions": sorted(
                     [
-                        {"name": job_function.user_key, "orgUnitUuid": str(layer1_2)},
-                        {"name": job_function.user_key, "orgUnitUuid": str(layer3_1)},
+                        {"name": job_function.name, "orgUnitUuid": str(layer1_2)},
+                        {"name": job_function.name, "orgUnitUuid": str(layer3_1)},
                     ],
                     key=lambda p: p["orgUnitUuid"],
                 ),
@@ -426,7 +426,7 @@ async def test_too_much(
                 "email": None,
                 "positions": [
                     {
-                        "name": job_function.user_key,
+                        "name": job_function.name,
                         "orgUnitUuid": str(layer3_1),
                     }
                 ],

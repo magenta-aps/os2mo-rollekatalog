@@ -23,10 +23,10 @@ KLE = NewType("KLE", str)
 # Titles are synced on-demand and not part of the persistent state
 class Title(BaseModel):
     uuid: UUID
-    user_key: str
+    name: str
 
     def to_rollekatalog_payload(self):
-        result = {"name": self.user_key, "uuid": self.uuid}
+        result = {"name": self.name, "uuid": self.uuid}
         return jsonable_encoder(result)
 
 

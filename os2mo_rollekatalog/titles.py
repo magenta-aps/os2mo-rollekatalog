@@ -7,7 +7,7 @@ from os2mo_rollekatalog.models import Title
 async def get_job_titles(mo: GraphQLClient) -> list[Title]:
     mo_titles = await mo.get_titles()
     titles = [
-        Title(uuid=obj.current.uuid, user_key=obj.current.user_key)
+        Title(uuid=obj.current.uuid, name=obj.current.name)
         for obj in mo_titles.objects
         if obj.current is not None
     ]

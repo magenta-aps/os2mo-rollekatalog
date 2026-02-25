@@ -6,7 +6,7 @@ query GetTitles {
   classes(filter: {facet: {user_keys:"engagement_job_function"}}) {
     objects {
       current {
-        user_key
+        name
         uuid
       }
     }
@@ -405,7 +405,7 @@ query _Testing_GetJobFunction {
       current {
         classes {
           uuid
-          user_key
+          name
         }
       }
     }
