@@ -34,6 +34,7 @@ def external_roots():
 
 @pytest.fixture
 async def _app(
+    request: pytest.FixtureRequest,
     monkeypatch: MonkeyPatch,
     root_uuid: UUID,
     exclude_org_unit_level: UUID,
@@ -47,6 +48,15 @@ async def _app(
     monkeypatch.setenv("FK_ITSYSTEM_USER_KEY", "FK ORG")
     monkeypatch.setenv("EXCLUDE_ORG_UNIT_LEVEL", str(exclude_org_unit_level))
     monkeypatch.setenv("EXTERNAL_ROOTS", json.dumps(external_roots))
+
+    # Tests marked with @pytest.mark.no_amqp get an app whose AMQP system
+    # has no registered event handlers. The consumer still starts but
+    # subscribes to no queues, so no background sync_* calls run during
+    # the test.
+    if request.node.get_closest_marker("no_amqp"):
+        from os2mo_rollekatalog import events
+
+        monkeypatch.setattr(events.router, "registry", {})
 
     app = create_app()
     return app
