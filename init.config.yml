@@ -31,4 +31,4 @@ facets:
   employee_address_type:
     MitIDEmployee:
       title: "MitID UUID"
-      scope: "UUID"
+      scope: "TEXT"

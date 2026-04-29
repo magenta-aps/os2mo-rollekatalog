@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
+import hashlib
 from datetime import datetime
 from uuid import UUID
 from more_itertools import one
@@ -7,6 +8,7 @@ from more_itertools import one
 import structlog
 from sqlalchemy import delete
 from sqlalchemy import select
+from sqlalchemy import text
 from sqlalchemy.orm import selectinload
 
 from os2mo_rollekatalog import depends
@@ -118,6 +120,15 @@ async def fetch_users_from_db(session: depends.Session, uuid: UUID) -> list[User
     return [user for user in users]
 
 
+def _person_lock_key(person_uuid: UUID) -> int:
+    # Stable signed 64-bit int derived from the UUID for use as the key
+    # of pg_advisory_xact_lock(bigint). Keeps concurrent sync_person
+    # calls for the same person serialized while letting different
+    # persons proceed in parallel.
+    digest = hashlib.blake2b(person_uuid.bytes, digest_size=8).digest()
+    return int.from_bytes(digest, byteorder="big", signed=True)
+
+
 async def sync_person(
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
@@ -133,6 +144,10 @@ async def sync_person(
     sync_titles: bool,
     external_roots: list[UUID],
 ) -> None:
+    await session.execute(
+        text("SELECT pg_advisory_xact_lock(:k)"),
+        {"k": _person_lock_key(person_uuid)},
+    )
     try:
         users = await get_person(
             mo,
@@ -151,7 +166,7 @@ async def sync_person(
         delete_result = await session.execute(
             delete(User).where(User.person == person_uuid)
         )
-        if delete_result.rowcount > 0:
+        if delete_result.rowcount > 0:  # type: ignore[attr-defined]
             logger.info("Remove user", uuid=person_uuid)
             periodic_sync.sync_soon()
         return
