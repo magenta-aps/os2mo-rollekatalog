@@ -49,6 +49,9 @@ query GetPerson(
           }
         ) {
           value
+          ituser(filter: {from_date: $now, to_date: null}) {
+            uuid
+          }
         }
         itusers(
           filter: {
@@ -321,9 +324,9 @@ mutation _Testing_CreateEmployee($first_name: String!, $last_name: String!) {
   }
 }
 
-mutation _Testing_CreateAddress($person: UUID!, $value: String!, $address_type: UUID!) {
+mutation _Testing_CreateAddress($person: UUID!, $value: String!, $address_type: UUID!, $ituser: UUID = null) {
   address_create(
-    input: {person: $person, value: $value, address_type: $address_type, validity: {from: "2014-01-01"}}
+    input: {person: $person, value: $value, address_type: $address_type, ituser: $ituser, validity: {from: "2014-01-01"}}
   ) {
     uuid
   }

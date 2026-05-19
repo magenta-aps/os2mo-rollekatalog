@@ -152,6 +152,7 @@ from .get_person import (
     GetPersonEmployeesObjectsCurrentItusersItsystem,
     GetPersonEmployeesObjectsCurrentItusersValidity,
     GetPersonEmployeesObjectsCurrentMitid,
+    GetPersonEmployeesObjectsCurrentMitidItuser,
 )
 from .get_person_uuid_for_address import (
     GetPersonUuidForAddress,
@@ -415,6 +416,7 @@ __all__ = [
     "GetPersonEmployeesObjectsCurrentItusersItsystem",
     "GetPersonEmployeesObjectsCurrentItusersValidity",
     "GetPersonEmployeesObjectsCurrentMitid",
+    "GetPersonEmployeesObjectsCurrentMitidItuser",
     "GetPersonUuidForAddress",
     "GetPersonUuidForAddressAddresses",
     "GetPersonUuidForAddressAddressesObjects",

@@ -59,10 +59,15 @@ async def get_person(
     except IndexError:
         email = None
 
-    try:
-        mit_id = list(mo_person.mitid)[-1].value
-    except IndexError:
-        mit_id = None
+    # MitID UUIDs are unique per ituser. Map each mitid to its linked
+    # ituser so we only assign nemloginUuid to that specific SAM account.
+    # Unlinked or ambiguous mitids are dropped: the schema requires
+    # nemloginUuid to be unique, and we have no way to know which ituser
+    # a floating mitid belongs to.
+    mit_id_by_ituser: dict[UUID, UUID] = {}
+    for addr in mo_person.mitid:
+        for linked in addr.ituser:
+            mit_id_by_ituser[linked.uuid] = UUID(addr.value)
 
     if prefer_nickname and mo_person.nickname:
         name = Name(mo_person.nickname)
@@ -102,7 +107,7 @@ async def get_person(
             User(
                 person=mo_person.uuid,
                 extUuid=extUuid,
-                nemloginUuid=mit_id,
+                nemloginUuid=mit_id_by_ituser.get(ituser.uuid),
                 userId=ituser.user_key,
                 name=name,
                 email=email,
