@@ -11,6 +11,10 @@ from pydantic import SecretStr
 
 
 class AMQPConnectionSettingsSeeded(AMQPConnectionSettings):
+    # AMQP isn't consumed by the integration (events come via the GraphQL
+    # event system) but fastramqpi 12.x still requires the AMQP system to
+    # be configured. Keep the exchange/queue prefix here so the idle AMQP
+    # consumer is named consistently.
     exchange = "os2mo_rollekatalog"
     queue_prefix = "os2mo_rollekatalog"
     upstream_exchange = "os2mo"
@@ -33,6 +37,16 @@ class _Settings(BaseSettings):
             "Enable writes to rollekatalog. This is disabled by default to "
             "allow a smooth roll-out. Trigger all refresh events and let the "
             "integration populate its database before enabling sync."
+        ),
+    )
+
+    listen_to_changes_in_mo: bool = Field(
+        True,
+        description=(
+            "Declare GraphQL event listeners and process MO changes as they "
+            "happen. On by default; the integration is event-driven and does "
+            "nothing useful without it. Disabled in tests that drive the "
+            "event endpoints directly so background fetchers don't race them."
         ),
     )
 

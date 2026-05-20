@@ -26,7 +26,7 @@ CONCURRENT = 10
 
 
 @pytest.mark.integration_test
-@pytest.mark.no_amqp
+@pytest.mark.envvar({"LISTEN_TO_CHANGES_IN_MO": "False"})
 async def test_concurrent_sync_person_no_duplicate_key_error(
     test_client: AsyncClient,
     graphql_client: GraphQLClient,
@@ -156,7 +156,7 @@ async def test_concurrent_sync_person_no_duplicate_key_error(
 
 
 @pytest.mark.integration_test
-@pytest.mark.no_amqp
+@pytest.mark.envvar({"LISTEN_TO_CHANGES_IN_MO": "False"})
 async def test_sync_handles_extuuid_change_with_same_nemlogin(
     test_client: AsyncClient,
     graphql_client: GraphQLClient,

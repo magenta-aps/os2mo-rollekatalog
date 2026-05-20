@@ -4,6 +4,8 @@
 import logging
 
 from fastapi import FastAPI
+from fastramqpi.events import GraphQLEvents
+from fastramqpi.events import Listener
 from fastramqpi.main import FastRAMQPI
 
 from os2mo_rollekatalog import api
@@ -18,12 +20,66 @@ from os2mo_rollekatalog.junkyard import create_ldap_client
 def create_app() -> FastAPI:
     settings = _Settings()
 
+    # One listener per MO event type, declared explicitly so each routing
+    # key and its handler endpoint can be found by searching the code.
+    # routing_key is the MO subject type; path matches the endpoint in
+    # events.py. Gated on listen_to_changes_in_mo so tests that drive the
+    # endpoints directly can run without background fetchers.
+    listeners = []
+    if settings.listen_to_changes_in_mo:
+        listeners = [
+            Listener(
+                namespace="mo",
+                user_key="class",
+                routing_key="class",
+                path="/class",
+            ),
+            Listener(
+                namespace="mo",
+                user_key="person",
+                routing_key="person",
+                path="/person",
+            ),
+            Listener(
+                namespace="mo",
+                user_key="ituser",
+                routing_key="ituser",
+                path="/ituser",
+            ),
+            Listener(
+                namespace="mo",
+                user_key="address",
+                routing_key="address",
+                path="/address",
+            ),
+            Listener(
+                namespace="mo",
+                user_key="engagement",
+                routing_key="engagement",
+                path="/engagement",
+            ),
+            Listener(
+                namespace="mo",
+                user_key="org_unit",
+                routing_key="org_unit",
+                path="/org_unit",
+            ),
+            Listener(namespace="mo", user_key="kle", routing_key="kle", path="/kle"),
+            Listener(
+                namespace="mo",
+                user_key="manager",
+                routing_key="manager",
+                path="/manager",
+            ),
+        ]
+
     fastramqpi = FastRAMQPI(
         application_name="rollekatalog",
         settings=settings.fastramqpi,
         graphql_version=25,
         graphql_client_cls=GraphQLClient,
         database_metadata=models.Base.metadata,
+        graphql_events=GraphQLEvents(declare_listeners=listeners),
     )
     fastramqpi.add_context(settings=settings)
 
@@ -47,13 +103,9 @@ def create_app() -> FastAPI:
     fastramqpi.add_lifespan_manager(periodic_sync_task.lifespan())
     periodic_sync_task.sync_soon()
 
-    # FastAPI router
     app = fastramqpi.get_app()
     app.include_router(api.router)
-
-    # MO AMQP
-    mo_amqp_system = fastramqpi.get_amqpsystem()
-    mo_amqp_system.router.registry.update(events.router.registry)
+    app.include_router(events.router)
 
     # HTTPX is too loud by default.
     logging.getLogger("httpx").setLevel(logging.WARN)

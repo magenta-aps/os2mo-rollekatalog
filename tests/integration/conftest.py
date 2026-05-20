@@ -6,11 +6,8 @@ from uuid import uuid4
 from uuid import UUID
 
 import pytest
-from asgi_lifespan import LifespanManager
-from asgi_lifespan._types import ASGIApp
 from fastapi import FastAPI
 from httpx import AsyncClient
-from httpx import ASGITransport
 from pytest import MonkeyPatch
 
 from os2mo_rollekatalog.app import create_app
@@ -33,8 +30,7 @@ def external_roots():
 
 
 @pytest.fixture
-async def _app(
-    request: pytest.FixtureRequest,
+async def app(
     monkeypatch: MonkeyPatch,
     root_uuid: UUID,
     exclude_org_unit_level: UUID,
@@ -49,43 +45,15 @@ async def _app(
     monkeypatch.setenv("EXCLUDE_ORG_UNIT_LEVEL", str(exclude_org_unit_level))
     monkeypatch.setenv("EXTERNAL_ROOTS", json.dumps(external_roots))
 
-    # Tests marked with @pytest.mark.no_amqp get an app whose AMQP system
-    # has no registered event handlers. The consumer still starts but
-    # subscribes to no queues, so no background sync_* calls run during
-    # the test.
-    if request.node.get_closest_marker("no_amqp"):
-        from os2mo_rollekatalog import events
-
-        monkeypatch.setattr(events.router, "registry", {})
-
-    app = create_app()
-    return app
+    return create_app()
 
 
 @pytest.fixture
-async def asgiapp(_app: FastAPI) -> AsyncIterator[ASGIApp]:
-    """ASGI app with lifespan run."""
-    async with LifespanManager(_app) as manager:
-        yield manager.app
-
-
-@pytest.fixture
-async def app(_app: FastAPI, asgiapp: ASGIApp) -> FastAPI:
-    """FastAPI app with lifespan run."""
-    return _app
-
-
-@pytest.fixture
-async def test_client(asgiapp: ASGIApp) -> AsyncIterator[AsyncClient]:
-    """Create test client with associated lifecycles."""
-    transport = ASGITransport(app=asgiapp, client=("1.2.3.4", 123))  # type: ignore
-    async with AsyncClient(
-        transport=transport, base_url="http://example.com"
-    ) as client:
-        yield client
-
-
-@pytest.fixture
-async def graphql_client(app: FastAPI) -> GraphQLClient:
+async def graphql_client(mo_client: AsyncClient) -> AsyncIterator[GraphQLClient]:
     """Authenticated GraphQL codegen client for OS2mo."""
-    return app.state.context["graphql_client"]
+    graphql_client = GraphQLClient(
+        url=f"{mo_client.base_url}/graphql/v25",
+        http_client=mo_client,
+    )
+    async with graphql_client as client:
+        yield client

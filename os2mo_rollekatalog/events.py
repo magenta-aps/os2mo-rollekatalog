@@ -1,10 +1,12 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 
+from uuid import UUID
+
 import structlog
+from fastapi import APIRouter
 from fastapi.encoders import jsonable_encoder
-from fastramqpi.ramqp.mo import MORouter
-from fastramqpi.ramqp.mo import PayloadUUID
+from fastramqpi.events import Event
 
 from os2mo_rollekatalog import depends
 from os2mo_rollekatalog import rollekatalog
@@ -14,15 +16,16 @@ from os2mo_rollekatalog.person import sync_person
 from os2mo_rollekatalog.titles import get_job_titles
 
 
-router = MORouter()
+router = APIRouter()
 logger = structlog.stdlib.get_logger(__name__)
 
 
-@router.register("class")
-async def sync_job_titles(
+@router.post("/class")
+async def handle_class(
     settings: depends.Settings,
     title_client: depends.TitleClient,
     mo: depends.GraphQLClient,
+    event: Event[UUID],
 ) -> None:
     # If this function is changed to not being on demand, it won't work unless the mutation is changed.
     # Right now the mutation has `limit: 1`, so sync_job_titles is only triggered once
@@ -38,14 +41,14 @@ async def sync_job_titles(
     )
 
 
-@router.register("person")
+@router.post("/person")
 async def handle_person(
-    person_uuid: PayloadUUID,
     settings: depends.Settings,
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
     periodic_sync: depends.PeriodicSync,
     session: depends.Session,
+    event: Event[UUID],
 ) -> None:
     await sync_person(
         mo,
@@ -57,23 +60,23 @@ async def handle_person(
         settings.employee_email_user_key,
         settings.mit_id_user_key,
         settings.root_org_unit,
-        person_uuid,
+        event.subject,
         settings.prefer_nickname,
         settings.sync_titles,
         settings.external_roots,
     )
 
 
-@router.register("ituser")
+@router.post("/ituser")
 async def handle_ituser(
-    ituser_uuid: PayloadUUID,
     settings: depends.Settings,
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
     periodic_sync: depends.PeriodicSync,
     session: depends.Session,
+    event: Event[UUID],
 ) -> None:
-    result = await mo.get_uuids_for_it_user(ituser_uuid)
+    result = await mo.get_uuids_for_it_user(event.subject)
     for person_container in flatten_validities(result):
         if person_container.person is None:
             continue
@@ -108,16 +111,16 @@ async def handle_ituser(
                 )
 
 
-@router.register("address")
+@router.post("/address")
 async def handle_address(
-    address_uuid: PayloadUUID,
     settings: depends.Settings,
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
     periodic_sync: depends.PeriodicSync,
     session: depends.Session,
+    event: Event[UUID],
 ) -> None:
-    result = await mo.get_person_uuid_for_address(address_uuid)
+    result = await mo.get_person_uuid_for_address(event.subject)
     for address in flatten_validities(result):
         if address.employee_uuid:
             await sync_person(
@@ -137,16 +140,16 @@ async def handle_address(
             )
 
 
-@router.register("engagement")
+@router.post("/engagement")
 async def handle_engagement(
-    engagement_uuid: PayloadUUID,
     settings: depends.Settings,
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
     periodic_sync: depends.PeriodicSync,
     session: depends.Session,
+    event: Event[UUID],
 ) -> None:
-    result = await mo.get_person_uuid_for_engagement(engagement_uuid)
+    result = await mo.get_person_uuid_for_engagement(event.subject)
     for engagement in flatten_validities(result):
         await sync_person(
             mo,
@@ -165,14 +168,14 @@ async def handle_engagement(
         )
 
 
-@router.register("org_unit")
+@router.post("/org_unit")
 async def handle_org_unit(
-    org_unit_uuid: PayloadUUID,
     settings: depends.Settings,
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
     periodic_sync: depends.PeriodicSync,
     session: depends.Session,
+    event: Event[UUID],
 ) -> None:
     await sync_org_unit(
         mo,
@@ -183,21 +186,21 @@ async def handle_org_unit(
         settings.fk_itsystem_user_key,
         settings.root_org_unit,
         settings.exclude_org_unit_level,
-        org_unit_uuid,
+        event.subject,
         settings.external_roots,
     )
 
 
-@router.register("kle")
+@router.post("/kle")
 async def handle_kle(
-    kle_uuid: PayloadUUID,
     settings: depends.Settings,
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
     periodic_sync: depends.PeriodicSync,
     session: depends.Session,
+    event: Event[UUID],
 ) -> None:
-    result = await mo.get_org_unit_uuid_for_kle(kle_uuid)
+    result = await mo.get_org_unit_uuid_for_kle(event.subject)
     for kle in flatten_validities(result):
         await sync_org_unit(
             mo,
@@ -213,16 +216,16 @@ async def handle_kle(
         )
 
 
-@router.register("manager")
+@router.post("/manager")
 async def handle_manager(
-    manager_uuid: PayloadUUID,
     settings: depends.Settings,
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
     periodic_sync: depends.PeriodicSync,
     session: depends.Session,
+    event: Event[UUID],
 ) -> None:
-    result = await mo.get_org_unit_uuid_for_manager(manager_uuid)
+    result = await mo.get_org_unit_uuid_for_manager(event.subject)
     for manager in flatten_validities(result):
         await sync_org_unit(
             mo,
