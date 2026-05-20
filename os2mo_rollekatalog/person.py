@@ -199,6 +199,13 @@ async def sync_person(
         )
         periodic_sync.sync_soon()
 
+    # Flush deletes before inserts so a reused unique nemloginUuid
+    # (e.g. the AD account's FK partner changed → new extUuid, same
+    # mitid) doesn't trip the constraint when SQLAlchemy's default
+    # unit-of-work order issues INSERTs before DELETEs.
+    if to_remove:
+        await session.flush()
+
     # add new accounts
     for key in to_add:
         new_user = mo_map[key]
