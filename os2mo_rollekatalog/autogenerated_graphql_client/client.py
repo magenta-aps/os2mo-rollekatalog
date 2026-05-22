@@ -690,20 +690,27 @@ class GraphQLClient(AsyncBaseClient):
         return TestingCreateItUser.parse_obj(data).ituser_create
 
     async def _testing__update_it_user(
-        self, uuid: UUID, from_: datetime
+        self,
+        uuid: UUID,
+        from_: datetime,
+        user_key: Union[Optional[str], UnsetType] = UNSET,
     ) -> TestingUpdateItUserItuserUpdate:
         query = gql(
             """
-            mutation _Testing_UpdateItUser($uuid: UUID!, $from: DateTime!) {
+            mutation _Testing_UpdateItUser($uuid: UUID!, $from: DateTime!, $user_key: String = "Updated name") {
               ituser_update(
-                input: {uuid: $uuid, user_key: "Updated name", validity: {from: $from}}
+                input: {uuid: $uuid, user_key: $user_key, validity: {from: $from}}
               ) {
                 uuid
               }
             }
             """
         )
-        variables: dict[str, object] = {"uuid": uuid, "from": from_}
+        variables: dict[str, object] = {
+            "uuid": uuid,
+            "from": from_,
+            "user_key": user_key,
+        }
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return TestingUpdateItUser.parse_obj(data).ituser_update

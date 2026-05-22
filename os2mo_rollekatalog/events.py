@@ -76,39 +76,49 @@ async def handle_ituser(
     session: depends.Session,
     event: Event[UUID],
 ) -> None:
+    # An ituser can have many validity periods, but the (person, org_unit)
+    # pairs we care about rarely change across them. Collect the distinct
+    # UUIDs and sync each one once.
     result = await mo.get_uuids_for_it_user(event.subject)
+    persons: set[UUID] = set()
+    org_units: set[UUID] = set()
     for person_container in flatten_validities(result):
         if person_container.person is None:
             continue
         for person in person_container.person:
-            await sync_person(
-                mo,
-                ldap_client,
-                periodic_sync,
-                session,
-                settings.ad_itsystem_user_key,
-                settings.fk_itsystem_user_key,
-                settings.employee_email_user_key,
-                settings.mit_id_user_key,
-                settings.root_org_unit,
-                person.uuid,
-                settings.prefer_nickname,
-                settings.sync_titles,
-                settings.external_roots,
-            )
+            persons.add(person.uuid)
             for engagement in person.engagements:
-                await sync_org_unit(
-                    mo,
-                    ldap_client,
-                    periodic_sync,
-                    session,
-                    settings.ad_itsystem_user_key,
-                    settings.fk_itsystem_user_key,
-                    settings.root_org_unit,
-                    settings.exclude_org_unit_level,
-                    engagement.org_unit_uuid,
-                    settings.external_roots,
-                )
+                org_units.add(engagement.org_unit_uuid)
+
+    for person_uuid in persons:
+        await sync_person(
+            mo,
+            ldap_client,
+            periodic_sync,
+            session,
+            settings.ad_itsystem_user_key,
+            settings.fk_itsystem_user_key,
+            settings.employee_email_user_key,
+            settings.mit_id_user_key,
+            settings.root_org_unit,
+            person_uuid,
+            settings.prefer_nickname,
+            settings.sync_titles,
+            settings.external_roots,
+        )
+    for org_unit_uuid in org_units:
+        await sync_org_unit(
+            mo,
+            ldap_client,
+            periodic_sync,
+            session,
+            settings.ad_itsystem_user_key,
+            settings.fk_itsystem_user_key,
+            settings.root_org_unit,
+            settings.exclude_org_unit_level,
+            org_unit_uuid,
+            settings.external_roots,
+        )
 
 
 @router.post("/address")
@@ -121,23 +131,25 @@ async def handle_address(
     event: Event[UUID],
 ) -> None:
     result = await mo.get_person_uuid_for_address(event.subject)
-    for address in flatten_validities(result):
-        if address.employee_uuid:
-            await sync_person(
-                mo,
-                ldap_client,
-                periodic_sync,
-                session,
-                settings.ad_itsystem_user_key,
-                settings.fk_itsystem_user_key,
-                settings.employee_email_user_key,
-                settings.mit_id_user_key,
-                settings.root_org_unit,
-                address.employee_uuid,
-                settings.prefer_nickname,
-                settings.sync_titles,
-                settings.external_roots,
-            )
+    persons: set[UUID] = {
+        a.employee_uuid for a in flatten_validities(result) if a.employee_uuid
+    }
+    for person_uuid in persons:
+        await sync_person(
+            mo,
+            ldap_client,
+            periodic_sync,
+            session,
+            settings.ad_itsystem_user_key,
+            settings.fk_itsystem_user_key,
+            settings.employee_email_user_key,
+            settings.mit_id_user_key,
+            settings.root_org_unit,
+            person_uuid,
+            settings.prefer_nickname,
+            settings.sync_titles,
+            settings.external_roots,
+        )
 
 
 @router.post("/engagement")
@@ -150,7 +162,10 @@ async def handle_engagement(
     event: Event[UUID],
 ) -> None:
     result = await mo.get_person_uuid_for_engagement(event.subject)
-    for engagement in flatten_validities(result):
+    persons: set[UUID] = {
+        e.employee_uuid for e in flatten_validities(result) if e.employee_uuid
+    }
+    for person_uuid in persons:
         await sync_person(
             mo,
             ldap_client,
@@ -161,7 +176,7 @@ async def handle_engagement(
             settings.employee_email_user_key,
             settings.mit_id_user_key,
             settings.root_org_unit,
-            engagement.employee_uuid,
+            person_uuid,
             settings.prefer_nickname,
             settings.sync_titles,
             settings.external_roots,
@@ -201,7 +216,10 @@ async def handle_kle(
     event: Event[UUID],
 ) -> None:
     result = await mo.get_org_unit_uuid_for_kle(event.subject)
-    for kle in flatten_validities(result):
+    org_units: set[UUID] = {
+        k.org_unit_uuid for k in flatten_validities(result) if k.org_unit_uuid
+    }
+    for org_unit_uuid in org_units:
         await sync_org_unit(
             mo,
             ldap_client,
@@ -211,7 +229,7 @@ async def handle_kle(
             settings.fk_itsystem_user_key,
             settings.root_org_unit,
             settings.exclude_org_unit_level,
-            kle.org_unit_uuid,
+            org_unit_uuid,
             settings.external_roots,
         )
 
@@ -226,7 +244,10 @@ async def handle_manager(
     event: Event[UUID],
 ) -> None:
     result = await mo.get_org_unit_uuid_for_manager(event.subject)
-    for manager in flatten_validities(result):
+    org_units: set[UUID] = {
+        m.org_unit_uuid for m in flatten_validities(result) if m.org_unit_uuid
+    }
+    for org_unit_uuid in org_units:
         await sync_org_unit(
             mo,
             ldap_client,
@@ -236,6 +257,6 @@ async def handle_manager(
             settings.fk_itsystem_user_key,
             settings.root_org_unit,
             settings.exclude_org_unit_level,
-            manager.org_unit_uuid,
+            org_unit_uuid,
             settings.external_roots,
         )
