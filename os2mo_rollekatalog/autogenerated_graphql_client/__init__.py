@@ -93,6 +93,10 @@ from ._testing__update_it_user_engagements import (
     TestingUpdateItUserEngagements,
     TestingUpdateItUserEngagementsItuserUpdate,
 )
+from ._testing__update_it_user_external_id import (
+    TestingUpdateItUserExternalId,
+    TestingUpdateItUserExternalIdItuserUpdate,
+)
 from .async_base_client import AsyncBaseClient
 from .base_model import BaseModel
 from .client import GraphQLClient
@@ -152,6 +156,7 @@ from .get_person import (
     GetPersonEmployeesObjectsCurrentItusersItsystem,
     GetPersonEmployeesObjectsCurrentItusersValidity,
     GetPersonEmployeesObjectsCurrentMitid,
+    GetPersonEmployeesObjectsCurrentMitidItuser,
 )
 from .get_person_uuid_for_address import (
     GetPersonUuidForAddress,
@@ -415,6 +420,7 @@ __all__ = [
     "GetPersonEmployeesObjectsCurrentItusersItsystem",
     "GetPersonEmployeesObjectsCurrentItusersValidity",
     "GetPersonEmployeesObjectsCurrentMitid",
+    "GetPersonEmployeesObjectsCurrentMitidItuser",
     "GetPersonUuidForAddress",
     "GetPersonUuidForAddressAddresses",
     "GetPersonUuidForAddressAddressesObjects",
@@ -574,6 +580,8 @@ __all__ = [
     "TestingUpdateItUser",
     "TestingUpdateItUserEngagements",
     "TestingUpdateItUserEngagementsItuserUpdate",
+    "TestingUpdateItUserExternalId",
+    "TestingUpdateItUserExternalIdItuserUpdate",
     "TestingUpdateItUserItuserUpdate",
     "UuidsBoundClassFilter",
     "UuidsBoundEmployeeFilter",

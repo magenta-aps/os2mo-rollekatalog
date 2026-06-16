@@ -271,18 +271,22 @@ async def test_too_much(
 
     anders_object_guid = uuid.uuid4()
     anders_external_id = uuid.uuid4()
+    anders_object_guid_2 = uuid.uuid4()
+    anders_external_id_2 = uuid.uuid4()
     anders_mit_id = uuid.uuid4()
 
+    anders_ituser = (
+        await graphql_client._testing__create_it_user(
+            AD,
+            str(anders_object_guid),
+            anders_and,
+            "AA",
+            None,
+            [anders_and_eng],
+        )
+    ).uuid
     await graphql_client._testing__create_address(
-        anders_and, str(anders_mit_id), mit_id_class
-    )
-    await graphql_client._testing__create_it_user(
-        AD,
-        str(anders_object_guid),
-        anders_and,
-        "AA",
-        uuid.UUID("00000000-0000-0000-0000-000000000002"),
-        [anders_and_eng],
+        anders_and, str(anders_mit_id), mit_id_class, ituser=anders_ituser
     )
     await graphql_client._testing__create_it_user(
         FK,
@@ -293,19 +297,21 @@ async def test_too_much(
         [anders_and_eng],
     )
 
-    await graphql_client._testing__create_it_user(
-        AD,
-        str(anders_object_guid),
-        anders_and,
-        "AA2",
-        uuid.UUID("00000000-0000-0000-0000-000000000001"),
-        [anders_and_eng],
-    )
+    anders_ituser_2 = (
+        await graphql_client._testing__create_it_user(
+            AD,
+            str(anders_object_guid_2),
+            anders_and,
+            "AA2",
+            None,
+            [anders_and_eng],
+        )
+    ).uuid
     await graphql_client._testing__create_it_user(
         FK,
-        str(anders_external_id),
+        str(anders_external_id_2),
         anders_and,
-        str(anders_object_guid),
+        str(anders_object_guid_2),
         engagements=[anders_and_eng],
     )
 
@@ -355,7 +361,9 @@ async def test_too_much(
         ).json() == {"error": "No SAM Account"}
         assert (await test_client.get(f"/debug/person/{joakim}")).json() == []
 
-        assert (await test_client.get(f"/cache/person/{anders_and}")).json() == [
+        anders_response = (await test_client.get(f"/cache/person/{anders_and}")).json()
+        anders_response = sorted(anders_response, key=lambda u: u["userId"])
+        assert anders_response == [
             {
                 "extUuid": str(anders_external_id),
                 "nemloginUuid": str(anders_mit_id),
@@ -368,7 +376,20 @@ async def test_too_much(
                         "orgUnitUuid": str(layer1_2),
                     }
                 ],
-            }
+            },
+            {
+                "extUuid": str(anders_external_id_2),
+                "nemloginUuid": None,
+                "userId": "AA2",
+                "name": "Anders And",
+                "email": None,
+                "positions": [
+                    {
+                        "name": job_function.name,
+                        "orgUnitUuid": str(layer1_2),
+                    }
+                ],
+            },
         ]
         assert (await test_client.get(f"/cache/person/{fedtmule}")).json() == [
             {
@@ -459,6 +480,14 @@ async def test_too_much(
             "klePerforming": [],
             "kleInterest": [],
         }
+        # Anders has two SAM accounts; manager resolution sorts itusers
+        # by str(uuid) and picks the first, so mirror that here.
+        if str(anders_ituser) < str(anders_ituser_2):
+            expected_manager_extuuid = anders_external_id
+            expected_manager_userid = "AA"
+        else:
+            expected_manager_extuuid = anders_external_id_2
+            expected_manager_userid = "AA2"
         assert (await test_client.get(f"/cache/org_unit/{layer1_2}")).json() == {
             "uuid": str(layer1_2),
             "name": "Layer 1 - Unit 2",
@@ -466,8 +495,8 @@ async def test_too_much(
             "manager": {
                 "id": 1,
                 "org_unit_id": 9,
-                "uuid": str(anders_external_id),
-                "userId": "AA2",
+                "uuid": str(expected_manager_extuuid),
+                "userId": expected_manager_userid,
             },
             "klePerforming": [],
             "kleInterest": [],
