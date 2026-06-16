@@ -64,8 +64,14 @@ class _Settings(BaseSettings):
         description="List of external pseudo root UUIDs. Pseudo roots will be placed under ROOT_ORG_UNIT in Rollekatalog.",
     )
 
-    ad_itsystem_user_key: str = Field(
-        description="Designed to sync AD GUIDs to Rollekatalog, this value represents the user key of the AD itsystem in OS2mo."
+    ad_itsystem_user_keys: list[str] = Field(
+        description=(
+            "User keys of the AD-like itsystems in OS2mo to sync GUIDs from. "
+            "Each is mapped to the FK itsystem the same way. Most customers have "
+            "a single AD, but some have several (e.g. a separate 'Skole-AD'), so "
+            "this is a list. Given as a JSON list, e.g. "
+            '\'["Active Directory", "Skole-AD"]\'.'
+        )
     )
     fk_itsystem_user_key: str = Field(
         description="Designed to sync AD GUIDs to Rollekatalog, this value represents the user key of the FK itsystem in OS2mo."
