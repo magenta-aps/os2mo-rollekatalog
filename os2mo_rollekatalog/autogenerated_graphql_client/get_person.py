@@ -35,6 +35,11 @@ class GetPersonEmployeesObjectsCurrentEmail(BaseModel):
 
 class GetPersonEmployeesObjectsCurrentMitid(BaseModel):
     value: str
+    ituser: List["GetPersonEmployeesObjectsCurrentMitidItuser"]
+
+
+class GetPersonEmployeesObjectsCurrentMitidItuser(BaseModel):
+    uuid: UUID
 
 
 class GetPersonEmployeesObjectsCurrentItusers(BaseModel):
@@ -87,6 +92,7 @@ GetPersonEmployeesObjects.update_forward_refs()
 GetPersonEmployeesObjectsCurrent.update_forward_refs()
 GetPersonEmployeesObjectsCurrentEmail.update_forward_refs()
 GetPersonEmployeesObjectsCurrentMitid.update_forward_refs()
+GetPersonEmployeesObjectsCurrentMitidItuser.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusers.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusersItsystem.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusersValidity.update_forward_refs()

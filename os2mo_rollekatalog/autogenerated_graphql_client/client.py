@@ -80,6 +80,10 @@ from ._testing__update_it_user_engagements import (
     TestingUpdateItUserEngagements,
     TestingUpdateItUserEngagementsItuserUpdate,
 )
+from ._testing__update_it_user_external_id import (
+    TestingUpdateItUserExternalId,
+    TestingUpdateItUserExternalIdItuserUpdate,
+)
 from .async_base_client import AsyncBaseClient
 from .base_model import UNSET, UnsetType
 from .get_org_unit import GetOrgUnit, GetOrgUnitOrgUnits
@@ -156,6 +160,9 @@ class GraphQLClient(AsyncBaseClient):
                       filter: {address_type: {user_keys: [$mit_id_user_key]}, from_date: $now, to_date: null}
                     ) {
                       value
+                      ituser(filter: {from_date: $now, to_date: null}) {
+                        uuid
+                      }
                     }
                     itusers(
                       filter: {itsystem: {user_keys: [$ad_itsystem_user_key, $fk_itsystem_user_key]}, from_date: $now, to_date: null}
@@ -602,13 +609,17 @@ class GraphQLClient(AsyncBaseClient):
         return TestingCreateEmployee.parse_obj(data).employee_create
 
     async def _testing__create_address(
-        self, person: UUID, value: str, address_type: UUID
+        self,
+        person: UUID,
+        value: str,
+        address_type: UUID,
+        ituser: Union[Optional[UUID], UnsetType] = UNSET,
     ) -> TestingCreateAddressAddressCreate:
         query = gql(
             """
-            mutation _Testing_CreateAddress($person: UUID!, $value: String!, $address_type: UUID!) {
+            mutation _Testing_CreateAddress($person: UUID!, $value: String!, $address_type: UUID!, $ituser: UUID = null) {
               address_create(
-                input: {person: $person, value: $value, address_type: $address_type, validity: {from: "2014-01-01"}}
+                input: {person: $person, value: $value, address_type: $address_type, ituser: $ituser, validity: {from: "2014-01-01"}}
               ) {
                 uuid
               }
@@ -619,6 +630,7 @@ class GraphQLClient(AsyncBaseClient):
             "person": person,
             "value": value,
             "address_type": address_type,
+            "ituser": ituser,
         }
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
@@ -721,6 +733,29 @@ class GraphQLClient(AsyncBaseClient):
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return TestingUpdateItUserEngagements.parse_obj(data).ituser_update
+
+    async def _testing__update_it_user_external_id(
+        self, uuid: UUID, external_id: str, from_: datetime
+    ) -> TestingUpdateItUserExternalIdItuserUpdate:
+        query = gql(
+            """
+            mutation _Testing_UpdateItUserExternalId($uuid: UUID!, $external_id: String!, $from: DateTime!) {
+              ituser_update(
+                input: {uuid: $uuid, external_id: $external_id, validity: {from: $from}}
+              ) {
+                uuid
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {
+            "uuid": uuid,
+            "external_id": external_id,
+            "from": from_,
+        }
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return TestingUpdateItUserExternalId.parse_obj(data).ituser_update
 
     async def _testing__create_engagement(
         self, orgunit: UUID, person: UUID, engagement_type: UUID, job_function: UUID

@@ -11,6 +11,7 @@ fail with a duplicate-key violation on the unique extUuid.
 
 import asyncio
 import uuid
+from datetime import datetime
 from unittest.mock import patch
 
 import pytest
@@ -149,6 +150,139 @@ async def test_concurrent_sync_person_no_duplicate_key_error(
                     "name": job_function.name,
                     "orgUnitUuid": str(org_unit),
                 }
+            ],
+        }
+    ]
+
+
+@pytest.mark.integration_test
+@pytest.mark.no_amqp
+async def test_sync_handles_extuuid_change_with_same_nemlogin(
+    test_client: AsyncClient,
+    graphql_client: GraphQLClient,
+    root_uuid: uuid.UUID,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """FK external_id can change for the same AD account (e.g., FK Org
+    re-registration). The next sync produces a to_remove + to_add for
+    the same person carrying the same nemloginUuid. Without an explicit
+    flush between the loops, SQLA's INSERT-before-DELETE order trips
+    the unique constraint on nemloginUuid.
+    """
+    org_unit_type = (await graphql_client._testing__get_org_unit_type()).objects[0].uuid
+    await graphql_client._testing__create_org_unit_root(
+        root_uuid=root_uuid, name="Root", org_unit_type=org_unit_type
+    )
+    org_unit = (
+        await graphql_client._testing__create_org_unit(
+            name="OU", parent=root_uuid, org_unit_type=org_unit_type
+        )
+    ).uuid
+    employee = (
+        await graphql_client._testing__create_employee(
+            first_name="Swap", last_name="User"
+        )
+    ).uuid
+    engagement_type = (
+        (await graphql_client._testing__get_engagement_type())
+        .objects[0]
+        .current.classes[0]  # type: ignore
+        .uuid
+    )
+    job_function = (
+        (await graphql_client._testing__get_job_function())
+        .objects[0]
+        .current.classes[0]  # type: ignore
+    )
+    eng = (
+        await graphql_client._testing__create_engagement(
+            org_unit, employee, engagement_type, job_function.uuid
+        )
+    ).uuid
+
+    AD = (await graphql_client._testing__create_it_system("Active Directory")).uuid
+    FK = (await graphql_client._testing__create_it_system("FK ORG")).uuid
+    object_guid = uuid.uuid4()
+    fk_external_id_original = uuid.uuid4()
+    fk_external_id_new = uuid.uuid4()
+    mit_id = uuid.uuid4()
+
+    ad_ituser = (
+        await graphql_client._testing__create_it_user(
+            AD, str(object_guid), employee, "SU", None, [eng]
+        )
+    ).uuid
+    fk_ituser = (
+        await graphql_client._testing__create_it_user(
+            FK, str(fk_external_id_original), employee, str(object_guid), None, [eng]
+        )
+    ).uuid
+    mit_id_class = (
+        (await graphql_client._testing__get_mit_i_d())
+        .objects[0]
+        .current.classes[0]  # type: ignore
+        .uuid
+    )
+    await graphql_client._testing__create_address(
+        employee, str(mit_id), mit_id_class, ituser=ad_ituser
+    )
+
+    @retry()
+    async def wait_for_mo() -> None:
+        debug = (await test_client.get(f"/debug/person/{employee}")).json()
+        assert isinstance(debug, list) and debug, f"MO not ready: {debug}"
+
+    await wait_for_mo()
+
+    # First sync — row gets created with the original FK external_id.
+    response = await test_client.post(f"/sync/person/{employee}")
+    assert response.status_code == 200, response.text
+    cached = (await test_client.get(f"/cache/person/{employee}")).json()
+    assert cached == [
+        {
+            "extUuid": str(fk_external_id_original),
+            "nemloginUuid": str(mit_id),
+            "userId": "SU",
+            "name": "Swap User",
+            "email": None,
+            "positions": [
+                {"name": job_function.name, "orgUnitUuid": str(org_unit)},
+            ],
+        }
+    ]
+
+    # Swap the FK ituser's external_id. AD ituser unchanged → same userId,
+    # same nemloginUuid carry over, but extUuid flips.
+    await graphql_client._testing__update_it_user_external_id(
+        fk_ituser, str(fk_external_id_new), datetime.now()
+    )
+
+    @retry()
+    async def wait_for_swap() -> None:
+        debug = (await test_client.get(f"/debug/person/{employee}")).json()
+        assert debug and debug[0]["extUuid"] == str(fk_external_id_new), debug
+
+    await wait_for_swap()
+
+    caplog.clear()
+    with caplog.at_level("INFO", logger="os2mo_rollekatalog.person"):
+        response = await test_client.post(f"/sync/person/{employee}")
+        assert response.status_code == 200, response.text
+
+    messages = [r.getMessage() for r in caplog.records]
+    assert sum("Remove user" in m for m in messages) == 1, messages
+    assert sum("Add new user" in m for m in messages) == 1, messages
+
+    cached = (await test_client.get(f"/cache/person/{employee}")).json()
+    assert cached == [
+        {
+            "extUuid": str(fk_external_id_new),
+            "nemloginUuid": str(mit_id),
+            "userId": "SU",
+            "name": "Swap User",
+            "email": None,
+            "positions": [
+                {"name": job_function.name, "orgUnitUuid": str(org_unit)},
             ],
         }
     ]
