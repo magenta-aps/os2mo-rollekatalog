@@ -188,6 +188,5 @@ async def org_unit_from_cache(session: depends.Session, uuid: UUID) -> dict | No
 @router.post("/trigger/all")
 async def trigger_refresh_all(settings: depends.Settings, mo: depends.GraphQLClient):
     await mo.refresh_all(
-        settings.fastramqpi.amqp.exchange,
         None if settings.external_roots else [settings.root_org_unit],
     )

@@ -34,27 +34,39 @@ to his IT-users, force sync of Ludvig and make him administrator in Rollekatalog
 
 When first deployed or when a "full" sync is needed for other reasons (such as
 a changed configuration), the following GraphQL query can be submitted to
-OS2mo:
+OS2mo. The `owner` is the rollekatalog service-account UUID; it scopes the
+refresh to this integration's own event listeners so the full sync doesn't
+broadcast refresh events to every other integration listening on the same
+routing keys.
+
+`$root_uuids` must list the configured `ROOT_ORG_UNIT` **and** every UUID in
+`EXTERNAL_ROOTS`, since the integration syncs org units under all of them.
 
 ```
-mutation RefreshAll($exchange: "os2mo_rollekatalog", $root_uuid: UUID!) {
-  employee_refresh(exchange: $exchange) {
+mutation RefreshAll($root_uuids: [UUID!]!) {
+  employee_refresh(owner: "2011e000-baad-c0de-726f-6c6c656b6174") {
     objects
   }
   org_unit_refresh(
-    exchange: $exchange
-    filter: { ancestor: { uuids: [$root_uuid] } }
+    owner: "2011e000-baad-c0de-726f-6c6c656b6174"
+    filter: { ancestor: { uuids: $root_uuids } }
   ) {
     objects
   }
   class_refresh(
-    exchange: $exchange
+    owner: "2011e000-baad-c0de-726f-6c6c656b6174"
     limit: 1
     filter: { facet: { user_keys: "engagement_job_function" } }
   ) {
     objects
   }
 }
+```
+
+with variables:
+
+```json
+{ "root_uuids": ["<ROOT_ORG_UNIT>", "<EXTERNAL_ROOT_1>", "<EXTERNAL_ROOT_2>"] }
 ```
 
 

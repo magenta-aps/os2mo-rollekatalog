@@ -441,18 +441,22 @@ mutation _Testing_MoveOrgUnitToRoot($uuid: UUID!) {
   }
 }
 
-mutation RefreshAll($exchange: String!, $root_uuid: [UUID!]) {
-  employee_refresh(exchange: $exchange) {
+# owner scopes the refresh to this integration's own event listeners, so a
+# full sync doesn't broadcast refresh events to every other integration
+# listening on the same routing keys. It is the rollekatalog service-account
+# UUID seeded in keycloak-realm-builder (stable across deployments).
+mutation RefreshAll($root_uuid: [UUID!]) {
+  employee_refresh(owner: "2011e000-baad-c0de-726f-6c6c656b6174") {
     objects
   }
   org_unit_refresh(
-    exchange: $exchange
+    owner: "2011e000-baad-c0de-726f-6c6c656b6174"
     filter: { ancestor: { uuids: $root_uuid } }
   ) {
     objects
   }
   class_refresh(
-    exchange: $exchange
+    owner: "2011e000-baad-c0de-726f-6c6c656b6174"
     limit: 1
     filter: { facet: { user_keys: "engagement_job_function" } }
   ) {

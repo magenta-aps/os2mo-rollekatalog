@@ -900,19 +900,22 @@ class GraphQLClient(AsyncBaseClient):
         return TestingMoveOrgUnitToRoot.parse_obj(data).org_unit_update
 
     async def refresh_all(
-        self, exchange: str, root_uuid: Union[Optional[List[UUID]], UnsetType] = UNSET
+        self, root_uuid: Union[Optional[List[UUID]], UnsetType] = UNSET
     ) -> RefreshAll:
         query = gql(
             """
-            mutation RefreshAll($exchange: String!, $root_uuid: [UUID!]) {
-              employee_refresh(exchange: $exchange) {
+            mutation RefreshAll($root_uuid: [UUID!]) {
+              employee_refresh(owner: "2011e000-baad-c0de-726f-6c6c656b6174") {
                 objects
               }
-              org_unit_refresh(exchange: $exchange, filter: {ancestor: {uuids: $root_uuid}}) {
+              org_unit_refresh(
+                owner: "2011e000-baad-c0de-726f-6c6c656b6174"
+                filter: {ancestor: {uuids: $root_uuid}}
+              ) {
                 objects
               }
               class_refresh(
-                exchange: $exchange
+                owner: "2011e000-baad-c0de-726f-6c6c656b6174"
                 limit: 1
                 filter: {facet: {user_keys: "engagement_job_function"}}
               ) {
@@ -921,7 +924,7 @@ class GraphQLClient(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {"exchange": exchange, "root_uuid": root_uuid}
+        variables: dict[str, object] = {"root_uuid": root_uuid}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return RefreshAll.parse_obj(data)
