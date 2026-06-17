@@ -345,8 +345,8 @@ mutation _Testing_CreateItUser($uuid: UUID, $itsystem: UUID!, $external_id: Stri
   }
 }
 
-mutation _Testing_UpdateItUser($uuid: UUID!, $from: DateTime!) {
-  ituser_update(input: {uuid: $uuid, user_key: "Updated name", validity: {from: $from}}) {
+mutation _Testing_UpdateItUser($uuid: UUID!, $from: DateTime!, $user_key: String = "Updated name") {
+  ituser_update(input: {uuid: $uuid, user_key: $user_key, validity: {from: $from}}) {
     uuid
   }
 }

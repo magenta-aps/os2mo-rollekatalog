@@ -286,3 +286,101 @@ async def test_sync_handles_extuuid_change_with_same_nemlogin(
             ],
         }
     ]
+
+
+@pytest.mark.integration_test
+@pytest.mark.envvar({"LISTEN_TO_CHANGES_IN_MO": "False"})
+async def test_ituser_event_dedups_validities(
+    test_client: AsyncClient,
+    graphql_client: GraphQLClient,
+    root_uuid: uuid.UUID,
+) -> None:
+    """A single ituser event with many validity periods triggers exactly
+    one sync_person call per unique person.
+
+    `get_uuids_for_it_user` queries `validities(start: null, end: null)`,
+    so an ituser that has been updated multiple times yields multiple
+    rows — but they almost always reference the same person. Without
+    dedup the handler would call sync_person once per validity row,
+    producing duplicate work and noisy logs (see the "User unchanged"
+    spam reported in #70184). The handler must collapse the rows by
+    person UUID before dispatching.
+    """
+    org_unit_type = (await graphql_client._testing__get_org_unit_type()).objects[0].uuid
+    await graphql_client._testing__create_org_unit_root(
+        root_uuid=root_uuid, name="Root", org_unit_type=org_unit_type
+    )
+    org_unit = (
+        await graphql_client._testing__create_org_unit(
+            name="OU", parent=root_uuid, org_unit_type=org_unit_type
+        )
+    ).uuid
+    employee = (
+        await graphql_client._testing__create_employee(
+            first_name="Many", last_name="Validities"
+        )
+    ).uuid
+    engagement_type = (
+        (await graphql_client._testing__get_engagement_type())
+        .objects[0]
+        .current.classes[0]  # type: ignore
+        .uuid
+    )
+    job_function = (
+        (await graphql_client._testing__get_job_function())
+        .objects[0]
+        .current.classes[0]  # type: ignore
+    )
+    eng = (
+        await graphql_client._testing__create_engagement(
+            org_unit, employee, engagement_type, job_function.uuid
+        )
+    ).uuid
+
+    AD = (await graphql_client._testing__create_it_system("Active Directory")).uuid
+    FK = (await graphql_client._testing__create_it_system("FK ORG")).uuid
+    object_guid = uuid.uuid4()
+    external_id = uuid.uuid4()
+
+    ad_ituser = (
+        await graphql_client._testing__create_it_user(
+            AD, str(object_guid), employee, "MV", None, [eng]
+        )
+    ).uuid
+    await graphql_client._testing__create_it_user(
+        FK, str(external_id), employee, str(object_guid), None, [eng]
+    )
+
+    # Bump the ituser repeatedly so it accumulates many validity rows.
+    # MO collapses validities when nothing changes, so vary user_key each
+    # round to force a new validity row per call.
+    from datetime import datetime, timedelta
+
+    for day in range(1, 6):
+        await graphql_client._testing__update_it_user(
+            ad_ituser,
+            datetime.now() + timedelta(days=day),
+            user_key=f"MV-{day}",
+        )
+
+    @retry()
+    async def wait_for_validities() -> None:
+        result = await graphql_client.get_uuids_for_it_user(ad_ituser)
+        validities = [v for obj in result.objects for v in obj.validities]
+        assert len(validities) >= 5, f"only {len(validities)} validities"
+
+    await wait_for_validities()
+
+    with patch("os2mo_rollekatalog.events.sync_person") as mock_sync:
+        response = await test_client.post(
+            "/ituser",
+            json={"subject": str(ad_ituser), "priority": 10000},
+        )
+        assert response.status_code == 200, response.text
+
+    # Exactly one sync_person call, for our employee — not one per validity.
+    # sync_person(mo, ldap, periodic_sync, session, ad_key, fk_key, email_key,
+    # mit_id_key, root_org_unit, person_uuid, ...) → person_uuid is positional 9.
+    person_uuids = {call.args[9] for call in mock_sync.call_args_list}
+    assert person_uuids == {employee}, person_uuids
+    assert mock_sync.call_count == 1, mock_sync.call_args_list
