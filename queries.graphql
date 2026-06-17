@@ -17,8 +17,7 @@ query GetTitles {
 query GetPerson(
   $employee_uuid: UUID!
   $root_uuids: [UUID!]!
-  $ad_itsystem_user_key: String!
-  $fk_itsystem_user_key: String!
+  $itsystem_user_keys: [String!]!
   $employee_email_user_key: String!
   $mit_id_user_key: String!
   $now: DateTime!
@@ -55,7 +54,7 @@ query GetPerson(
         }
         itusers(
           filter: {
-            itsystem: { user_keys: [$ad_itsystem_user_key, $fk_itsystem_user_key] }
+            itsystem: { user_keys: $itsystem_user_keys }
             from_date: $now
             to_date: null
           }
@@ -139,8 +138,7 @@ query GetPersonUuidForEngagement($uuid: UUID!) {
 query GetOrgUnit(
   $uuid: UUID!
   $root_uuids: [UUID!]!
-  $ad_itsystem_user_key: String!
-  $fk_itsystem_user_key: String!
+  $itsystem_user_keys: [String!]!
   $now: DateTime!
 ) {
   org_units(
@@ -170,7 +168,7 @@ query GetOrgUnit(
         managers(filter: {from_date: $now, to_date: null}){
           person(filter: {from_date: $now, to_date: null}){
             uuid
-            itusers(filter: { itsystem: { user_keys: [$ad_itsystem_user_key, $fk_itsystem_user_key] }, from_date: $now, to_date: null}) {
+            itusers(filter: { itsystem: { user_keys: $itsystem_user_keys }, from_date: $now, to_date: null}) {
               uuid
               user_key
               external_id

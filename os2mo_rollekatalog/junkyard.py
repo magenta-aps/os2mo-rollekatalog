@@ -90,7 +90,7 @@ def create_ldap_client(ldap_url: AnyHttpUrl) -> LDAPClient:
 
 def resolve_samaccounts(
     itusers: Sequence[ITUser],
-    ad_itsystem_user_key: str,
+    ad_itsystem_user_keys: list[str],
     fk_itsystem_user_key: str,
 ) -> tuple[list[ITUser], dict[str, UUID]]:
     """
@@ -99,12 +99,16 @@ def resolve_samaccounts(
     For each AD IT-user, look up a matching FK IT-user.
     Build a mapping {ad.user_key: resolved_external_id}.
 
+    Multiple AD-like itsystems are supported (e.g. a regular AD and a
+    separate "Skole-AD"); they are all mapped to the FK itsystem the
+    same way.
+
     Returns:
         (ad_itusers, samaccounts)
         - ad_itusers: list of AD IT-users
         - samaccounts: dict mapping AD user_key -> external_id (resolved if match found)
     """
-    ad_itusers = [it for it in itusers if it.itsystem.user_key == ad_itsystem_user_key]
+    ad_itusers = [it for it in itusers if it.itsystem.user_key in ad_itsystem_user_keys]
     if not ad_itusers:
         return [], {}
 

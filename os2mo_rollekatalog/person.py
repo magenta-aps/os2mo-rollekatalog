@@ -26,7 +26,7 @@ logger = structlog.stdlib.get_logger(__name__)
 async def get_person(
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
-    ad_itsystem_user_key: str,
+    ad_itsystem_user_keys: list[str],
     fk_itsystem_user_key: str,
     employee_email_user_key: str,
     mit_id_user_key: str,
@@ -39,8 +39,7 @@ async def get_person(
     result = await mo.get_person(
         person_uuid,
         [root_org_unit] + external_roots,
-        ad_itsystem_user_key,
-        fk_itsystem_user_key,
+        [*ad_itsystem_user_keys, fk_itsystem_user_key],
         employee_email_user_key,
         mit_id_user_key,
         datetime.now(),
@@ -76,7 +75,7 @@ async def get_person(
 
     users = []
     itusers, samaccounts = resolve_samaccounts(
-        mo_person.itusers, ad_itsystem_user_key, fk_itsystem_user_key
+        mo_person.itusers, ad_itsystem_user_keys, fk_itsystem_user_key
     )
 
     if not itusers:
@@ -139,7 +138,7 @@ async def sync_person(
     ldap_client: depends.LDAPClient,
     periodic_sync: depends.PeriodicSync,
     session: depends.Session,
-    ad_itsystem_user_key: str,
+    ad_itsystem_user_keys: list[str],
     fk_itsystem_user_key: str,
     employee_email_user_key: str,
     mit_id_user_key: str,
@@ -157,7 +156,7 @@ async def sync_person(
         users = await get_person(
             mo,
             ldap_client,
-            ad_itsystem_user_key,
+            ad_itsystem_user_keys,
             fk_itsystem_user_key,
             employee_email_user_key,
             mit_id_user_key,

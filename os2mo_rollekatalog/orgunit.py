@@ -33,7 +33,7 @@ class ExpectedParent(Exception):
 async def get_org_unit(
     mo: depends.GraphQLClient,
     ldap_client: depends.LDAPClient,
-    ad_itsystem_user_key: str,
+    ad_itsystem_user_keys: list[str],
     fk_itsystem_user_key: str,
     root_org_unit: UUID,
     exclude_org_unit_level: UUID | None,
@@ -43,8 +43,7 @@ async def get_org_unit(
     result = await mo.get_org_unit(
         org_unit_uuid,
         [root_org_unit] + external_roots,
-        ad_itsystem_user_key,
-        fk_itsystem_user_key,
+        [*ad_itsystem_user_keys, fk_itsystem_user_key],
         datetime.now(),
     )
 
@@ -94,7 +93,7 @@ async def get_org_unit(
                             f"no suitable SAM-Account found for {person.itusers=}"
                         )
                     itusers, samaccounts = resolve_samaccounts(
-                        person.itusers, ad_itsystem_user_key, fk_itsystem_user_key
+                        person.itusers, ad_itsystem_user_keys, fk_itsystem_user_key
                     )
                     relevant_itusers = select_relevant(itusers)
                     sorted_itusers = sorted(
@@ -152,7 +151,7 @@ async def sync_org_unit(
     ldap_client: depends.LDAPClient,
     periodic_sync: depends.PeriodicSync,
     session: depends.Session,
-    ad_itsystem_user_key: str,
+    ad_itsystem_user_keys: list[str],
     fk_itsystem_user_key: str,
     root_org_unit: UUID,
     exclude_org_unit_level: UUID | None,
@@ -163,7 +162,7 @@ async def sync_org_unit(
         org_unit = await get_org_unit(
             mo,
             ldap_client,
-            ad_itsystem_user_key,
+            ad_itsystem_user_keys,
             fk_itsystem_user_key,
             root_org_unit,
             exclude_org_unit_level or None,
@@ -198,7 +197,7 @@ async def sync_org_unit(
                 ldap_client,
                 periodic_sync,
                 session,
-                ad_itsystem_user_key,
+                ad_itsystem_user_keys,
                 fk_itsystem_user_key,
                 root_org_unit,
                 exclude_org_unit_level,

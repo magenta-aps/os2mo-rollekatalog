@@ -40,7 +40,9 @@ async def app(
     monkeypatch.setenv("API_KEY", "dummy")
     monkeypatch.setenv("ROOT_ORG_UNIT", str(root_uuid))
     monkeypatch.setenv("SYNC_TITLES", "false")
-    monkeypatch.setenv("AD_ITSYSTEM_USER_KEY", "Active Directory")
+    monkeypatch.setenv(
+        "AD_ITSYSTEM_USER_KEYS", json.dumps(["Active Directory", "Skole-AD"])
+    )
     monkeypatch.setenv("FK_ITSYSTEM_USER_KEY", "FK ORG")
     monkeypatch.setenv("EXCLUDE_ORG_UNIT_LEVEL", str(exclude_org_unit_level))
     monkeypatch.setenv("EXTERNAL_ROOTS", json.dumps(external_roots))
