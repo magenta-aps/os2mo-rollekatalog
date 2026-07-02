@@ -98,9 +98,6 @@ async def get_person(
             for eng in ituser.engagements or []
             if eng.current and eng.current.org_unit
         ]
-        if len(positions) == 0:
-            # Skip itusers without valid engagements
-            continue
 
         users.append(
             User(
