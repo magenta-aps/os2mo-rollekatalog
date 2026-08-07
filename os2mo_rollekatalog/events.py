@@ -45,14 +45,12 @@ async def handle_class(
 async def handle_person(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
-    ldap_client: depends.LDAPClient,
     periodic_sync: depends.PeriodicSync,
     session: depends.Session,
     event: Event[UUID],
 ) -> None:
     await sync_person(
         mo,
-        ldap_client,
         periodic_sync,
         session,
         settings.ad_itsystem_user_keys,
@@ -71,7 +69,6 @@ async def handle_person(
 async def handle_ituser(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
-    ldap_client: depends.LDAPClient,
     periodic_sync: depends.PeriodicSync,
     session: depends.Session,
     event: Event[UUID],
@@ -93,7 +90,6 @@ async def handle_ituser(
     for person_uuid in persons:
         await sync_person(
             mo,
-            ldap_client,
             periodic_sync,
             session,
             settings.ad_itsystem_user_keys,
@@ -109,7 +105,6 @@ async def handle_ituser(
     for org_unit_uuid in org_units:
         await sync_org_unit(
             mo,
-            ldap_client,
             periodic_sync,
             session,
             settings.ad_itsystem_user_keys,
@@ -125,7 +120,6 @@ async def handle_ituser(
 async def handle_address(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
-    ldap_client: depends.LDAPClient,
     periodic_sync: depends.PeriodicSync,
     session: depends.Session,
     event: Event[UUID],
@@ -137,7 +131,6 @@ async def handle_address(
     for person_uuid in persons:
         await sync_person(
             mo,
-            ldap_client,
             periodic_sync,
             session,
             settings.ad_itsystem_user_keys,
@@ -156,7 +149,6 @@ async def handle_address(
 async def handle_engagement(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
-    ldap_client: depends.LDAPClient,
     periodic_sync: depends.PeriodicSync,
     session: depends.Session,
     event: Event[UUID],
@@ -168,7 +160,6 @@ async def handle_engagement(
     for person_uuid in persons:
         await sync_person(
             mo,
-            ldap_client,
             periodic_sync,
             session,
             settings.ad_itsystem_user_keys,
@@ -187,14 +178,12 @@ async def handle_engagement(
 async def handle_org_unit(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
-    ldap_client: depends.LDAPClient,
     periodic_sync: depends.PeriodicSync,
     session: depends.Session,
     event: Event[UUID],
 ) -> None:
     await sync_org_unit(
         mo,
-        ldap_client,
         periodic_sync,
         session,
         settings.ad_itsystem_user_keys,
@@ -210,7 +199,6 @@ async def handle_org_unit(
 async def handle_kle(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
-    ldap_client: depends.LDAPClient,
     periodic_sync: depends.PeriodicSync,
     session: depends.Session,
     event: Event[UUID],
@@ -222,7 +210,6 @@ async def handle_kle(
     for org_unit_uuid in org_units:
         await sync_org_unit(
             mo,
-            ldap_client,
             periodic_sync,
             session,
             settings.ad_itsystem_user_keys,
@@ -238,7 +225,6 @@ async def handle_kle(
 async def handle_manager(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
-    ldap_client: depends.LDAPClient,
     periodic_sync: depends.PeriodicSync,
     session: depends.Session,
     event: Event[UUID],
@@ -250,7 +236,6 @@ async def handle_manager(
     for org_unit_uuid in org_units:
         await sync_org_unit(
             mo,
-            ldap_client,
             periodic_sync,
             session,
             settings.ad_itsystem_user_keys,

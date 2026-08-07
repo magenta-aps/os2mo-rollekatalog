@@ -379,8 +379,8 @@ async def test_ituser_event_dedups_validities(
         assert response.status_code == 200, response.text
 
     # Exactly one sync_person call, for our employee — not one per validity.
-    # sync_person(mo, ldap, periodic_sync, session, ad_key, fk_key, email_key,
-    # mit_id_key, root_org_unit, person_uuid, ...) → person_uuid is positional 9.
-    person_uuids = {call.args[9] for call in mock_sync.call_args_list}
+    # sync_person(mo, periodic_sync, session, ad_key, fk_key, email_key,
+    # mit_id_key, root_org_unit, person_uuid, ...) → person_uuid is positional 8.
+    person_uuids = {call.args[8] for call in mock_sync.call_args_list}
     assert person_uuids == {employee}, person_uuids
     assert mock_sync.call_count == 1, mock_sync.call_args_list
