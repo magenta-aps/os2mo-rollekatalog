@@ -167,7 +167,7 @@ async def sync_person(
         delete_result = await session.execute(
             delete(User).where(User.person == person_uuid)
         )
-        if delete_result.rowcount > 0:  # type: ignore[attr-defined]
+        if delete_result.rowcount > 0:
             logger.info("Remove user", uuid=person_uuid)
             periodic_sync.sync_soon()
         return
