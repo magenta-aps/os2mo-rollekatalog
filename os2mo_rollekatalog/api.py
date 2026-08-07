@@ -71,14 +71,12 @@ async def random_org_units(session: depends.Session, count: int = 5) -> list:
 async def person(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
-    ldap_client: depends.LDAPClient,
     uuid: UUID,
 ) -> list | dict:
     """See how a person will be synced, or debug why it is not to be."""
     try:
         users = await get_person(
             mo,
-            ldap_client,
             settings.ad_itsystem_user_keys,
             settings.fk_itsystem_user_key,
             settings.employee_email_user_key,
@@ -98,7 +96,6 @@ async def person(
 async def sync_person_on_demand(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
-    ldap_client: depends.LDAPClient,
     periodic_sync: depends.PeriodicSync,
     session: depends.Session,
     uuid: UUID,
@@ -106,7 +103,6 @@ async def sync_person_on_demand(
     """Sync person."""
     await sync_person(
         mo,
-        ldap_client,
         periodic_sync,
         session,
         settings.ad_itsystem_user_keys,
@@ -132,14 +128,12 @@ async def person_from_cache(session: depends.Session, uuid: UUID) -> list:
 async def org_unit(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
-    ldap_client: depends.LDAPClient,
     uuid: UUID,
 ) -> dict:
     """See how an org unit will be synced, or debug why it is not to be."""
     try:
         org_unit = await get_org_unit(
             mo,
-            ldap_client,
             settings.ad_itsystem_user_keys,
             settings.fk_itsystem_user_key,
             settings.root_org_unit,
@@ -156,7 +150,6 @@ async def org_unit(
 async def sync_org_unit_on_demand(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
-    ldap_client: depends.LDAPClient,
     periodic_sync: depends.PeriodicSync,
     session: depends.Session,
     uuid: UUID,
@@ -164,7 +157,6 @@ async def sync_org_unit_on_demand(
     """Sync org unit."""
     await sync_org_unit(
         mo,
-        ldap_client,
         periodic_sync,
         session,
         settings.ad_itsystem_user_keys,

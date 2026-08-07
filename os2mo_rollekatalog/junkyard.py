@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 from collections.abc import Generator
-from typing import NewType
 from typing import Protocol
 from typing import Sequence
 from typing import TypeVar
@@ -12,9 +11,6 @@ from zoneinfo import ZoneInfo
 from collections import defaultdict
 from more_itertools import one
 import structlog
-
-from httpx import AsyncClient
-from pydantic import AnyHttpUrl
 
 logger = structlog.stdlib.get_logger(__name__)
 
@@ -79,13 +75,6 @@ class ITUser(HasUUID, HasUserKey, HasExternalID, HasITSystem, Protocol):
     """
     Protocol that represents any IT-user object we can resolve SAM accounts for.
     """
-
-
-LDAPClient = NewType("LDAPClient", AsyncClient)
-
-
-def create_ldap_client(ldap_url: AnyHttpUrl) -> LDAPClient:
-    return LDAPClient(AsyncClient(base_url=ldap_url))
 
 
 def resolve_samaccounts(
