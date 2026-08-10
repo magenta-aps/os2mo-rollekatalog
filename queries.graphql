@@ -308,9 +308,10 @@ mutation _Testing_CreateOrgUnitRoot($name: String!, $root_uuid: UUID!, $org_unit
 }
 
 
-mutation _Testing_CreateOrgUnit($name: String!, $parent: UUID!, $org_unit_type: UUID!, $org_unit_level: UUID) {
+mutation _Testing_CreateOrgUnit($name: String!, $parent: UUID!, $org_unit_type: UUID!, $org_unit_level: UUID, $uuid: UUID) {
   org_unit_create(
     input: {
+      uuid: $uuid,
       name: $name,
       parent: $parent,
       org_unit_type: $org_unit_type,
