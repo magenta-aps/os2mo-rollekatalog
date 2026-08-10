@@ -766,13 +766,18 @@ class GraphQLClient(AsyncBaseClient):
         return TestingUpdateItUserExternalId.parse_obj(data).ituser_update
 
     async def _testing__create_engagement(
-        self, orgunit: UUID, person: UUID, engagement_type: UUID, job_function: UUID
+        self,
+        orgunit: UUID,
+        person: UUID,
+        engagement_type: UUID,
+        job_function: UUID,
+        from_: Union[Optional[datetime], UnsetType] = UNSET,
     ) -> TestingCreateEngagementEngagementCreate:
         query = gql(
             """
-            mutation _Testing_CreateEngagement($orgunit: UUID!, $person: UUID!, $engagement_type: UUID!, $job_function: UUID!) {
+            mutation _Testing_CreateEngagement($orgunit: UUID!, $person: UUID!, $engagement_type: UUID!, $job_function: UUID!, $from: DateTime = "2016-05-05") {
               engagement_create(
-                input: {org_unit: $orgunit, engagement_type: $engagement_type, job_function: $job_function, person: $person, validity: {from: "2016-05-05"}}
+                input: {org_unit: $orgunit, engagement_type: $engagement_type, job_function: $job_function, person: $person, validity: {from: $from}}
               ) {
                 uuid
               }
@@ -784,6 +789,7 @@ class GraphQLClient(AsyncBaseClient):
             "person": person,
             "engagement_type": engagement_type,
             "job_function": job_function,
+            "from": from_,
         }
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)

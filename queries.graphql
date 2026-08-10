@@ -366,9 +366,9 @@ mutation _Testing_UpdateItUserExternalId($uuid: UUID!, $external_id: String!, $f
   }
 }
 
-mutation _Testing_CreateEngagement($orgunit: UUID!, $person: UUID!, $engagement_type: UUID!, $job_function: UUID!) {
+mutation _Testing_CreateEngagement($orgunit: UUID!, $person: UUID!, $engagement_type: UUID!, $job_function: UUID!, $from: DateTime = "2016-05-05") {
   engagement_create(
-    input: {org_unit: $orgunit, engagement_type: $engagement_type, job_function: $job_function, person: $person, validity: {from: "2016-05-05"}}
+    input: {org_unit: $orgunit, engagement_type: $engagement_type, job_function: $job_function, person: $person, validity: {from: $from}}
   ) {
     uuid
   }
