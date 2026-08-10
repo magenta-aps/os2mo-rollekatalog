@@ -86,6 +86,10 @@ class _Settings(BaseSettings):
         None,
         description="UUID of `org_unit_level` to ignore. If a unit has this level the unit (including it's children) will not be synced",
     )
+    exclude_org_units: list[UUID] = Field(
+        [],
+        description="UUIDs of org units to exclude from Rollekatalog. The unit and all its descendants are skipped.",
+    )
     prefer_nickname: bool = Field(
         False,
         description="Whether to sync the *name* or *nickname* of OS2mo to Rollekatalog.",
