@@ -138,6 +138,7 @@ async def org_unit(
             settings.fk_itsystem_user_key,
             settings.root_org_unit,
             settings.exclude_org_unit_level,
+            settings.exclude_org_units,
             uuid,
             settings.external_roots,
         )
@@ -163,6 +164,7 @@ async def sync_org_unit_on_demand(
         settings.fk_itsystem_user_key,
         settings.root_org_unit,
         settings.exclude_org_unit_level,
+        settings.exclude_org_units,
         uuid,
         settings.external_roots,
     )
