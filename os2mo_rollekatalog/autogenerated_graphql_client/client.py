@@ -187,6 +187,15 @@ class GraphQLClient(AsyncBaseClient):
                             filter: {ancestor: {uuids: $root_uuids}, from_date: $now, to_date: null}
                           ) {
                             uuid
+                            org_unit_level {
+                              uuid
+                            }
+                            ancestors {
+                              uuid
+                              org_unit_level {
+                                uuid
+                              }
+                            }
                             validity {
                               from
                               to

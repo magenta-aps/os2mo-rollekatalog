@@ -13,6 +13,7 @@ from sqlalchemy.orm import selectinload
 
 from os2mo_rollekatalog import depends
 from os2mo_rollekatalog.junkyard import WillNotSync
+from os2mo_rollekatalog.junkyard import is_org_unit_excluded
 from os2mo_rollekatalog.junkyard import resolve_samaccounts
 from os2mo_rollekatalog.junkyard import select_relevant
 from os2mo_rollekatalog.models import Name
@@ -34,6 +35,8 @@ async def get_person(
     prefer_nickname: bool,
     sync_titles: bool,
     external_roots: list[UUID],
+    exclude_org_unit_level: UUID | None,
+    exclude_org_units: list[UUID],
 ) -> list[User]:
     result = await mo.get_person(
         person_uuid,
@@ -90,21 +93,36 @@ async def get_person(
 
         # Include engagements valid now or in the future (Nutid/Fremtid).
         # The query returns all engagement validities, so pick the relevant
-        # validity per engagement (current, else earliest future).
+        # validity per engagement (current, else earliest future), and resolve
+        # each to its org unit within the sync tree.
         engagement_validities = [
             validity for eng in ituser.engagements or [] for validity in eng.validities
         ]
-        positions = [
-            Position(
-                name=eng.job_function.name,
-                orgUnitUuid=one(select_relevant(eng.org_unit)).uuid,
-                titleUuid=eng.job_function.uuid if sync_titles else None,
-            )
+        engagement_units = [
+            (eng, one(select_relevant(eng.org_unit)))
             for eng in select_relevant(engagement_validities)
             # Skip engagements whose org unit is outside the sync root (the
             # query's ancestor filter returns an empty list for those).
             if eng.org_unit
         ]
+        # Never create a position in an org unit we don't sync.
+        positions = [
+            Position(
+                name=eng.job_function.name,
+                orgUnitUuid=org_unit.uuid,
+                titleUuid=eng.job_function.uuid if sync_titles else None,
+            )
+            for eng, org_unit in engagement_units
+            if not is_org_unit_excluded(
+                org_unit, exclude_org_unit_level, exclude_org_units
+            )
+        ]
+
+        # Drop itusers whose in-tree engagements all resolved to excluded org
+        # units. An ituser with no in-tree engagements at all is still synced
+        # (see #70811).
+        if engagement_units and not positions:
+            continue
 
         users.append(
             User(
@@ -150,6 +168,8 @@ async def sync_person(
     prefer_nickname: bool,
     sync_titles: bool,
     external_roots: list[UUID],
+    exclude_org_unit_level: UUID | None,
+    exclude_org_units: list[UUID],
 ) -> None:
     await session.execute(
         text("SELECT pg_advisory_xact_lock(:k)"),
@@ -167,6 +187,8 @@ async def sync_person(
             prefer_nickname,
             sync_titles,
             external_roots,
+            exclude_org_unit_level,
+            exclude_org_units,
         )
     except WillNotSync:
         delete_result = await session.execute(
