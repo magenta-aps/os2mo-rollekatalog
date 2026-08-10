@@ -86,6 +86,8 @@ async def person(
             settings.prefer_nickname,
             settings.sync_titles,
             settings.external_roots,
+            settings.exclude_org_unit_level,
+            settings.exclude_org_units,
         )
     except WillNotSync as e:
         return {"error": e.message}
@@ -114,6 +116,8 @@ async def sync_person_on_demand(
         settings.prefer_nickname,
         settings.sync_titles,
         settings.external_roots,
+        settings.exclude_org_unit_level,
+        settings.exclude_org_units,
     )
 
 

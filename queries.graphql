@@ -84,6 +84,15 @@ query GetPerson(
                 }
               ) {
                 uuid
+                org_unit_level {
+                  uuid
+                }
+                ancestors {
+                  uuid
+                  org_unit_level {
+                    uuid
+                  }
+                }
                 validity {
                   from
                   to
