@@ -177,7 +177,12 @@ class GraphQLClient(AsyncBaseClient):
                         to
                       }
                       engagements(filter: {from_date: $now, to_date: null}) {
-                        current {
+                        validities {
+                          uuid
+                          validity {
+                            from
+                            to
+                          }
                           org_unit(
                             filter: {ancestor: {uuids: $root_uuids}, from_date: $now, to_date: null}
                           ) {

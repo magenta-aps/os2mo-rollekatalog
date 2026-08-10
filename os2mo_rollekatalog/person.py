@@ -88,14 +88,22 @@ async def get_person(
         if extUuid is None:
             continue
 
+        # Include engagements valid now or in the future (Nutid/Fremtid).
+        # The query returns all engagement validities, so pick the relevant
+        # validity per engagement (current, else earliest future).
+        engagement_validities = [
+            validity for eng in ituser.engagements or [] for validity in eng.validities
+        ]
         positions = [
             Position(
-                name=eng.current.job_function.name,
-                orgUnitUuid=one(select_relevant(eng.current.org_unit)).uuid,
-                titleUuid=eng.current.job_function.uuid if sync_titles else None,
+                name=eng.job_function.name,
+                orgUnitUuid=one(select_relevant(eng.org_unit)).uuid,
+                titleUuid=eng.job_function.uuid if sync_titles else None,
             )
-            for eng in ituser.engagements or []
-            if eng.current and eng.current.org_unit
+            for eng in select_relevant(engagement_validities)
+            # Skip engagements whose org unit is outside the sync root (the
+            # query's ancestor filter returns an empty list for those).
+            if eng.org_unit
         ]
 
         users.append(

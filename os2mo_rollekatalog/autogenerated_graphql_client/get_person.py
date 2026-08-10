@@ -61,27 +61,42 @@ class GetPersonEmployeesObjectsCurrentItusersValidity(BaseModel):
 
 
 class GetPersonEmployeesObjectsCurrentItusersEngagements(BaseModel):
-    current: Optional["GetPersonEmployeesObjectsCurrentItusersEngagementsCurrent"]
+    validities: List["GetPersonEmployeesObjectsCurrentItusersEngagementsValidities"]
 
 
-class GetPersonEmployeesObjectsCurrentItusersEngagementsCurrent(BaseModel):
-    org_unit: List["GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnit"]
-    job_function: "GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentJobFunction"
-
-
-class GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnit(BaseModel):
+class GetPersonEmployeesObjectsCurrentItusersEngagementsValidities(BaseModel):
     uuid: UUID
-    validity: "GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnitValidity"
+    validity: "GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesValidity"
+    org_unit: List[
+        "GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesOrgUnit"
+    ]
+    job_function: (
+        "GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesJobFunction"
+    )
 
 
-class GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnitValidity(
+class GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesValidity(BaseModel):
+    from_: datetime = Field(alias="from")
+    to: Optional[datetime]
+
+
+class GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesOrgUnit(BaseModel):
+    uuid: UUID
+    validity: (
+        "GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesOrgUnitValidity"
+    )
+
+
+class GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesOrgUnitValidity(
     BaseModel
 ):
     from_: datetime = Field(alias="from")
     to: Optional[datetime]
 
 
-class GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentJobFunction(BaseModel):
+class GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesJobFunction(
+    BaseModel
+):
     name: str
     uuid: UUID
 
@@ -97,7 +112,8 @@ GetPersonEmployeesObjectsCurrentItusers.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusersItsystem.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusersValidity.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusersEngagements.update_forward_refs()
-GetPersonEmployeesObjectsCurrentItusersEngagementsCurrent.update_forward_refs()
-GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnit.update_forward_refs()
-GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentOrgUnitValidity.update_forward_refs()
-GetPersonEmployeesObjectsCurrentItusersEngagementsCurrentJobFunction.update_forward_refs()
+GetPersonEmployeesObjectsCurrentItusersEngagementsValidities.update_forward_refs()
+GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesValidity.update_forward_refs()
+GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesOrgUnit.update_forward_refs()
+GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesOrgUnitValidity.update_forward_refs()
+GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesJobFunction.update_forward_refs()
