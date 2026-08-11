@@ -62,6 +62,8 @@ async def handle_person(
         settings.prefer_nickname,
         settings.sync_titles,
         settings.external_roots,
+        settings.exclude_org_unit_level,
+        settings.exclude_org_units,
     )
 
 
@@ -101,6 +103,8 @@ async def handle_ituser(
             settings.prefer_nickname,
             settings.sync_titles,
             settings.external_roots,
+            settings.exclude_org_unit_level,
+            settings.exclude_org_units,
         )
     for org_unit_uuid in org_units:
         await sync_org_unit(
@@ -111,6 +115,7 @@ async def handle_ituser(
             settings.fk_itsystem_user_key,
             settings.root_org_unit,
             settings.exclude_org_unit_level,
+            settings.exclude_org_units,
             org_unit_uuid,
             settings.external_roots,
         )
@@ -142,6 +147,8 @@ async def handle_address(
             settings.prefer_nickname,
             settings.sync_titles,
             settings.external_roots,
+            settings.exclude_org_unit_level,
+            settings.exclude_org_units,
         )
 
 
@@ -171,6 +178,8 @@ async def handle_engagement(
             settings.prefer_nickname,
             settings.sync_titles,
             settings.external_roots,
+            settings.exclude_org_unit_level,
+            settings.exclude_org_units,
         )
 
 
@@ -190,6 +199,7 @@ async def handle_org_unit(
         settings.fk_itsystem_user_key,
         settings.root_org_unit,
         settings.exclude_org_unit_level,
+        settings.exclude_org_units,
         event.subject,
         settings.external_roots,
     )
@@ -216,6 +226,7 @@ async def handle_kle(
             settings.fk_itsystem_user_key,
             settings.root_org_unit,
             settings.exclude_org_unit_level,
+            settings.exclude_org_units,
             org_unit_uuid,
             settings.external_roots,
         )
@@ -242,6 +253,7 @@ async def handle_manager(
             settings.fk_itsystem_user_key,
             settings.root_org_unit,
             settings.exclude_org_unit_level,
+            settings.exclude_org_units,
             org_unit_uuid,
             settings.external_roots,
         )

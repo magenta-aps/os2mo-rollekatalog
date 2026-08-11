@@ -187,6 +187,15 @@ class GraphQLClient(AsyncBaseClient):
                             filter: {ancestor: {uuids: $root_uuids}, from_date: $now, to_date: null}
                           ) {
                             uuid
+                            org_unit_level {
+                              uuid
+                            }
+                            ancestors {
+                              uuid
+                              org_unit_level {
+                                uuid
+                              }
+                            }
                             validity {
                               from
                               to
@@ -548,12 +557,13 @@ class GraphQLClient(AsyncBaseClient):
         parent: UUID,
         org_unit_type: UUID,
         org_unit_level: Union[Optional[UUID], UnsetType] = UNSET,
+        uuid: Union[Optional[UUID], UnsetType] = UNSET,
     ) -> TestingCreateOrgUnitOrgUnitCreate:
         query = gql(
             """
-            mutation _Testing_CreateOrgUnit($name: String!, $parent: UUID!, $org_unit_type: UUID!, $org_unit_level: UUID) {
+            mutation _Testing_CreateOrgUnit($name: String!, $parent: UUID!, $org_unit_type: UUID!, $org_unit_level: UUID, $uuid: UUID) {
               org_unit_create(
-                input: {name: $name, parent: $parent, org_unit_type: $org_unit_type, org_unit_level: $org_unit_level, validity: {from: "2010-02-03"}}
+                input: {uuid: $uuid, name: $name, parent: $parent, org_unit_type: $org_unit_type, org_unit_level: $org_unit_level, validity: {from: "2010-02-03"}}
               ) {
                 uuid
               }
@@ -565,6 +575,7 @@ class GraphQLClient(AsyncBaseClient):
             "parent": parent,
             "org_unit_type": org_unit_type,
             "org_unit_level": org_unit_level,
+            "uuid": uuid,
         }
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)

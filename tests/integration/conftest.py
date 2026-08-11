@@ -2,11 +2,15 @@
 # SPDX-License-Identifier: MPL-2.0
 import json
 from collections.abc import AsyncIterator
+from collections.abc import Awaitable
+from collections.abc import Callable
 from uuid import uuid4
 from uuid import UUID
 
 import pytest
 from fastapi import FastAPI
+from fastapi.encoders import jsonable_encoder
+from fastramqpi.events import Event
 from httpx import AsyncClient
 from pytest import MonkeyPatch
 
@@ -59,3 +63,23 @@ async def graphql_client(mo_client: AsyncClient) -> AsyncIterator[GraphQLClient]
     )
     async with graphql_client as client:
         yield client
+
+
+@pytest.fixture
+def trigger_event(
+    test_client: AsyncClient,
+) -> Callable[[str, UUID], Awaitable[None]]:
+    """Return a callable that POSTs a GraphQL event to a listener endpoint.
+
+    Drives a handler the same way FastRAMQPI's event system does — over its
+    external HTTP interface — so the handler runs synchronously.
+    """
+
+    async def inner(routing_key: str, subject: UUID) -> None:
+        r = await test_client.post(
+            f"/{routing_key}",
+            json=jsonable_encoder(Event(subject=subject, priority=1)),
+        )
+        r.raise_for_status()
+
+    return inner
