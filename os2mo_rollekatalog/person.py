@@ -1,12 +1,14 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 import hashlib
+from collections.abc import Collection
 from datetime import datetime
 from uuid import UUID
 from more_itertools import one
 
 import structlog
 from sqlalchemy import delete
+from sqlalchemy import or_
 from sqlalchemy import select
 from sqlalchemy import text
 from sqlalchemy.orm import selectinload
@@ -138,12 +140,66 @@ async def get_person(
     return users
 
 
-async def fetch_users_from_db(session: depends.Session, uuid: UUID) -> list[User]:
-    stmt = select(User).options(selectinload(User.positions)).where(User.person == uuid)
+async def fetch_users_from_db(
+    session: depends.Session,
+    uuid: UUID,
+    ext_uuids: Collection[UUID] = (),
+    nemlogin_uuids: Collection[UUID] = (),
+) -> list[User]:
+    """Fetch the cached rows to reconcile against MO.
+
+    Besides the person's own rows, this includes rows owned by *other* persons
+    that hold one of the unique keys we are about to write. ``extUuid`` and
+    ``nemloginUuid`` are unique across the whole table, so such a row blocks
+    our INSERT even though it belongs to someone we are not syncing:
+
+    * the AD/FK account was handed over to another employee and the previous
+      owner has not been re-synced yet, or
+    * the previous owner does not exist in MO at all — e.g. a manually created
+      employee that was recreated with a fresh UUID after a database copy
+      between environments — so no event will ever mention that person UUID
+      again and nothing would ever clean the row up.
+
+    Including them here lets the normal reconciliation move the row to its
+    current owner, MO being the source of truth. Otherwise the INSERT fails on
+    the unique constraint, the event is never acknowledged, and every
+    redelivery fails identically forever.
+    """
+    stmt = (
+        select(User)
+        .options(selectinload(User.positions))
+        .where(
+            or_(
+                User.person == uuid,
+                User.extUuid.in_(ext_uuids),
+                User.nemloginUuid.in_(nemlogin_uuids),
+            )
+        )
+    )
     scalar_result = await session.scalars(stmt)
     users = scalar_result.all()
 
     return [user for user in users]
+
+
+def warn_if_owned_by_another_person(existing: User, person_uuid: UUID) -> None:
+    """Warn when we take a unique key from a row belonging to another person.
+
+    Either the account was handed over or its owner is gone from MO (see
+    ``fetch_users_from_db``). An account genuinely shared by two employees that
+    both still exist in MO cannot be resolved here — they will take the row
+    from each other on every sync — but that is an error in the MO data.
+    """
+    if existing.person == person_uuid:
+        return
+    logger.warning(
+        "Claiming user from another person",
+        uuid=existing.extUuid,
+        name=existing.name,
+        samaccount=existing.userId,
+        previous_person=existing.person,
+        person=person_uuid,
+    )
 
 
 def _person_lock_key(person_uuid: UUID) -> int:
@@ -200,7 +256,12 @@ async def sync_person(
         return
 
     mo_map = {u.extUuid: u for u in users}
-    dbusers = await fetch_users_from_db(session, person_uuid)
+    dbusers = await fetch_users_from_db(
+        session,
+        person_uuid,
+        mo_map.keys(),
+        {u.nemloginUuid for u in users if u.nemloginUuid is not None},
+    )
     db_map = {u.extUuid: u for u in dbusers}
 
     mo_keys = set(mo_map.keys())
@@ -213,6 +274,7 @@ async def sync_person(
     # remove missing accounts
     for key in to_remove:
         old_user = db_map[key]
+        warn_if_owned_by_another_person(old_user, person_uuid)
         await session.delete(old_user)
         logger.info(
             "Remove user",
@@ -222,12 +284,30 @@ async def sync_person(
         )
         periodic_sync.sync_soon()
 
-    # Flush deletes before inserts so a reused unique nemloginUuid
-    # (e.g. the AD account's FK partner changed → new extUuid, same
-    # mitid) doesn't trip the constraint when SQLAlchemy's default
-    # unit-of-work order issues INSERTs before DELETEs.
-    if to_remove:
-        await session.flush()
+    # Changed accounts are replaced rather than mutated, so delete the old row
+    # here and insert the incoming one after the flush below.
+    changed = []
+    for key in to_check:
+        incoming = mo_map[key]
+        existing = db_map[key]
+
+        if incoming == existing:
+            logger.info(
+                "User unchanged",
+                uuid=existing.extUuid,
+                name=existing.name,
+                samaccount=existing.userId,
+            )
+            continue
+
+        warn_if_owned_by_another_person(existing, person_uuid)
+        await session.delete(existing)
+        changed.append(incoming)
+
+    # Every DELETE must reach the database before an INSERT reuses one of its
+    # unique keys (extUuid/nemloginUuid) — SQLAlchemy's default unit-of-work
+    # order issues INSERTs before DELETEs.
+    await session.flush()
 
     # add new accounts
     for key in to_add:
@@ -242,21 +322,7 @@ async def sync_person(
         periodic_sync.sync_soon()
 
     # update changed accounts
-    for key in to_check:
-        incoming = mo_map[key]
-        existing = db_map[key]
-
-        if incoming == existing:
-            logger.info(
-                "User unchanged",
-                uuid=existing.extUuid,
-                name=existing.name,
-                samaccount=existing.userId,
-            )
-            continue
-
-        await session.delete(existing)
-        await session.flush()
+    for incoming in changed:
         session.add(incoming)
         periodic_sync.sync_soon()
         logger.info(
