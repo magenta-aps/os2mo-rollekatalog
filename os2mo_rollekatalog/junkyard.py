@@ -188,3 +188,33 @@ def select_relevant(
             continue
 
     return result
+
+
+def select_preferred(objects: list):
+    """Pick the single most relevant object among candidates.
+
+    Prefer a currently valid object; among several, the newest wins: the one
+    whose validity history starts latest. A version's own start date cannot
+    tell, since editing an object splits its validity. If nothing is valid
+    yet, pick the soonest future one. Expects full validity history.
+    """
+    now = datetime.now(ZoneInfo("Europe/Copenhagen")).date()
+    first_from: dict[UUID, datetime] = {}
+    for obj in objects:
+        if obj.uuid not in first_from or obj.validity.from_ < first_from[obj.uuid]:
+            first_from[obj.uuid] = obj.validity.from_
+    # select_relevant expects current/future input; drop expired versions.
+    active = [
+        obj
+        for obj in objects
+        if obj.validity.to is None or now < obj.validity.to.date()
+    ]
+    relevant = select_relevant(active)
+    current = [obj for obj in relevant if obj.validity.from_.date() <= now]
+    # Date ties break by uuid, in the same direction in both branches so the
+    # winner doesn't flip when a future object becomes current.
+    if current:
+        return max(current, key=lambda obj: (first_from[obj.uuid], obj.uuid))
+    return min(
+        relevant, key=lambda obj: (obj.validity.from_, -obj.uuid.int), default=None
+    )

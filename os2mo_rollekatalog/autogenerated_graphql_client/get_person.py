@@ -30,7 +30,19 @@ class GetPersonEmployeesObjectsCurrent(BaseModel):
 
 
 class GetPersonEmployeesObjectsCurrentEmail(BaseModel):
+    uuid: UUID
     value: str
+    validity: "GetPersonEmployeesObjectsCurrentEmailValidity"
+    ituser: List["GetPersonEmployeesObjectsCurrentEmailItuser"]
+
+
+class GetPersonEmployeesObjectsCurrentEmailValidity(BaseModel):
+    from_: datetime = Field(alias="from")
+    to: Optional[datetime]
+
+
+class GetPersonEmployeesObjectsCurrentEmailItuser(BaseModel):
+    uuid: UUID
 
 
 class GetPersonEmployeesObjectsCurrentMitid(BaseModel):
@@ -48,6 +60,7 @@ class GetPersonEmployeesObjectsCurrentItusers(BaseModel):
     external_id: Optional[str]
     itsystem: "GetPersonEmployeesObjectsCurrentItusersItsystem"
     validity: "GetPersonEmployeesObjectsCurrentItusersValidity"
+    addresses: List["GetPersonEmployeesObjectsCurrentItusersAddresses"]
     engagements: List["GetPersonEmployeesObjectsCurrentItusersEngagements"]
 
 
@@ -56,6 +69,17 @@ class GetPersonEmployeesObjectsCurrentItusersItsystem(BaseModel):
 
 
 class GetPersonEmployeesObjectsCurrentItusersValidity(BaseModel):
+    from_: datetime = Field(alias="from")
+    to: Optional[datetime]
+
+
+class GetPersonEmployeesObjectsCurrentItusersAddresses(BaseModel):
+    uuid: UUID
+    value: str
+    validity: "GetPersonEmployeesObjectsCurrentItusersAddressesValidity"
+
+
+class GetPersonEmployeesObjectsCurrentItusersAddressesValidity(BaseModel):
     from_: datetime = Field(alias="from")
     to: Optional[datetime]
 
@@ -133,11 +157,15 @@ GetPersonEmployees.update_forward_refs()
 GetPersonEmployeesObjects.update_forward_refs()
 GetPersonEmployeesObjectsCurrent.update_forward_refs()
 GetPersonEmployeesObjectsCurrentEmail.update_forward_refs()
+GetPersonEmployeesObjectsCurrentEmailValidity.update_forward_refs()
+GetPersonEmployeesObjectsCurrentEmailItuser.update_forward_refs()
 GetPersonEmployeesObjectsCurrentMitid.update_forward_refs()
 GetPersonEmployeesObjectsCurrentMitidItuser.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusers.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusersItsystem.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusersValidity.update_forward_refs()
+GetPersonEmployeesObjectsCurrentItusersAddresses.update_forward_refs()
+GetPersonEmployeesObjectsCurrentItusersAddressesValidity.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusersEngagements.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusersEngagementsValidities.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesValidity.update_forward_refs()

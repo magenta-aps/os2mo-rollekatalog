@@ -151,9 +151,17 @@ class GraphQLClient(AsyncBaseClient):
                     nickname
                     name
                     email: addresses(
-                      filter: {address_type: {user_keys: [$employee_email_user_key]}, from_date: $now, to_date: null}
+                      filter: {address_type: {user_keys: [$employee_email_user_key]}, from_date: null, to_date: null}
                     ) {
+                      uuid
                       value
+                      validity {
+                        from
+                        to
+                      }
+                      ituser(filter: {from_date: $now, to_date: null}) {
+                        uuid
+                      }
                     }
                     mitid: addresses(
                       filter: {address_type: {user_keys: [$mit_id_user_key]}, from_date: $now, to_date: null}
@@ -175,6 +183,16 @@ class GraphQLClient(AsyncBaseClient):
                       validity {
                         from
                         to
+                      }
+                      addresses(
+                        filter: {address_type: {user_keys: [$employee_email_user_key]}, from_date: null, to_date: null}
+                      ) {
+                        uuid
+                        value
+                        validity {
+                          from
+                          to
+                        }
                       }
                       engagements(filter: {from_date: $now, to_date: null}) {
                         validities {

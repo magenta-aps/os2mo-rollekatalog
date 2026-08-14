@@ -15,6 +15,7 @@ from os2mo_rollekatalog import depends
 from os2mo_rollekatalog.junkyard import WillNotSync
 from os2mo_rollekatalog.junkyard import is_org_unit_excluded
 from os2mo_rollekatalog.junkyard import resolve_samaccounts
+from os2mo_rollekatalog.junkyard import select_preferred
 from os2mo_rollekatalog.junkyard import select_relevant
 from os2mo_rollekatalog.models import Name
 from os2mo_rollekatalog.models import Position
@@ -54,11 +55,6 @@ async def get_person(
 
     if mo_person is None:
         raise WillNotSync("Not found")
-    try:
-        # Behaviour of the old integration 🤷
-        email = list(mo_person.email)[-1].value
-    except IndexError:
-        email = None
 
     # MitID UUIDs are unique per ituser. Map each mitid to its linked
     # ituser so we only assign nemloginUuid to that specific SAM account.
@@ -86,10 +82,20 @@ async def get_person(
 
     relevant_itusers = select_relevant(itusers)
 
+    # Emails are matched to accounts via their ituser link. An email linked
+    # to no account is a fallback for accounts without one of their own.
+    unlinked = select_preferred(
+        [email for email in mo_person.email if not email.ituser]
+    )
+    unlinked_email = unlinked.value if unlinked else None
+
     for ituser in relevant_itusers:
         extUuid = samaccounts.get(ituser.user_key)
         if extUuid is None:
             continue
+
+        linked_email = select_preferred(ituser.addresses)
+        email = linked_email.value if linked_email else unlinked_email
 
         # Include engagements valid now or in the future (Nutid/Fremtid).
         # The query returns all engagement validities, so pick the relevant
