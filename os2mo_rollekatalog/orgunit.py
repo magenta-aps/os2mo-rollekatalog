@@ -1,6 +1,5 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
-from contextlib import suppress
 from datetime import datetime
 from uuid import UUID
 from more_itertools import one
@@ -11,7 +10,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from os2mo_rollekatalog import depends
-from os2mo_rollekatalog.junkyard import NoSuitableSamAccount
 from os2mo_rollekatalog.junkyard import WillNotSync
 from os2mo_rollekatalog.junkyard import is_org_unit_excluded
 from os2mo_rollekatalog.junkyard import resolve_samaccounts
@@ -68,41 +66,36 @@ async def get_org_unit(
         assert org_unit.parent is not None
         parent_uuid = org_unit.parent.uuid
 
-    async def get_manager() -> Manager | None:
+    def get_manager() -> Manager | None:
+        """
+        Rollekatalog's org unit carries a single manager and MO does not know
+        which one to pick, so we pick arbitrarily from the valid ones.
+        """
+        # TODO: MO is getting a manager -> engagement connection, and a primary
+        # manager on the org unit. Either would let us report a deliberate
+        # manager rather than an arbitrary one. Before building on them, confirm
+        # that customers maintain these fields - the fields are
+        # only useful to us if the data is actually maintained.
+        if len(org_unit.managers) > 1:
+            logger.warning(
+                "Org unit has multiple managers",
+                org_unit=org_unit.uuid,
+            )
+
         for manager in org_unit.managers:
-            # Check that manager position is not vacant
-            if manager.person is None:
-                continue
-            for person in manager.person:
-                with suppress(NoSuitableSamAccount):
-                    if not person.itusers:
-                        raise NoSuitableSamAccount(
-                            f"no suitable SAM-Account found for {person.itusers=}"
-                        )
-                    itusers, samaccounts = resolve_samaccounts(
-                        person.itusers, ad_itsystem_user_keys, fk_itsystem_user_key
-                    )
-                    relevant_itusers = select_relevant(itusers)
-                    sorted_itusers = sorted(
-                        relevant_itusers, key=lambda iu: str(iu.uuid)
-                    )
-                    if not len(sorted_itusers):
-                        continue
-                    chosen_ituser = sorted_itusers[0]
-                    if not chosen_ituser.engagements:
-                        continue
-
-                    extUuid = samaccounts.get(chosen_ituser.user_key)
+            for person in manager.person or []:
+                itusers, samaccounts = resolve_samaccounts(
+                    person.itusers, ad_itsystem_user_keys, fk_itsystem_user_key
+                )
+                for ituser in select_relevant(itusers):
+                    extUuid = samaccounts.get(ituser.user_key)
                     if extUuid is None:
+                        # No FK-org account to map to, so no extUuid.
                         continue
-
-                    return Manager(
-                        uuid=extUuid,
-                        userId=SamAccountName(chosen_ituser.user_key),
-                    )
+                    return Manager(uuid=extUuid, userId=SamAccountName(ituser.user_key))
         return None
 
-    manager = await get_manager()
+    manager = get_manager()
 
     kle_performing = set()
     kle_interests = set()
