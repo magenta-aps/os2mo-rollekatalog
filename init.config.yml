@@ -32,3 +32,6 @@ facets:
     MitIDEmployee:
       title: "MitID UUID"
       scope: "TEXT"
+    EmailEmployee:
+      title: "Email"
+      scope: "EMAIL"

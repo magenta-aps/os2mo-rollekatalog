@@ -35,6 +35,10 @@ from ._testing__create_org_unit_root import (
     TestingCreateOrgUnitRoot,
     TestingCreateOrgUnitRootOrgUnitCreate,
 )
+from ._testing__get_email_employee import (
+    TestingGetEmailEmployee,
+    TestingGetEmailEmployeeFacets,
+)
 from ._testing__get_engagement_type import (
     TestingGetEngagementType,
     TestingGetEngagementTypeFacets,
@@ -71,6 +75,10 @@ from ._testing__move_org_unit_to_root import (
 from ._testing__rename_org_unit import (
     TestingRenameOrgUnit,
     TestingRenameOrgUnitOrgUnitUpdate,
+)
+from ._testing__update_address import (
+    TestingUpdateAddress,
+    TestingUpdateAddressAddressUpdate,
 )
 from ._testing__update_it_user import (
     TestingUpdateItUser,
@@ -644,12 +652,13 @@ class GraphQLClient(AsyncBaseClient):
         value: str,
         address_type: UUID,
         ituser: Union[Optional[UUID], UnsetType] = UNSET,
+        from_: Union[Optional[datetime], UnsetType] = UNSET,
     ) -> TestingCreateAddressAddressCreate:
         query = gql(
             """
-            mutation _Testing_CreateAddress($person: UUID!, $value: String!, $address_type: UUID!, $ituser: UUID = null) {
+            mutation _Testing_CreateAddress($person: UUID!, $value: String!, $address_type: UUID!, $ituser: UUID = null, $from: DateTime = "2014-01-01") {
               address_create(
-                input: {person: $person, value: $value, address_type: $address_type, ituser: $ituser, validity: {from: "2014-01-01"}}
+                input: {person: $person, value: $value, address_type: $address_type, ituser: $ituser, validity: {from: $from}}
               ) {
                 uuid
               }
@@ -661,10 +670,43 @@ class GraphQLClient(AsyncBaseClient):
             "value": value,
             "address_type": address_type,
             "ituser": ituser,
+            "from": from_,
         }
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return TestingCreateAddress.parse_obj(data).address_create
+
+    async def _testing__update_address(
+        self,
+        uuid: UUID,
+        person: UUID,
+        value: str,
+        address_type: UUID,
+        from_: datetime,
+        ituser: Union[Optional[UUID], UnsetType] = UNSET,
+    ) -> TestingUpdateAddressAddressUpdate:
+        query = gql(
+            """
+            mutation _Testing_UpdateAddress($uuid: UUID!, $person: UUID!, $value: String!, $address_type: UUID!, $ituser: UUID = null, $from: DateTime!) {
+              address_update(
+                input: {uuid: $uuid, person: $person, value: $value, address_type: $address_type, ituser: $ituser, validity: {from: $from}}
+              ) {
+                uuid
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {
+            "uuid": uuid,
+            "person": person,
+            "value": value,
+            "address_type": address_type,
+            "ituser": ituser,
+            "from": from_,
+        }
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return TestingUpdateAddress.parse_obj(data).address_update
 
     async def _testing__create_it_system(
         self, name: str
@@ -922,6 +964,28 @@ class GraphQLClient(AsyncBaseClient):
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return TestingGetMitID.parse_obj(data).facets
+
+    async def _testing__get_email_employee(self) -> TestingGetEmailEmployeeFacets:
+        query = gql(
+            """
+            query _Testing_GetEmailEmployee {
+              facets(filter: {user_keys: "employee_address_type"}) {
+                objects {
+                  current {
+                    classes(filter: {user_keys: "EmailEmployee"}) {
+                      uuid
+                      user_key
+                    }
+                  }
+                }
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return TestingGetEmailEmployee.parse_obj(data).facets
 
     async def _testing__move_org_unit_to_root(
         self, uuid: UUID

@@ -359,9 +359,17 @@ mutation _Testing_CreateEmployee($first_name: String!, $last_name: String!) {
   }
 }
 
-mutation _Testing_CreateAddress($person: UUID!, $value: String!, $address_type: UUID!, $ituser: UUID = null) {
+mutation _Testing_CreateAddress($person: UUID!, $value: String!, $address_type: UUID!, $ituser: UUID = null, $from: DateTime = "2014-01-01") {
   address_create(
-    input: {person: $person, value: $value, address_type: $address_type, ituser: $ituser, validity: {from: "2014-01-01"}}
+    input: {person: $person, value: $value, address_type: $address_type, ituser: $ituser, validity: {from: $from}}
+  ) {
+    uuid
+  }
+}
+
+mutation _Testing_UpdateAddress($uuid: UUID!, $person: UUID!, $value: String!, $address_type: UUID!, $ituser: UUID = null, $from: DateTime!) {
+  address_update(
+    input: {uuid: $uuid, person: $person, value: $value, address_type: $address_type, ituser: $ituser, validity: {from: $from}}
   ) {
     uuid
   }
@@ -461,6 +469,20 @@ query _Testing_GetMitID {
     objects {
       current {
         classes(filter: {user_keys: "MitIDEmployee"}) {
+          uuid
+          user_key
+        }
+      }
+    }
+  }
+}
+
+
+query _Testing_GetEmailEmployee {
+  facets(filter: {user_keys: "employee_address_type"}) {
+    objects {
+      current {
+        classes(filter: {user_keys: "EmailEmployee"}) {
           uuid
           user_key
         }
