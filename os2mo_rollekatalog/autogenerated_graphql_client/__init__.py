@@ -31,6 +31,13 @@ from ._testing__create_org_unit_root import (
     TestingCreateOrgUnitRoot,
     TestingCreateOrgUnitRootOrgUnitCreate,
 )
+from ._testing__get_email_employee import (
+    TestingGetEmailEmployee,
+    TestingGetEmailEmployeeFacets,
+    TestingGetEmailEmployeeFacetsObjects,
+    TestingGetEmailEmployeeFacetsObjectsCurrent,
+    TestingGetEmailEmployeeFacetsObjectsCurrentClasses,
+)
 from ._testing__get_engagement_type import (
     TestingGetEngagementType,
     TestingGetEngagementTypeFacets,
@@ -84,6 +91,10 @@ from ._testing__move_org_unit_to_root import (
 from ._testing__rename_org_unit import (
     TestingRenameOrgUnit,
     TestingRenameOrgUnitOrgUnitUpdate,
+)
+from ._testing__update_address import (
+    TestingUpdateAddress,
+    TestingUpdateAddressAddressUpdate,
 )
 from ._testing__update_it_user import (
     TestingUpdateItUser,
@@ -147,7 +158,11 @@ from .get_person import (
     GetPersonEmployeesObjects,
     GetPersonEmployeesObjectsCurrent,
     GetPersonEmployeesObjectsCurrentEmail,
+    GetPersonEmployeesObjectsCurrentEmailItuser,
+    GetPersonEmployeesObjectsCurrentEmailValidity,
     GetPersonEmployeesObjectsCurrentItusers,
+    GetPersonEmployeesObjectsCurrentItusersAddresses,
+    GetPersonEmployeesObjectsCurrentItusersAddressesValidity,
     GetPersonEmployeesObjectsCurrentItusersEngagements,
     GetPersonEmployeesObjectsCurrentItusersEngagementsValidities,
     GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesJobFunction,
@@ -415,7 +430,11 @@ __all__ = [
     "GetPersonEmployeesObjects",
     "GetPersonEmployeesObjectsCurrent",
     "GetPersonEmployeesObjectsCurrentEmail",
+    "GetPersonEmployeesObjectsCurrentEmailItuser",
+    "GetPersonEmployeesObjectsCurrentEmailValidity",
     "GetPersonEmployeesObjectsCurrentItusers",
+    "GetPersonEmployeesObjectsCurrentItusersAddresses",
+    "GetPersonEmployeesObjectsCurrentItusersAddressesValidity",
     "GetPersonEmployeesObjectsCurrentItusersEngagements",
     "GetPersonEmployeesObjectsCurrentItusersEngagementsValidities",
     "GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesJobFunction",
@@ -551,6 +570,11 @@ __all__ = [
     "TestingCreateOrgUnitOrgUnitCreate",
     "TestingCreateOrgUnitRoot",
     "TestingCreateOrgUnitRootOrgUnitCreate",
+    "TestingGetEmailEmployee",
+    "TestingGetEmailEmployeeFacets",
+    "TestingGetEmailEmployeeFacetsObjects",
+    "TestingGetEmailEmployeeFacetsObjectsCurrent",
+    "TestingGetEmailEmployeeFacetsObjectsCurrentClasses",
     "TestingGetEngagementType",
     "TestingGetEngagementTypeFacets",
     "TestingGetEngagementTypeFacetsObjects",
@@ -585,6 +609,8 @@ __all__ = [
     "TestingMoveOrgUnitToRootOrgUnitUpdate",
     "TestingRenameOrgUnit",
     "TestingRenameOrgUnitOrgUnitUpdate",
+    "TestingUpdateAddress",
+    "TestingUpdateAddressAddressUpdate",
     "TestingUpdateItUser",
     "TestingUpdateItUserEngagements",
     "TestingUpdateItUserEngagementsItuserUpdate",
