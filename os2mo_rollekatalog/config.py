@@ -73,6 +73,15 @@ class _Settings(BaseSettings):
             '\'["Active Directory", "Skole-AD"]\'.'
         )
     )
+    manager_itsystem_user_key: str | None = Field(
+        None,
+        description=(
+            "User key of the itsystem whose accounts carry manager rights in "
+            "Rollekatalog. A manager without an account in this itsystem is "
+            "not reported. Must be one of AD_ITSYSTEM_USER_KEYS. If unset, "
+            "accounts from all of AD_ITSYSTEM_USER_KEYS are considered."
+        ),
+    )
     fk_itsystem_user_key: str = Field(
         description="Designed to sync AD GUIDs to Rollekatalog, this value represents the user key of the FK itsystem in OS2mo."
     )

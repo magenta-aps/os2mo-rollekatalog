@@ -33,6 +33,7 @@ async def get_org_unit(
     mo: depends.GraphQLClient,
     ad_itsystem_user_keys: list[str],
     fk_itsystem_user_key: str,
+    manager_itsystem_user_key: str | None,
     root_org_unit: UUID,
     exclude_org_unit_level: UUID | None,
     exclude_org_units: list[UUID],
@@ -70,6 +71,10 @@ async def get_org_unit(
         """
         Rollekatalog's org unit carries a single manager and MO does not know
         which one to pick, so we pick arbitrarily from the valid ones.
+
+        With MANAGER_ITSYSTEM_USER_KEY set, only accounts in that itsystem
+        are considered, so which login carries the manager rights in
+        Rollekatalog is configuration, not chance.
         """
         # TODO: MO is getting a manager -> engagement connection, and a primary
         # manager on the org unit. Either would let us report a deliberate
@@ -88,6 +93,11 @@ async def get_org_unit(
                     person.itusers, ad_itsystem_user_keys, fk_itsystem_user_key
                 )
                 for ituser in select_relevant(itusers):
+                    if (
+                        manager_itsystem_user_key is not None
+                        and ituser.itsystem.user_key != manager_itsystem_user_key
+                    ):
+                        continue
                     extUuid = samaccounts.get(ituser.user_key)
                     if extUuid is None:
                         # No FK-org account to map to, so no extUuid.
@@ -132,6 +142,7 @@ async def sync_org_unit(
     session: depends.Session,
     ad_itsystem_user_keys: list[str],
     fk_itsystem_user_key: str,
+    manager_itsystem_user_key: str | None,
     root_org_unit: UUID,
     exclude_org_unit_level: UUID | None,
     exclude_org_units: list[UUID],
@@ -143,6 +154,7 @@ async def sync_org_unit(
             mo,
             ad_itsystem_user_keys,
             fk_itsystem_user_key,
+            manager_itsystem_user_key,
             root_org_unit,
             exclude_org_unit_level or None,
             exclude_org_units,
@@ -178,6 +190,7 @@ async def sync_org_unit(
                 session,
                 ad_itsystem_user_keys,
                 fk_itsystem_user_key,
+                manager_itsystem_user_key,
                 root_org_unit,
                 exclude_org_unit_level,
                 exclude_org_units,
