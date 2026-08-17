@@ -60,6 +60,128 @@ async def test_manager_without_engagement_is_synced(
 
 
 @pytest.mark.integration_test
+@pytest.mark.envvar(
+    {
+        "LISTEN_TO_CHANGES_IN_MO": "False",
+        "MANAGER_ITSYSTEM_USER_KEY": "Active Directory",
+    }
+)
+async def test_manager_account_is_from_manager_itsystem(
+    test_client: AsyncClient,
+    graphql_client: GraphQLClient,
+    trigger_event,
+    root_uuid: uuid.UUID,
+) -> None:
+    """Only accounts in MANAGER_ITSYSTEM_USER_KEY carry manager rights.
+
+    The ituser UUIDs are pinned so the Skole-AD account would win if the
+    itsystem were ignored."""
+    # Arrange: a manager with an account in each AD itsystem.
+    org_unit_type = one(
+        (await graphql_client._testing__get_org_unit_type()).objects
+    ).uuid
+    await graphql_client._testing__create_org_unit_root(
+        root_uuid=root_uuid, name="Root", org_unit_type=org_unit_type
+    )
+    managed = (
+        await graphql_client._testing__create_org_unit(
+            name="Managed", parent=root_uuid, org_unit_type=org_unit_type
+        )
+    ).uuid
+    employee = (
+        await graphql_client._testing__create_employee(
+            first_name="Anders", last_name="And"
+        )
+    ).uuid
+    AD = (await graphql_client._testing__create_it_system("Active Directory")).uuid
+    SKOLE = (await graphql_client._testing__create_it_system("Skole-AD")).uuid
+    FK = (await graphql_client._testing__create_it_system("FK ORG")).uuid
+    skole_guid, skole_external = uuid.uuid4(), uuid.uuid4()
+    ad_guid, ad_external = uuid.uuid4(), uuid.uuid4()
+    await graphql_client._testing__create_it_user(
+        SKOLE,
+        str(skole_guid),
+        employee,
+        "SKOLE",
+        uuid.UUID("00000000-0000-4000-0000-000000000001"),
+        [],
+    )
+    await graphql_client._testing__create_it_user(
+        FK, str(skole_external), employee, str(skole_guid), None, []
+    )
+    await graphql_client._testing__create_it_user(
+        AD,
+        str(ad_guid),
+        employee,
+        "AD",
+        uuid.UUID("ffffffff-0000-4000-0000-000000000002"),
+        [],
+    )
+    await graphql_client._testing__create_it_user(
+        FK, str(ad_external), employee, str(ad_guid), None, []
+    )
+    await _create_manager(graphql_client, managed, employee)
+
+    # Act.
+    await trigger_event("org_unit", managed)
+
+    # Assert: the Active Directory account carries the manager rights.
+    manager = (await test_client.get(f"/cache/org_unit/{managed}")).json()["manager"]
+    assert manager["userId"] == "AD"
+    assert manager["uuid"] == str(ad_external)
+
+
+@pytest.mark.integration_test
+@pytest.mark.envvar(
+    {
+        "LISTEN_TO_CHANGES_IN_MO": "False",
+        "MANAGER_ITSYSTEM_USER_KEY": "Active Directory",
+    }
+)
+async def test_manager_with_only_other_itsystem_account_is_not_synced(
+    test_client: AsyncClient,
+    graphql_client: GraphQLClient,
+    trigger_event,
+    root_uuid: uuid.UUID,
+) -> None:
+    """A manager with no account in MANAGER_ITSYSTEM_USER_KEY is not reported."""
+    # Arrange: a manager with a resolvable Skole-AD account and nothing else.
+    org_unit_type = one(
+        (await graphql_client._testing__get_org_unit_type()).objects
+    ).uuid
+    await graphql_client._testing__create_org_unit_root(
+        root_uuid=root_uuid, name="Root", org_unit_type=org_unit_type
+    )
+    managed = (
+        await graphql_client._testing__create_org_unit(
+            name="Managed", parent=root_uuid, org_unit_type=org_unit_type
+        )
+    ).uuid
+    employee = (
+        await graphql_client._testing__create_employee(
+            first_name="Joakim", last_name="von And"
+        )
+    ).uuid
+    SKOLE = (await graphql_client._testing__create_it_system("Skole-AD")).uuid
+    FK = (await graphql_client._testing__create_it_system("FK ORG")).uuid
+    object_guid, external_id = uuid.uuid4(), uuid.uuid4()
+    await graphql_client._testing__create_it_user(
+        SKOLE, str(object_guid), employee, "SKOLE", None, []
+    )
+    await graphql_client._testing__create_it_user(
+        FK, str(external_id), employee, str(object_guid), None, []
+    )
+    await _create_manager(graphql_client, managed, employee)
+
+    # Act.
+    await trigger_event("org_unit", managed)
+
+    # Assert.
+    org_unit = (await test_client.get(f"/cache/org_unit/{managed}")).json()
+    assert org_unit["manager"] is None
+
+
+@pytest.mark.integration_test
 @pytest.mark.envvar({"LISTEN_TO_CHANGES_IN_MO": "False"})
 async def test_manager_without_fk_org_account_is_not_synced(
     test_client: AsyncClient,
