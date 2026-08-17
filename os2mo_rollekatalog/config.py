@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
+from textwrap import dedent
 from uuid import UUID
 
 from fastramqpi.config import Settings as _FastRAMQPISettings
@@ -72,6 +73,19 @@ class _Settings(BaseSettings):
             "this is a list. Given as a JSON list, e.g. "
             '\'["Active Directory", "Skole-AD"]\'.'
         )
+    )
+    manager_itsystem_user_key: str | None = Field(
+        None,
+        description=dedent(
+            """
+            User key of the itsystem whose accounts carry manager rights in
+            Rollekatalog. A manager without an account in this itsystem is
+            not reported. Must be one of AD_ITSYSTEM_USER_KEYS.
+
+            If unset, accounts from all of AD_ITSYSTEM_USER_KEYS are
+            considered.
+            """
+        ),
     )
     fk_itsystem_user_key: str = Field(
         description="Designed to sync AD GUIDs to Rollekatalog, this value represents the user key of the FK itsystem in OS2mo."
