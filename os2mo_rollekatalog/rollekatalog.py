@@ -58,6 +58,11 @@ async def upload(client: RollekatalogClient, path: str, payload: Any) -> None:
     except HTTPStatusError as e:
         logger.error("Error: Failed to upload data", http_body=e.response.text)
         raise e
+    # /api/organisation/v3 answers with how many objects it created, updated
+    # and deleted. That is the only feedback we get on what a full load
+    # actually did, and the numbers are what we need when discussing import
+    # times with the supplier.
+    logger.info("Rollekatalog accepted upload", path=path, http_body=r.text)
 
 
 class PeriodicSync:
