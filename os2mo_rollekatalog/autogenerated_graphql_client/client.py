@@ -15,6 +15,7 @@ from ._testing__create_engagement import (
     TestingCreateEngagement,
     TestingCreateEngagementEngagementCreate,
 )
+from ._testing__create_facet import TestingCreateFacet, TestingCreateFacetFacetCreate
 from ._testing__create_it_system import (
     TestingCreateItSystem,
     TestingCreateItSystemItsystemCreate,
@@ -34,39 +35,6 @@ from ._testing__create_org_unit import (
 from ._testing__create_org_unit_root import (
     TestingCreateOrgUnitRoot,
     TestingCreateOrgUnitRootOrgUnitCreate,
-)
-from ._testing__get_email_employee import (
-    TestingGetEmailEmployee,
-    TestingGetEmailEmployeeFacets,
-)
-from ._testing__get_engagement_type import (
-    TestingGetEngagementType,
-    TestingGetEngagementTypeFacets,
-)
-from ._testing__get_job_function import (
-    TestingGetJobFunction,
-    TestingGetJobFunctionFacets,
-)
-from ._testing__get_manager_level import (
-    TestingGetManagerLevel,
-    TestingGetManagerLevelClasses,
-)
-from ._testing__get_manager_responsibility import (
-    TestingGetManagerResponsibility,
-    TestingGetManagerResponsibilityClasses,
-)
-from ._testing__get_manager_type import (
-    TestingGetManagerType,
-    TestingGetManagerTypeClasses,
-)
-from ._testing__get_mit_i_d import TestingGetMitID, TestingGetMitIDFacets
-from ._testing__get_org_unit_level_facet_u_u_i_d import (
-    TestingGetOrgUnitLevelFacetUUID,
-    TestingGetOrgUnitLevelFacetUUIDFacets,
-)
-from ._testing__get_org_unit_type import (
-    TestingGetOrgUnitType,
-    TestingGetOrgUnitTypeClasses,
 )
 from ._testing__move_org_unit_to_root import (
     TestingMoveOrgUnitToRoot,
@@ -439,53 +407,35 @@ class GraphQLClient(AsyncBaseClient):
         data = self.get_data(response)
         return GetOrgUnitUuidForManager.parse_obj(data).managers
 
-    async def _testing__get_org_unit_type(self) -> TestingGetOrgUnitTypeClasses:
+    async def _testing__create_facet(
+        self, user_key: str
+    ) -> TestingCreateFacetFacetCreate:
         query = gql(
             """
-            query _Testing_GetOrgUnitType {
-              classes(filter: {facet_user_keys: "org_unit_type"}) {
-                objects {
-                  uuid
-                }
+            mutation _Testing_CreateFacet($user_key: String!) {
+              facet_create(input: {user_key: $user_key, validity: {from: "2010-02-03"}}) {
+                uuid
               }
             }
             """
         )
-        variables: dict[str, object] = {}
+        variables: dict[str, object] = {"user_key": user_key}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return TestingGetOrgUnitType.parse_obj(data).classes
-
-    async def _testing__get_org_unit_level_facet_u_u_i_d(
-        self,
-    ) -> TestingGetOrgUnitLevelFacetUUIDFacets:
-        query = gql(
-            """
-            query _Testing_GetOrgUnitLevelFacetUUID {
-              facets(filter: {user_keys: "org_unit_level"}) {
-                objects {
-                  uuid
-                }
-              }
-            }
-            """
-        )
-        variables: dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
-        data = self.get_data(response)
-        return TestingGetOrgUnitLevelFacetUUID.parse_obj(data).facets
+        return TestingCreateFacet.parse_obj(data).facet_create
 
     async def _testing__create_class(
         self,
+        name: str,
         facet_uuid: UUID,
-        uuid: UUID,
-        name: Union[Optional[str], UnsetType] = UNSET,
+        uuid: Union[Optional[UUID], UnsetType] = UNSET,
+        scope: Union[Optional[str], UnsetType] = UNSET,
     ) -> TestingCreateClassClassCreate:
         query = gql(
             """
-            mutation _Testing_CreateClass($name: String = "Udgået", $facet_uuid: UUID!, $uuid: UUID!) {
+            mutation _Testing_CreateClass($name: String!, $facet_uuid: UUID!, $uuid: UUID, $scope: String) {
               class_create(
-                input: {name: $name, user_key: $name, facet_uuid: $facet_uuid, uuid: $uuid, validity: {from: "2010-02-03"}}
+                input: {name: $name, user_key: $name, facet_uuid: $facet_uuid, uuid: $uuid, scope: $scope, validity: {from: "2010-02-03"}}
               ) {
                 uuid
               }
@@ -496,63 +446,11 @@ class GraphQLClient(AsyncBaseClient):
             "name": name,
             "facet_uuid": facet_uuid,
             "uuid": uuid,
+            "scope": scope,
         }
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return TestingCreateClass.parse_obj(data).class_create
-
-    async def _testing__get_manager_level(self) -> TestingGetManagerLevelClasses:
-        query = gql(
-            """
-            query _Testing_GetManagerLevel {
-              classes(filter: {facet_user_keys: "manager_level"}) {
-                objects {
-                  uuid
-                }
-              }
-            }
-            """
-        )
-        variables: dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
-        data = self.get_data(response)
-        return TestingGetManagerLevel.parse_obj(data).classes
-
-    async def _testing__get_manager_type(self) -> TestingGetManagerTypeClasses:
-        query = gql(
-            """
-            query _Testing_GetManagerType {
-              classes(filter: {facet_user_keys: "manager_type"}) {
-                objects {
-                  uuid
-                }
-              }
-            }
-            """
-        )
-        variables: dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
-        data = self.get_data(response)
-        return TestingGetManagerType.parse_obj(data).classes
-
-    async def _testing__get_manager_responsibility(
-        self,
-    ) -> TestingGetManagerResponsibilityClasses:
-        query = gql(
-            """
-            query _Testing_GetManagerResponsibility {
-              classes(filter: {facet_user_keys: "responsibility"}) {
-                objects {
-                  uuid
-                }
-              }
-            }
-            """
-        )
-        variables: dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
-        data = self.get_data(response)
-        return TestingGetManagerResponsibility.parse_obj(data).classes
 
     async def _testing__create_org_unit_root(
         self, name: str, root_uuid: UUID, org_unit_type: UUID
@@ -899,93 +797,6 @@ class GraphQLClient(AsyncBaseClient):
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return TestingCreateManager.parse_obj(data).manager_create
-
-    async def _testing__get_engagement_type(self) -> TestingGetEngagementTypeFacets:
-        query = gql(
-            """
-            query _Testing_GetEngagementType {
-              facets(filter: {user_keys: "engagement_type"}) {
-                objects {
-                  current {
-                    classes {
-                      uuid
-                    }
-                  }
-                }
-              }
-            }
-            """
-        )
-        variables: dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
-        data = self.get_data(response)
-        return TestingGetEngagementType.parse_obj(data).facets
-
-    async def _testing__get_job_function(self) -> TestingGetJobFunctionFacets:
-        query = gql(
-            """
-            query _Testing_GetJobFunction {
-              facets(filter: {user_keys: "engagement_job_function"}) {
-                objects {
-                  current {
-                    classes {
-                      uuid
-                      name
-                    }
-                  }
-                }
-              }
-            }
-            """
-        )
-        variables: dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
-        data = self.get_data(response)
-        return TestingGetJobFunction.parse_obj(data).facets
-
-    async def _testing__get_mit_i_d(self) -> TestingGetMitIDFacets:
-        query = gql(
-            """
-            query _Testing_GetMitID {
-              facets(filter: {user_keys: "employee_address_type"}) {
-                objects {
-                  current {
-                    classes(filter: {user_keys: "MitIDEmployee"}) {
-                      uuid
-                      user_key
-                    }
-                  }
-                }
-              }
-            }
-            """
-        )
-        variables: dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
-        data = self.get_data(response)
-        return TestingGetMitID.parse_obj(data).facets
-
-    async def _testing__get_email_employee(self) -> TestingGetEmailEmployeeFacets:
-        query = gql(
-            """
-            query _Testing_GetEmailEmployee {
-              facets(filter: {user_keys: "employee_address_type"}) {
-                objects {
-                  current {
-                    classes(filter: {user_keys: "EmailEmployee"}) {
-                      uuid
-                      user_key
-                    }
-                  }
-                }
-              }
-            }
-            """
-        )
-        variables: dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
-        data = self.get_data(response)
-        return TestingGetEmailEmployee.parse_obj(data).facets
 
     async def _testing__move_org_unit_to_root(
         self, uuid: UUID
