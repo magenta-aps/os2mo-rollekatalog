@@ -28,18 +28,6 @@ from ._testing__create_org_unit import (
     TestingCreateOrgUnit,
     TestingCreateOrgUnitOrgUnitCreate,
 )
-from ._testing__create_org_unit_root import (
-    TestingCreateOrgUnitRoot,
-    TestingCreateOrgUnitRootOrgUnitCreate,
-)
-from ._testing__move_org_unit_to_root import (
-    TestingMoveOrgUnitToRoot,
-    TestingMoveOrgUnitToRootOrgUnitUpdate,
-)
-from ._testing__rename_org_unit import (
-    TestingRenameOrgUnit,
-    TestingRenameOrgUnitOrgUnitUpdate,
-)
 from ._testing__update_address import (
     TestingUpdateAddress,
     TestingUpdateAddressAddressUpdate,
@@ -48,13 +36,9 @@ from ._testing__update_it_user import (
     TestingUpdateItUser,
     TestingUpdateItUserItuserUpdate,
 )
-from ._testing__update_it_user_engagements import (
-    TestingUpdateItUserEngagements,
-    TestingUpdateItUserEngagementsItuserUpdate,
-)
-from ._testing__update_it_user_external_id import (
-    TestingUpdateItUserExternalId,
-    TestingUpdateItUserExternalIdItuserUpdate,
+from ._testing__update_org_unit import (
+    TestingUpdateOrgUnit,
+    TestingUpdateOrgUnitOrgUnitUpdate,
 )
 from .async_base_client import AsyncBaseClient
 from .base_model import BaseModel
@@ -518,20 +502,12 @@ __all__ = [
     "TestingCreateManagerManagerCreate",
     "TestingCreateOrgUnit",
     "TestingCreateOrgUnitOrgUnitCreate",
-    "TestingCreateOrgUnitRoot",
-    "TestingCreateOrgUnitRootOrgUnitCreate",
-    "TestingMoveOrgUnitToRoot",
-    "TestingMoveOrgUnitToRootOrgUnitUpdate",
-    "TestingRenameOrgUnit",
-    "TestingRenameOrgUnitOrgUnitUpdate",
     "TestingUpdateAddress",
     "TestingUpdateAddressAddressUpdate",
     "TestingUpdateItUser",
-    "TestingUpdateItUserEngagements",
-    "TestingUpdateItUserEngagementsItuserUpdate",
-    "TestingUpdateItUserExternalId",
-    "TestingUpdateItUserExternalIdItuserUpdate",
     "TestingUpdateItUserItuserUpdate",
+    "TestingUpdateOrgUnit",
+    "TestingUpdateOrgUnitOrgUnitUpdate",
     "UuidsBoundClassFilter",
     "UuidsBoundEmployeeFilter",
     "UuidsBoundEngagementFilter",
