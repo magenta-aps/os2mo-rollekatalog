@@ -65,6 +65,87 @@ async def graphql_client(mo_client: AsyncClient) -> AsyncIterator[GraphQLClient]
         yield client
 
 
+async def _create_facet(graphql_client: GraphQLClient, user_key: str) -> UUID:
+    return (await graphql_client._testing__create_facet(user_key)).uuid
+
+
+async def _create_class(
+    graphql_client: GraphQLClient,
+    facet_user_key: str,
+    name: str,
+    scope: str | None = None,
+) -> UUID:
+    facet = await _create_facet(graphql_client, facet_user_key)
+    r = await graphql_client._testing__create_class(
+        name=name, facet_uuid=facet, scope=scope
+    )
+    return r.uuid
+
+
+@pytest.fixture
+async def org_unit_type(graphql_client: GraphQLClient) -> UUID:
+    return await _create_class(graphql_client, "org_unit_type", "Afdeling")
+
+
+@pytest.fixture
+async def org_unit_level_facet(graphql_client: GraphQLClient) -> UUID:
+    return await _create_facet(graphql_client, "org_unit_level")
+
+
+@pytest.fixture
+async def engagement_type(graphql_client: GraphQLClient) -> UUID:
+    return await _create_class(graphql_client, "engagement_type", "Ansat")
+
+
+@pytest.fixture
+async def job_function(graphql_client: GraphQLClient) -> UUID:
+    return await _create_class(graphql_client, "engagement_job_function", "Jurist")
+
+
+@pytest.fixture
+async def manager_level(graphql_client: GraphQLClient) -> UUID:
+    return await _create_class(graphql_client, "manager_level", "Niveau 1")
+
+
+@pytest.fixture
+async def manager_type(graphql_client: GraphQLClient) -> UUID:
+    return await _create_class(graphql_client, "manager_type", "Leder")
+
+
+@pytest.fixture
+async def responsibility(graphql_client: GraphQLClient) -> UUID:
+    return await _create_class(graphql_client, "responsibility", "MUS")
+
+
+@pytest.fixture
+async def employee_address_type_facet(graphql_client: GraphQLClient) -> UUID:
+    return await _create_facet(graphql_client, "employee_address_type")
+
+
+@pytest.fixture
+async def email_address_type(
+    graphql_client: GraphQLClient, employee_address_type_facet: UUID
+) -> UUID:
+    r = await graphql_client._testing__create_class(
+        name="EmailEmployee",
+        facet_uuid=employee_address_type_facet,
+        scope="EMAIL",
+    )
+    return r.uuid
+
+
+@pytest.fixture
+async def mit_id_address_type(
+    graphql_client: GraphQLClient, employee_address_type_facet: UUID
+) -> UUID:
+    r = await graphql_client._testing__create_class(
+        name="MitIDEmployee",
+        facet_uuid=employee_address_type_facet,
+        scope="TEXT",
+    )
+    return r.uuid
+
+
 @pytest.fixture
 def trigger_event(
     test_client: AsyncClient,

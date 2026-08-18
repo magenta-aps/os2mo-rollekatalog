@@ -20,13 +20,13 @@ async def test_future_engagement_is_synced(
     test_client: AsyncClient,
     graphql_client: GraphQLClient,
     root_uuid: uuid.UUID,
+    org_unit_type: uuid.UUID,
+    engagement_type: uuid.UUID,
+    job_function: uuid.UUID,
 ) -> None:
     """A person whose only engagement starts in the future is synced with a
     position."""
     # Arrange: a unit, and a person whose only engagement starts in a year.
-    org_unit_type = one(
-        (await graphql_client._testing__get_org_unit_type()).objects
-    ).uuid
     await graphql_client._testing__create_org_unit_root(
         root_uuid=root_uuid, name="Root", org_unit_type=org_unit_type
     )
@@ -40,19 +40,11 @@ async def test_future_engagement_is_synced(
             first_name="Fætter", last_name="Højben"
         )
     ).uuid
-    engagement_type = one(
-        one(
-            (await graphql_client._testing__get_engagement_type()).objects
-        ).current.classes  # type: ignore
-    ).uuid
-    job_function = one(
-        one((await graphql_client._testing__get_job_function()).objects).current.classes  # type: ignore
-    )
     # Engagement that only becomes valid in a year.
     future = datetime.now() + timedelta(days=365)
     eng = (
         await graphql_client._testing__create_engagement(
-            org_unit, employee, engagement_type, job_function.uuid, future
+            org_unit, employee, engagement_type, job_function, future
         )
     ).uuid
 
@@ -79,7 +71,7 @@ async def test_future_engagement_is_synced(
             "userId": "FH",
             "name": "Fætter Højben",
             "email": None,
-            "positions": [{"name": job_function.name, "orgUnitUuid": str(org_unit)}],
+            "positions": [{"name": "Jurist", "orgUnitUuid": str(org_unit)}],
         }
     ]
 
@@ -90,13 +82,13 @@ async def test_current_and_future_engagements_both_synced(
     test_client: AsyncClient,
     graphql_client: GraphQLClient,
     root_uuid: uuid.UUID,
+    org_unit_type: uuid.UUID,
+    engagement_type: uuid.UUID,
+    job_function: uuid.UUID,
 ) -> None:
     """A person with one current and one future engagement gets both positions."""
     # Arrange: two units, and a person with a current engagement in one and a
     # future engagement in the other.
-    org_unit_type = one(
-        (await graphql_client._testing__get_org_unit_type()).objects
-    ).uuid
     await graphql_client._testing__create_org_unit_root(
         root_uuid=root_uuid, name="Root", org_unit_type=org_unit_type
     )
@@ -115,23 +107,15 @@ async def test_current_and_future_engagements_both_synced(
             first_name="Anders", last_name="And"
         )
     ).uuid
-    engagement_type = one(
-        one(
-            (await graphql_client._testing__get_engagement_type()).objects
-        ).current.classes  # type: ignore
-    ).uuid
-    job_function = one(
-        one((await graphql_client._testing__get_job_function()).objects).current.classes  # type: ignore
-    )
     current_eng = (
         await graphql_client._testing__create_engagement(
-            unit_a, employee, engagement_type, job_function.uuid
+            unit_a, employee, engagement_type, job_function
         )
     ).uuid
     future = datetime.now() + timedelta(days=365)
     future_eng = (
         await graphql_client._testing__create_engagement(
-            unit_b, employee, engagement_type, job_function.uuid, future
+            unit_b, employee, engagement_type, job_function, future
         )
     ).uuid
 
@@ -160,8 +144,8 @@ async def test_current_and_future_engagements_both_synced(
     positions = one(cached)["positions"]
     assert sorted(positions, key=lambda p: p["orgUnitUuid"]) == sorted(
         [
-            {"name": job_function.name, "orgUnitUuid": str(unit_a)},
-            {"name": job_function.name, "orgUnitUuid": str(unit_b)},
+            {"name": "Jurist", "orgUnitUuid": str(unit_a)},
+            {"name": "Jurist", "orgUnitUuid": str(unit_b)},
         ],
         key=lambda p: p["orgUnitUuid"],
     )

@@ -22,59 +22,61 @@ async def test_too_much(
     root_uuid: uuid.UUID,
     exclude_org_unit_level: uuid.UUID,
     external_roots: list[uuid.UUID],
+    org_unit_type: uuid.UUID,
+    org_unit_level_facet: uuid.UUID,
+    engagement_type: uuid.UUID,
+    job_function: uuid.UUID,
+    mit_id_address_type: uuid.UUID,
+    manager_level: uuid.UUID,
+    manager_type: uuid.UUID,
+    responsibility: uuid.UUID,
 ) -> None:
     # Create org hierarchy
-    org_unit_type_uuid = (
-        (await graphql_client._testing__get_org_unit_type()).objects[0].uuid
-    )
-    org_unit_level_facet_uuid = (
-        (await graphql_client._testing__get_org_unit_level_facet_u_u_i_d())
-        .objects[0]
-        .uuid
-    )
     exclude_org_unit_level_uuid = (
         await graphql_client._testing__create_class(
-            org_unit_level_facet_uuid, exclude_org_unit_level
+            name="Udgået",
+            facet_uuid=org_unit_level_facet,
+            uuid=exclude_org_unit_level,
         )
     ).uuid
     await graphql_client._testing__create_org_unit_root(
         root_uuid=root_uuid,
         name="Root",
-        org_unit_type=org_unit_type_uuid,
+        org_unit_type=org_unit_type,
     )
     layer1_1 = (
         await graphql_client._testing__create_org_unit(
             name="Layer 1 - Unit 1",
             parent=root_uuid,
-            org_unit_type=org_unit_type_uuid,
+            org_unit_type=org_unit_type,
         )
     ).uuid
     layer1_2 = (
         await graphql_client._testing__create_org_unit(
             name="Layer 1 - Unit 2",
             parent=root_uuid,
-            org_unit_type=org_unit_type_uuid,
+            org_unit_type=org_unit_type,
         )
     ).uuid
     layer2_1 = (
         await graphql_client._testing__create_org_unit(
             name="Layer 2 - Unit 1",
             parent=layer1_2,
-            org_unit_type=org_unit_type_uuid,
+            org_unit_type=org_unit_type,
         )
     ).uuid
     layer3_1 = (
         await graphql_client._testing__create_org_unit(
             name="Layer 3 - Unit 1",
             parent=layer2_1,
-            org_unit_type=org_unit_type_uuid,
+            org_unit_type=org_unit_type,
         )
     ).uuid
     layer1_3 = (
         await graphql_client._testing__create_org_unit(
             name="Layer 1 - Unit 3",
             parent=root_uuid,
-            org_unit_type=org_unit_type_uuid,
+            org_unit_type=org_unit_type,
             org_unit_level=exclude_org_unit_level_uuid,
         )
     ).uuid
@@ -82,21 +84,21 @@ async def test_too_much(
         await graphql_client._testing__create_org_unit(
             name="Layer 2 - Unit 3",
             parent=layer1_3,
-            org_unit_type=org_unit_type_uuid,
+            org_unit_type=org_unit_type,
         )
     ).uuid
     external_root = (
         await graphql_client._testing__create_org_unit_root(
             name="External root",
             root_uuid=external_roots[0],
-            org_unit_type=org_unit_type_uuid,
+            org_unit_type=org_unit_type,
         )
     ).uuid
     external_layer1_1 = (
         await graphql_client._testing__create_org_unit(
             name="External Layer 1 - Unit 1",
             parent=external_root,
-            org_unit_type=org_unit_type_uuid,
+            org_unit_type=org_unit_type,
         )
     ).uuid
 
@@ -213,47 +215,29 @@ async def test_too_much(
     ).uuid
 
     # Create engagements ("positions"). Note that Joakim does not work.
-    engagement_type = (
-        (await graphql_client._testing__get_engagement_type())
-        .objects[0]
-        .current.classes[0]  # type: ignore
-        .uuid
-    )
-    job_function = (
-        (await graphql_client._testing__get_job_function())
-        .objects[0]
-        .current.classes[0]  # type: ignore
-    )
-
-    mit_id_class = (
-        (await graphql_client._testing__get_mit_i_d())
-        .objects[0]
-        .current.classes[0]  # type: ignore
-        .uuid
-    )
     joakim_eng = (
         await graphql_client._testing__create_engagement(
-            layer2_1, joakim, engagement_type, job_function.uuid
+            layer2_1, joakim, engagement_type, job_function
         )
     ).uuid
     anders_and_eng = (
         await graphql_client._testing__create_engagement(
-            layer1_2, anders_and, engagement_type, job_function.uuid
+            layer1_2, anders_and, engagement_type, job_function
         )
     ).uuid
     fedtmule_eng = (
         await graphql_client._testing__create_engagement(
-            external_layer1_1, fedtmule, engagement_type, job_function.uuid
+            external_layer1_1, fedtmule, engagement_type, job_function
         )
     ).uuid
     fætter_eng_1 = (
         await graphql_client._testing__create_engagement(
-            layer3_1, fætter_højben, engagement_type, job_function.uuid
+            layer3_1, fætter_højben, engagement_type, job_function
         )
     ).uuid
     fætter_eng_2 = (
         await graphql_client._testing__create_engagement(
-            layer1_2, fætter_højben, engagement_type, job_function.uuid
+            layer1_2, fætter_højben, engagement_type, job_function
         )
     ).uuid
 
@@ -286,7 +270,7 @@ async def test_too_much(
         )
     ).uuid
     await graphql_client._testing__create_address(
-        anders_and, str(anders_mit_id), mit_id_class, ituser=anders_ituser
+        anders_and, str(anders_mit_id), mit_id_address_type, ituser=anders_ituser
     )
     await graphql_client._testing__create_it_user(
         FK,
@@ -372,7 +356,7 @@ async def test_too_much(
                 "email": None,
                 "positions": [
                     {
-                        "name": job_function.name,
+                        "name": "Jurist",
                         "orgUnitUuid": str(layer1_2),
                     }
                 ],
@@ -385,7 +369,7 @@ async def test_too_much(
                 "email": None,
                 "positions": [
                     {
-                        "name": job_function.name,
+                        "name": "Jurist",
                         "orgUnitUuid": str(layer1_2),
                     }
                 ],
@@ -400,7 +384,7 @@ async def test_too_much(
                 "email": None,
                 "positions": [
                     {
-                        "name": job_function.name,
+                        "name": "Jurist",
                         "orgUnitUuid": str(external_layer1_1),
                     }
                 ],
@@ -421,8 +405,8 @@ async def test_too_much(
                 "email": None,
                 "positions": sorted(
                     [
-                        {"name": job_function.name, "orgUnitUuid": str(layer1_2)},
-                        {"name": job_function.name, "orgUnitUuid": str(layer3_1)},
+                        {"name": "Jurist", "orgUnitUuid": str(layer1_2)},
+                        {"name": "Jurist", "orgUnitUuid": str(layer3_1)},
                     ],
                     key=lambda p: p["orgUnitUuid"],
                 ),
@@ -447,7 +431,7 @@ async def test_too_much(
                 "email": None,
                 "positions": [
                     {
-                        "name": job_function.name,
+                        "name": "Jurist",
                         "orgUnitUuid": str(layer3_1),
                     }
                 ],
@@ -456,12 +440,6 @@ async def test_too_much(
 
     await verify_users_post_update()
 
-    manager_level = (await graphql_client._testing__get_manager_level()).objects[0].uuid
-
-    manager_type = (await graphql_client._testing__get_manager_type()).objects[0].uuid
-    responsibility = (
-        (await graphql_client._testing__get_manager_responsibility()).objects[0].uuid
-    )
     # Create manager WITHOUT extUuid (Should be skipped)
     await graphql_client._testing__create_manager(
         layer2_1, joakim, manager_level, manager_type, responsibility

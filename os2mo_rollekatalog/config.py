@@ -3,26 +3,11 @@
 from textwrap import dedent
 from uuid import UUID
 
-from fastramqpi.config import Settings as _FastRAMQPISettings
-from fastramqpi.ramqp.config import AMQPConnectionSettings
+from fastramqpi.config import Settings as FastRAMQPISettings
 from pydantic import AnyHttpUrl
 from pydantic import BaseSettings
 from pydantic import Field
 from pydantic import SecretStr
-
-
-class AMQPConnectionSettingsSeeded(AMQPConnectionSettings):
-    # AMQP isn't consumed by the integration (events come via the GraphQL
-    # event system) but fastramqpi 12.x still requires the AMQP system to
-    # be configured. Keep the exchange/queue prefix here so the idle AMQP
-    # consumer is named consistently.
-    exchange = "os2mo_rollekatalog"
-    queue_prefix = "os2mo_rollekatalog"
-    upstream_exchange = "os2mo"
-
-
-class FastRAMQPISettings(_FastRAMQPISettings):
-    amqp: AMQPConnectionSettingsSeeded
 
 
 class _Settings(BaseSettings):

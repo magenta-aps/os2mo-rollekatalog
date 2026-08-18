@@ -266,52 +266,17 @@ query GetOrgUnitUuidForManager($uuid: UUID!) {
 }
 
 
-query _Testing_GetOrgUnitType {
-  classes(filter: {facet_user_keys: "org_unit_type"}) {
-    objects {
-      uuid
-    }
-  }
-}
-
-query _Testing_GetOrgUnitLevelFacetUUID {
-  facets(filter: {user_keys: "org_unit_level"}) {
-    objects {
-      uuid
-    }
-  }
-}
-
-mutation _Testing_CreateClass($name: String = "Udgået", $facet_uuid: UUID!, $uuid: UUID!) {
-  class_create(
-    input: {name: $name, user_key: $name, facet_uuid: $facet_uuid, uuid: $uuid, validity: {from: "2010-02-03"}}
-  ) {
+mutation _Testing_CreateFacet($user_key: String!) {
+  facet_create(input: {user_key: $user_key, validity: {from: "2010-02-03"}}) {
     uuid
   }
 }
 
-query _Testing_GetManagerLevel {
-  classes(filter: {facet_user_keys: "manager_level"}) {
-    objects {
-      uuid
-    }
-  }
-}
-
-
-query _Testing_GetManagerType {
-  classes(filter: {facet_user_keys: "manager_type"}) {
-    objects {
-      uuid
-    }
-  }
-}
-
-query _Testing_GetManagerResponsibility {
-  classes(filter: {facet_user_keys: "responsibility"}) {
-    objects {
-      uuid
-    }
+mutation _Testing_CreateClass($name: String!, $facet_uuid: UUID!, $uuid: UUID, $scope: String) {
+  class_create(
+    input: {name: $name, user_key: $name, facet_uuid: $facet_uuid, uuid: $uuid, scope: $scope, validity: {from: "2010-02-03"}}
+  ) {
+    uuid
   }
 }
 
@@ -434,60 +399,6 @@ mutation _Testing_CreateManager(
     }
   ) {
     uuid
-  }
-}
-
-
-query _Testing_GetEngagementType {
-  facets(filter: {user_keys: "engagement_type"}) {
-    objects {
-      current {
-        classes {
-          uuid
-        }
-      }
-    }
-  }
-}
-
-
-query _Testing_GetJobFunction {
-  facets(filter: {user_keys: "engagement_job_function"}) {
-    objects {
-      current {
-        classes {
-          uuid
-          name
-        }
-      }
-    }
-  }
-}
-
-query _Testing_GetMitID {
-  facets(filter: {user_keys: "employee_address_type"}) {
-    objects {
-      current {
-        classes(filter: {user_keys: "MitIDEmployee"}) {
-          uuid
-          user_key
-        }
-      }
-    }
-  }
-}
-
-
-query _Testing_GetEmailEmployee {
-  facets(filter: {user_keys: "employee_address_type"}) {
-    objects {
-      current {
-        classes(filter: {user_keys: "EmailEmployee"}) {
-          uuid
-          user_key
-        }
-      }
-    }
   }
 }
 
