@@ -237,3 +237,71 @@ async def test_manager_without_fk_org_account_is_not_synced(
     # Assert.
     org_unit = (await test_client.get(f"/cache/org_unit/{managed}")).json()
     assert org_unit["manager"] is None
+
+
+@pytest.mark.integration_test
+@pytest.mark.envvar({"LISTEN_TO_CHANGES_IN_MO": "False"})
+async def test_manager_with_two_accounts_picks_the_first_by_uuid(
+    test_client: AsyncClient,
+    graphql_client: GraphQLClient,
+    trigger_event: Callable[[str, uuid.UUID], Awaitable[None]],
+    root_uuid: uuid.UUID,
+    create_org_unit: Callable[..., Awaitable[uuid.UUID]],
+    create_it_system: Callable[..., Awaitable[uuid.UUID]],
+    create_ituser: Callable[..., Awaitable[uuid.UUID]],
+    create_manager: Callable[..., Awaitable[uuid.UUID]],
+) -> None:
+    """With several resolvable accounts, MO cannot say which one carries the
+    manager rights, so the account with the lowest ituser UUID wins. The
+    ituser UUIDs are pinned so the winner is deterministic."""
+    # Arrange: a manager with two AD accounts, both mapped to FK-org.
+    await create_org_unit(name="Root", uuid=root_uuid)
+    managed = await create_org_unit(name="Managed", parent=root_uuid)
+    employee = (
+        await graphql_client._testing__create_employee(
+            input=EmployeeCreateInput(given_name="Anders", surname="And")
+        )
+    ).uuid
+    AD = await create_it_system("Active Directory")
+    FK = await create_it_system("FK ORG")
+    first_guid, first_external = uuid.uuid4(), uuid.uuid4()
+    second_guid, second_external = uuid.uuid4(), uuid.uuid4()
+    await create_ituser(
+        itsystem=AD,
+        external_id=str(first_guid),
+        person=employee,
+        user_key="AA",
+        uuid=uuid.UUID("00000000-0000-4000-0000-000000000001"),
+        engagements=[],
+    )
+    await create_ituser(
+        itsystem=FK,
+        external_id=str(first_external),
+        person=employee,
+        user_key=str(first_guid),
+        engagements=[],
+    )
+    await create_ituser(
+        itsystem=AD,
+        external_id=str(second_guid),
+        person=employee,
+        user_key="AA2",
+        uuid=uuid.UUID("ffffffff-0000-4000-0000-000000000002"),
+        engagements=[],
+    )
+    await create_ituser(
+        itsystem=FK,
+        external_id=str(second_external),
+        person=employee,
+        user_key=str(second_guid),
+        engagements=[],
+    )
+    await create_manager(person=employee, org_unit=managed)
+
+    # Act.
+    await trigger_event("org_unit", managed)
+
+    # Assert: the account with the lowest UUID carries the manager rights.
+    manager = (await test_client.get(f"/cache/org_unit/{managed}")).json()["manager"]
+    assert manager["userId"] == "AA"
+    assert manager["uuid"] == str(first_external)
