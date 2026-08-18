@@ -85,8 +85,18 @@ async def _create_class(
 
 
 @pytest.fixture
-async def org_unit_type(graphql_client: GraphQLClient) -> UUID:
-    return await _create_class(graphql_client, "org_unit_type", "Afdeling")
+async def org_unit_type_facet(graphql_client: GraphQLClient) -> UUID:
+    return await _create_facet(graphql_client, "org_unit_type")
+
+
+@pytest.fixture
+async def org_unit_type(
+    graphql_client: GraphQLClient, org_unit_type_facet: UUID
+) -> UUID:
+    r = await graphql_client._testing__create_class(
+        name="Afdeling", facet_uuid=org_unit_type_facet
+    )
+    return r.uuid
 
 
 @pytest.fixture
