@@ -11,6 +11,7 @@ from ._testing__create_engagement import (
     TestingCreateEngagement,
     TestingCreateEngagementEngagementCreate,
 )
+from ._testing__create_facet import TestingCreateFacet, TestingCreateFacetFacetCreate
 from ._testing__create_it_system import (
     TestingCreateItSystem,
     TestingCreateItSystemItsystemCreate,
@@ -30,59 +31,6 @@ from ._testing__create_org_unit import (
 from ._testing__create_org_unit_root import (
     TestingCreateOrgUnitRoot,
     TestingCreateOrgUnitRootOrgUnitCreate,
-)
-from ._testing__get_email_employee import (
-    TestingGetEmailEmployee,
-    TestingGetEmailEmployeeFacets,
-    TestingGetEmailEmployeeFacetsObjects,
-    TestingGetEmailEmployeeFacetsObjectsCurrent,
-    TestingGetEmailEmployeeFacetsObjectsCurrentClasses,
-)
-from ._testing__get_engagement_type import (
-    TestingGetEngagementType,
-    TestingGetEngagementTypeFacets,
-    TestingGetEngagementTypeFacetsObjects,
-    TestingGetEngagementTypeFacetsObjectsCurrent,
-    TestingGetEngagementTypeFacetsObjectsCurrentClasses,
-)
-from ._testing__get_job_function import (
-    TestingGetJobFunction,
-    TestingGetJobFunctionFacets,
-    TestingGetJobFunctionFacetsObjects,
-    TestingGetJobFunctionFacetsObjectsCurrent,
-    TestingGetJobFunctionFacetsObjectsCurrentClasses,
-)
-from ._testing__get_manager_level import (
-    TestingGetManagerLevel,
-    TestingGetManagerLevelClasses,
-    TestingGetManagerLevelClassesObjects,
-)
-from ._testing__get_manager_responsibility import (
-    TestingGetManagerResponsibility,
-    TestingGetManagerResponsibilityClasses,
-    TestingGetManagerResponsibilityClassesObjects,
-)
-from ._testing__get_manager_type import (
-    TestingGetManagerType,
-    TestingGetManagerTypeClasses,
-    TestingGetManagerTypeClassesObjects,
-)
-from ._testing__get_mit_i_d import (
-    TestingGetMitID,
-    TestingGetMitIDFacets,
-    TestingGetMitIDFacetsObjects,
-    TestingGetMitIDFacetsObjectsCurrent,
-    TestingGetMitIDFacetsObjectsCurrentClasses,
-)
-from ._testing__get_org_unit_level_facet_u_u_i_d import (
-    TestingGetOrgUnitLevelFacetUUID,
-    TestingGetOrgUnitLevelFacetUUIDFacets,
-    TestingGetOrgUnitLevelFacetUUIDFacetsObjects,
-)
-from ._testing__get_org_unit_type import (
-    TestingGetOrgUnitType,
-    TestingGetOrgUnitTypeClasses,
-    TestingGetOrgUnitTypeClassesObjects,
 )
 from ._testing__move_org_unit_to_root import (
     TestingMoveOrgUnitToRoot,
@@ -560,6 +508,8 @@ __all__ = [
     "TestingCreateEmployeeEmployeeCreate",
     "TestingCreateEngagement",
     "TestingCreateEngagementEngagementCreate",
+    "TestingCreateFacet",
+    "TestingCreateFacetFacetCreate",
     "TestingCreateItSystem",
     "TestingCreateItSystemItsystemCreate",
     "TestingCreateItUser",
@@ -570,41 +520,6 @@ __all__ = [
     "TestingCreateOrgUnitOrgUnitCreate",
     "TestingCreateOrgUnitRoot",
     "TestingCreateOrgUnitRootOrgUnitCreate",
-    "TestingGetEmailEmployee",
-    "TestingGetEmailEmployeeFacets",
-    "TestingGetEmailEmployeeFacetsObjects",
-    "TestingGetEmailEmployeeFacetsObjectsCurrent",
-    "TestingGetEmailEmployeeFacetsObjectsCurrentClasses",
-    "TestingGetEngagementType",
-    "TestingGetEngagementTypeFacets",
-    "TestingGetEngagementTypeFacetsObjects",
-    "TestingGetEngagementTypeFacetsObjectsCurrent",
-    "TestingGetEngagementTypeFacetsObjectsCurrentClasses",
-    "TestingGetJobFunction",
-    "TestingGetJobFunctionFacets",
-    "TestingGetJobFunctionFacetsObjects",
-    "TestingGetJobFunctionFacetsObjectsCurrent",
-    "TestingGetJobFunctionFacetsObjectsCurrentClasses",
-    "TestingGetManagerLevel",
-    "TestingGetManagerLevelClasses",
-    "TestingGetManagerLevelClassesObjects",
-    "TestingGetManagerResponsibility",
-    "TestingGetManagerResponsibilityClasses",
-    "TestingGetManagerResponsibilityClassesObjects",
-    "TestingGetManagerType",
-    "TestingGetManagerTypeClasses",
-    "TestingGetManagerTypeClassesObjects",
-    "TestingGetMitID",
-    "TestingGetMitIDFacets",
-    "TestingGetMitIDFacetsObjects",
-    "TestingGetMitIDFacetsObjectsCurrent",
-    "TestingGetMitIDFacetsObjectsCurrentClasses",
-    "TestingGetOrgUnitLevelFacetUUID",
-    "TestingGetOrgUnitLevelFacetUUIDFacets",
-    "TestingGetOrgUnitLevelFacetUUIDFacetsObjects",
-    "TestingGetOrgUnitType",
-    "TestingGetOrgUnitTypeClasses",
-    "TestingGetOrgUnitTypeClassesObjects",
     "TestingMoveOrgUnitToRoot",
     "TestingMoveOrgUnitToRootOrgUnitUpdate",
     "TestingRenameOrgUnit",

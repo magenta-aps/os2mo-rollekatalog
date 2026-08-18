@@ -32,8 +32,10 @@ async def test_concurrent_sync_person_no_duplicate_key_error(
     graphql_client: GraphQLClient,
     root_uuid: uuid.UUID,
     caplog: pytest.LogCaptureFixture,
+    org_unit_type: uuid.UUID,
+    engagement_type: uuid.UUID,
+    job_function: uuid.UUID,
 ) -> None:
-    org_unit_type = (await graphql_client._testing__get_org_unit_type()).objects[0].uuid
     await graphql_client._testing__create_org_unit_root(
         root_uuid=root_uuid,
         name="Root",
@@ -54,20 +56,9 @@ async def test_concurrent_sync_person_no_duplicate_key_error(
         )
     ).uuid
 
-    engagement_type = (
-        (await graphql_client._testing__get_engagement_type())
-        .objects[0]
-        .current.classes[0]  # type: ignore
-        .uuid
-    )
-    job_function = (
-        (await graphql_client._testing__get_job_function())
-        .objects[0]
-        .current.classes[0]  # type: ignore
-    )
     eng = (
         await graphql_client._testing__create_engagement(
-            org_unit, employee, engagement_type, job_function.uuid
+            org_unit, employee, engagement_type, job_function
         )
     ).uuid
 
@@ -147,7 +138,7 @@ async def test_concurrent_sync_person_no_duplicate_key_error(
             "email": None,
             "positions": [
                 {
-                    "name": job_function.name,
+                    "name": "Jurist",
                     "orgUnitUuid": str(org_unit),
                 }
             ],
@@ -162,6 +153,10 @@ async def test_sync_handles_extuuid_change_with_same_nemlogin(
     graphql_client: GraphQLClient,
     root_uuid: uuid.UUID,
     caplog: pytest.LogCaptureFixture,
+    org_unit_type: uuid.UUID,
+    engagement_type: uuid.UUID,
+    job_function: uuid.UUID,
+    mit_id_address_type: uuid.UUID,
 ) -> None:
     """FK external_id can change for the same AD account (e.g., FK Org
     re-registration). The next sync produces a to_remove + to_add for
@@ -169,7 +164,6 @@ async def test_sync_handles_extuuid_change_with_same_nemlogin(
     flush between the loops, SQLA's INSERT-before-DELETE order trips
     the unique constraint on nemloginUuid.
     """
-    org_unit_type = (await graphql_client._testing__get_org_unit_type()).objects[0].uuid
     await graphql_client._testing__create_org_unit_root(
         root_uuid=root_uuid, name="Root", org_unit_type=org_unit_type
     )
@@ -183,20 +177,9 @@ async def test_sync_handles_extuuid_change_with_same_nemlogin(
             first_name="Swap", last_name="User"
         )
     ).uuid
-    engagement_type = (
-        (await graphql_client._testing__get_engagement_type())
-        .objects[0]
-        .current.classes[0]  # type: ignore
-        .uuid
-    )
-    job_function = (
-        (await graphql_client._testing__get_job_function())
-        .objects[0]
-        .current.classes[0]  # type: ignore
-    )
     eng = (
         await graphql_client._testing__create_engagement(
-            org_unit, employee, engagement_type, job_function.uuid
+            org_unit, employee, engagement_type, job_function
         )
     ).uuid
 
@@ -217,14 +200,8 @@ async def test_sync_handles_extuuid_change_with_same_nemlogin(
             FK, str(fk_external_id_original), employee, str(object_guid), None, [eng]
         )
     ).uuid
-    mit_id_class = (
-        (await graphql_client._testing__get_mit_i_d())
-        .objects[0]
-        .current.classes[0]  # type: ignore
-        .uuid
-    )
     await graphql_client._testing__create_address(
-        employee, str(mit_id), mit_id_class, ituser=ad_ituser
+        employee, str(mit_id), mit_id_address_type, ituser=ad_ituser
     )
 
     @retry()
@@ -246,7 +223,7 @@ async def test_sync_handles_extuuid_change_with_same_nemlogin(
             "name": "Swap User",
             "email": None,
             "positions": [
-                {"name": job_function.name, "orgUnitUuid": str(org_unit)},
+                {"name": "Jurist", "orgUnitUuid": str(org_unit)},
             ],
         }
     ]
@@ -282,7 +259,7 @@ async def test_sync_handles_extuuid_change_with_same_nemlogin(
             "name": "Swap User",
             "email": None,
             "positions": [
-                {"name": job_function.name, "orgUnitUuid": str(org_unit)},
+                {"name": "Jurist", "orgUnitUuid": str(org_unit)},
             ],
         }
     ]
@@ -294,6 +271,9 @@ async def test_ituser_event_dedups_validities(
     test_client: AsyncClient,
     graphql_client: GraphQLClient,
     root_uuid: uuid.UUID,
+    org_unit_type: uuid.UUID,
+    engagement_type: uuid.UUID,
+    job_function: uuid.UUID,
 ) -> None:
     """A single ituser event with many validity periods triggers exactly
     one sync_person call per unique person.
@@ -306,7 +286,6 @@ async def test_ituser_event_dedups_validities(
     spam reported in #70184). The handler must collapse the rows by
     person UUID before dispatching.
     """
-    org_unit_type = (await graphql_client._testing__get_org_unit_type()).objects[0].uuid
     await graphql_client._testing__create_org_unit_root(
         root_uuid=root_uuid, name="Root", org_unit_type=org_unit_type
     )
@@ -320,20 +299,9 @@ async def test_ituser_event_dedups_validities(
             first_name="Many", last_name="Validities"
         )
     ).uuid
-    engagement_type = (
-        (await graphql_client._testing__get_engagement_type())
-        .objects[0]
-        .current.classes[0]  # type: ignore
-        .uuid
-    )
-    job_function = (
-        (await graphql_client._testing__get_job_function())
-        .objects[0]
-        .current.classes[0]  # type: ignore
-    )
     eng = (
         await graphql_client._testing__create_engagement(
-            org_unit, employee, engagement_type, job_function.uuid
+            org_unit, employee, engagement_type, job_function
         )
     ).uuid
 

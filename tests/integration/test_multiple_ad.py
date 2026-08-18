@@ -23,8 +23,10 @@ async def test_multiple_ad_itsystems_map_to_fk(
     test_client: AsyncClient,
     graphql_client: GraphQLClient,
     root_uuid: uuid.UUID,
+    org_unit_type: uuid.UUID,
+    engagement_type: uuid.UUID,
+    job_function: uuid.UUID,
 ) -> None:
-    org_unit_type = (await graphql_client._testing__get_org_unit_type()).objects[0].uuid
     await graphql_client._testing__create_org_unit_root(
         root_uuid=root_uuid, name="Root", org_unit_type=org_unit_type
     )
@@ -38,20 +40,9 @@ async def test_multiple_ad_itsystems_map_to_fk(
             first_name="Multi", last_name="AD"
         )
     ).uuid
-    engagement_type = (
-        (await graphql_client._testing__get_engagement_type())
-        .objects[0]
-        .current.classes[0]  # type: ignore
-        .uuid
-    )
-    job_function = (
-        (await graphql_client._testing__get_job_function())
-        .objects[0]
-        .current.classes[0]  # type: ignore
-    )
     eng = (
         await graphql_client._testing__create_engagement(
-            org_unit, employee, engagement_type, job_function.uuid
+            org_unit, employee, engagement_type, job_function
         )
     ).uuid
 
@@ -93,7 +84,7 @@ async def test_multiple_ad_itsystems_map_to_fk(
             "name": "Multi AD",
             "email": None,
             "positions": [
-                {"name": job_function.name, "orgUnitUuid": str(org_unit)},
+                {"name": "Jurist", "orgUnitUuid": str(org_unit)},
             ],
         },
         {
@@ -103,7 +94,7 @@ async def test_multiple_ad_itsystems_map_to_fk(
             "name": "Multi AD",
             "email": None,
             "positions": [
-                {"name": job_function.name, "orgUnitUuid": str(org_unit)},
+                {"name": "Jurist", "orgUnitUuid": str(org_unit)},
             ],
         },
     ]

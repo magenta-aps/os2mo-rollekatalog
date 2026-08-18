@@ -20,6 +20,7 @@ async def test_email_linked_to_ituser_goes_to_that_account(
     graphql_client: GraphQLClient,
     trigger_event,
     root_uuid: uuid.UUID,
+    email_address_type: uuid.UUID,
 ) -> None:
     """An email linked to an ituser is only used for that account."""
     # Arrange: a person with two AD accounts, and an email linked to one.
@@ -49,7 +50,7 @@ async def test_email_linked_to_ituser_goes_to_that_account(
     await graphql_client._testing__create_address(
         employee,
         "linked@example.org",
-        await _email_address_type(graphql_client),
+        email_address_type,
         ituser=linked_ituser,
     )
 
@@ -69,6 +70,7 @@ async def test_unlinked_email_is_used_for_any_account(
     graphql_client: GraphQLClient,
     trigger_event,
     root_uuid: uuid.UUID,
+    email_address_type: uuid.UUID,
 ) -> None:
     """An email with no ituser link is used as a fallback (linking an
     address to an ituser is optional in MO)."""
@@ -88,7 +90,7 @@ async def test_unlinked_email_is_used_for_any_account(
         FK, str(external_id), employee, str(object_guid), None, []
     )
     await graphql_client._testing__create_address(
-        employee, "unlinked@example.org", await _email_address_type(graphql_client)
+        employee, "unlinked@example.org", email_address_type
     )
 
     # Act.
@@ -106,6 +108,7 @@ async def test_current_email_preferred_over_future(
     graphql_client: GraphQLClient,
     trigger_event,
     root_uuid: uuid.UUID,
+    email_address_type: uuid.UUID,
 ) -> None:
     """With one address valid now and one only valid in the future, the
     current one is used."""
@@ -127,16 +130,15 @@ async def test_current_email_preferred_over_future(
     await graphql_client._testing__create_it_user(
         FK, str(external_id), employee, str(object_guid), None, []
     )
-    address_type = await _email_address_type(graphql_client)
     await graphql_client._testing__create_address(
         employee,
         "future@example.org",
-        address_type,
+        email_address_type,
         ituser=ituser,
         from_=datetime.now() + timedelta(days=365),
     )
     await graphql_client._testing__create_address(
-        employee, "current@example.org", address_type, ituser=ituser
+        employee, "current@example.org", email_address_type, ituser=ituser
     )
 
     # Act.
@@ -154,6 +156,7 @@ async def test_newest_email_wins_among_multiple_current(
     graphql_client: GraphQLClient,
     trigger_event,
     root_uuid: uuid.UUID,
+    email_address_type: uuid.UUID,
 ) -> None:
     """With several currently valid addresses, the newest one is used — the
     one whose validity starts latest — not the most recently edited."""
@@ -176,24 +179,23 @@ async def test_newest_email_wins_among_multiple_current(
     await graphql_client._testing__create_it_user(
         FK, str(external_id), employee, str(object_guid), None, []
     )
-    address_type = await _email_address_type(graphql_client)
     await graphql_client._testing__create_address(
         employee,
         "newest@example.org",
-        address_type,
+        email_address_type,
         ituser=ituser,
         from_=datetime(2020, 1, 1),
     )
     oldest = (
         await graphql_client._testing__create_address(
-            employee, "oldest@example.org", address_type, ituser=ituser
+            employee, "oldest@example.org", email_address_type, ituser=ituser
         )
     ).uuid
     await graphql_client._testing__update_address(
         oldest,
         employee,
         "oldest-edited@example.org",
-        address_type,
+        email_address_type,
         ituser=ituser,
         from_=datetime(2026, 1, 1),
     )
@@ -204,12 +206,3 @@ async def test_newest_email_wins_among_multiple_current(
     # Assert.
     user = one((await test_client.get(f"/cache/person/{employee}")).json())
     assert user["email"] == "newest@example.org"
-
-
-async def _email_address_type(graphql_client: GraphQLClient) -> uuid.UUID:
-    """The class used for employee email addresses."""
-    return one(
-        one(
-            (await graphql_client._testing__get_email_employee()).objects
-        ).current.classes  # type: ignore
-    ).uuid
