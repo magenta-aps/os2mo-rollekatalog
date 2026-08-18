@@ -109,6 +109,9 @@ class GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesOrgUnit(BaseMo
     org_unit_level: Optional[
         "GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesOrgUnitOrgUnitLevel"
     ]
+    org_unit_type: Optional[
+        "GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesOrgUnitOrgUnitType"
+    ]
     ancestors: List[
         "GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesOrgUnitAncestors"
     ]
@@ -123,6 +126,12 @@ class GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesOrgUnitOrgUnit
     uuid: UUID
 
 
+class GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesOrgUnitOrgUnitType(
+    BaseModel
+):
+    uuid: UUID
+
+
 class GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesOrgUnitAncestors(
     BaseModel
 ):
@@ -130,9 +139,18 @@ class GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesOrgUnitAncesto
     org_unit_level: Optional[
         "GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesOrgUnitAncestorsOrgUnitLevel"
     ]
+    org_unit_type: Optional[
+        "GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesOrgUnitAncestorsOrgUnitType"
+    ]
 
 
 class GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesOrgUnitAncestorsOrgUnitLevel(
+    BaseModel
+):
+    uuid: UUID
+
+
+class GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesOrgUnitAncestorsOrgUnitType(
     BaseModel
 ):
     uuid: UUID
@@ -171,7 +189,9 @@ GetPersonEmployeesObjectsCurrentItusersEngagementsValidities.update_forward_refs
 GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesValidity.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesOrgUnit.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesOrgUnitOrgUnitLevel.update_forward_refs()
+GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesOrgUnitOrgUnitType.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesOrgUnitAncestors.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesOrgUnitAncestorsOrgUnitLevel.update_forward_refs()
+GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesOrgUnitAncestorsOrgUnitType.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesOrgUnitValidity.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusersEngagementsValiditiesJobFunction.update_forward_refs()

@@ -10,8 +10,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from os2mo_rollekatalog import depends
+from os2mo_rollekatalog.junkyard import OrgUnitExclusions
 from os2mo_rollekatalog.junkyard import WillNotSync
-from os2mo_rollekatalog.junkyard import is_org_unit_excluded
 from os2mo_rollekatalog.junkyard import resolve_samaccounts
 from os2mo_rollekatalog.junkyard import select_relevant
 from os2mo_rollekatalog.models import Manager
@@ -35,8 +35,7 @@ async def get_org_unit(
     fk_itsystem_user_key: str,
     manager_itsystem_user_key: str | None,
     root_org_unit: UUID,
-    exclude_org_unit_level: UUID | None,
-    exclude_org_units: list[UUID],
+    exclusions: OrgUnitExclusions,
     org_unit_uuid: UUID,
     external_roots: list[UUID],
 ) -> OrgUnit:
@@ -54,17 +53,20 @@ async def get_org_unit(
     if org_unit is None:
         raise WillNotSync("Org unit does not exist now or in the future.")
 
-    if is_org_unit_excluded(org_unit, exclude_org_unit_level, exclude_org_units):
-        raise WillNotSync(
-            f"Skipping sync for org_unit, due to exclusion filter: {org_unit.uuid}"
-        )
+    reason = exclusions.reason_to_exclude(org_unit)
+    if reason is not None:
+        raise WillNotSync(f"Skipping sync for org_unit {org_unit.uuid}: {reason}")
 
     if org_unit.uuid == root_org_unit:
         parent_uuid = None
     elif org_unit.uuid in external_roots:
         parent_uuid = root_org_unit
+    elif org_unit.parent is None:
+        # Should not happen: the unit matched the root-org ancestor filter, so
+        # it has a parent unless it *is* a root. Skip it rather than crash -
+        # Rollekatalog cannot place a unit with no parent anyway.
+        raise WillNotSync("Org unit has no parent, and is not a known root.")
     else:
-        assert org_unit.parent is not None
         parent_uuid = org_unit.parent.uuid
 
     def get_manager() -> Manager | None:
@@ -144,8 +146,7 @@ async def sync_org_unit(
     fk_itsystem_user_key: str,
     manager_itsystem_user_key: str | None,
     root_org_unit: UUID,
-    exclude_org_unit_level: UUID | None,
-    exclude_org_units: list[UUID],
+    exclusions: OrgUnitExclusions,
     org_unit_uuid: UUID,
     external_roots: list[UUID],
 ) -> None:
@@ -156,8 +157,7 @@ async def sync_org_unit(
             fk_itsystem_user_key,
             manager_itsystem_user_key,
             root_org_unit,
-            exclude_org_unit_level or None,
-            exclude_org_units,
+            exclusions,
             org_unit_uuid,
             external_roots,
         )
@@ -192,8 +192,7 @@ async def sync_org_unit(
                 fk_itsystem_user_key,
                 manager_itsystem_user_key,
                 root_org_unit,
-                exclude_org_unit_level,
-                exclude_org_units,
+                exclusions,
                 child_uuid,
                 external_roots,
             )

@@ -86,8 +86,7 @@ async def person(
             settings.prefer_nickname,
             settings.sync_titles,
             settings.external_roots,
-            settings.exclude_org_unit_level,
-            settings.exclude_org_units,
+            settings.org_unit_exclusions,
         )
     except WillNotSync as e:
         return {"error": e.message}
@@ -116,8 +115,7 @@ async def sync_person_on_demand(
         settings.prefer_nickname,
         settings.sync_titles,
         settings.external_roots,
-        settings.exclude_org_unit_level,
-        settings.exclude_org_units,
+        settings.org_unit_exclusions,
     )
 
 
@@ -142,8 +140,7 @@ async def org_unit(
             settings.fk_itsystem_user_key,
             settings.manager_itsystem_user_key,
             settings.root_org_unit,
-            settings.exclude_org_unit_level,
-            settings.exclude_org_units,
+            settings.org_unit_exclusions,
             uuid,
             settings.external_roots,
         )
@@ -169,8 +166,7 @@ async def sync_org_unit_on_demand(
         settings.fk_itsystem_user_key,
         settings.manager_itsystem_user_key,
         settings.root_org_unit,
-        settings.exclude_org_unit_level,
-        settings.exclude_org_units,
+        settings.org_unit_exclusions,
         uuid,
         settings.external_roots,
     )

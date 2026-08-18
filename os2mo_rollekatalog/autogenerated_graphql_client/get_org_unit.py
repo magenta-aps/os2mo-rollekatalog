@@ -24,6 +24,7 @@ class GetOrgUnitOrgUnitsObjectsCurrent(BaseModel):
     name: str
     parent: Optional["GetOrgUnitOrgUnitsObjectsCurrentParent"]
     org_unit_level: Optional["GetOrgUnitOrgUnitsObjectsCurrentOrgUnitLevel"]
+    org_unit_type: Optional["GetOrgUnitOrgUnitsObjectsCurrentOrgUnitType"]
     ancestors: List["GetOrgUnitOrgUnitsObjectsCurrentAncestors"]
     managers: List["GetOrgUnitOrgUnitsObjectsCurrentManagers"]
     kles: List["GetOrgUnitOrgUnitsObjectsCurrentKles"]
@@ -37,12 +38,21 @@ class GetOrgUnitOrgUnitsObjectsCurrentOrgUnitLevel(BaseModel):
     uuid: UUID
 
 
+class GetOrgUnitOrgUnitsObjectsCurrentOrgUnitType(BaseModel):
+    uuid: UUID
+
+
 class GetOrgUnitOrgUnitsObjectsCurrentAncestors(BaseModel):
     uuid: UUID
     org_unit_level: Optional["GetOrgUnitOrgUnitsObjectsCurrentAncestorsOrgUnitLevel"]
+    org_unit_type: Optional["GetOrgUnitOrgUnitsObjectsCurrentAncestorsOrgUnitType"]
 
 
 class GetOrgUnitOrgUnitsObjectsCurrentAncestorsOrgUnitLevel(BaseModel):
+    uuid: UUID
+
+
+class GetOrgUnitOrgUnitsObjectsCurrentAncestorsOrgUnitType(BaseModel):
     uuid: UUID
 
 
@@ -114,8 +124,10 @@ GetOrgUnitOrgUnitsObjects.update_forward_refs()
 GetOrgUnitOrgUnitsObjectsCurrent.update_forward_refs()
 GetOrgUnitOrgUnitsObjectsCurrentParent.update_forward_refs()
 GetOrgUnitOrgUnitsObjectsCurrentOrgUnitLevel.update_forward_refs()
+GetOrgUnitOrgUnitsObjectsCurrentOrgUnitType.update_forward_refs()
 GetOrgUnitOrgUnitsObjectsCurrentAncestors.update_forward_refs()
 GetOrgUnitOrgUnitsObjectsCurrentAncestorsOrgUnitLevel.update_forward_refs()
+GetOrgUnitOrgUnitsObjectsCurrentAncestorsOrgUnitType.update_forward_refs()
 GetOrgUnitOrgUnitsObjectsCurrentManagers.update_forward_refs()
 GetOrgUnitOrgUnitsObjectsCurrentManagersPerson.update_forward_refs()
 GetOrgUnitOrgUnitsObjectsCurrentManagersPersonItusers.update_forward_refs()

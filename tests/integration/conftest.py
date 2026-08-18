@@ -48,7 +48,9 @@ async def app(
         "AD_ITSYSTEM_USER_KEYS", json.dumps(["Active Directory", "Skole-AD"])
     )
     monkeypatch.setenv("FK_ITSYSTEM_USER_KEY", "FK ORG")
-    monkeypatch.setenv("EXCLUDE_ORG_UNIT_LEVEL", str(exclude_org_unit_level))
+    monkeypatch.setenv(
+        "EXCLUDE_ORG_UNIT_LEVELS", json.dumps([str(exclude_org_unit_level)])
+    )
     monkeypatch.setenv("EXTERNAL_ROOTS", json.dumps(external_roots))
 
     return create_app()

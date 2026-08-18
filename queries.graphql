@@ -109,9 +109,15 @@ query GetPerson(
                 org_unit_level {
                   uuid
                 }
+                org_unit_type: unit_type {
+                  uuid
+                }
                 ancestors {
                   uuid
                   org_unit_level {
+                    uuid
+                  }
+                  org_unit_type: unit_type {
                     uuid
                   }
                 }
@@ -195,9 +201,15 @@ query GetOrgUnit(
         org_unit_level {
           uuid
         }
+        org_unit_type: unit_type {
+          uuid
+        }
         ancestors {
           uuid
           org_unit_level {
+            uuid
+          }
+          org_unit_type: unit_type {
             uuid
           }
         }

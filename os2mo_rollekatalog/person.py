@@ -12,8 +12,8 @@ from sqlalchemy import text
 from sqlalchemy.orm import selectinload
 
 from os2mo_rollekatalog import depends
+from os2mo_rollekatalog.junkyard import OrgUnitExclusions
 from os2mo_rollekatalog.junkyard import WillNotSync
-from os2mo_rollekatalog.junkyard import is_org_unit_excluded
 from os2mo_rollekatalog.junkyard import resolve_samaccounts
 from os2mo_rollekatalog.junkyard import select_preferred
 from os2mo_rollekatalog.junkyard import select_relevant
@@ -36,8 +36,7 @@ async def get_person(
     prefer_nickname: bool,
     sync_titles: bool,
     external_roots: list[UUID],
-    exclude_org_unit_level: UUID | None,
-    exclude_org_units: list[UUID],
+    exclusions: OrgUnitExclusions,
 ) -> list[User]:
     result = await mo.get_person(
         person_uuid,
@@ -119,9 +118,7 @@ async def get_person(
                 titleUuid=eng.job_function.uuid if sync_titles else None,
             )
             for eng, org_unit in engagement_units
-            if not is_org_unit_excluded(
-                org_unit, exclude_org_unit_level, exclude_org_units
-            )
+            if exclusions.reason_to_exclude(org_unit) is None
         ]
 
         # Drop itusers whose in-tree engagements all resolved to excluded org
@@ -174,8 +171,7 @@ async def sync_person(
     prefer_nickname: bool,
     sync_titles: bool,
     external_roots: list[UUID],
-    exclude_org_unit_level: UUID | None,
-    exclude_org_units: list[UUID],
+    exclusions: OrgUnitExclusions,
 ) -> None:
     await session.execute(
         text("SELECT pg_advisory_xact_lock(:k)"),
@@ -193,8 +189,7 @@ async def sync_person(
             prefer_nickname,
             sync_titles,
             external_roots,
-            exclude_org_unit_level,
-            exclude_org_units,
+            exclusions,
         )
     except WillNotSync:
         delete_result = await session.execute(

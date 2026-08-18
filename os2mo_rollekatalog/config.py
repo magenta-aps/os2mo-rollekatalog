@@ -9,6 +9,8 @@ from pydantic import BaseSettings
 from pydantic import Field
 from pydantic import SecretStr
 
+from os2mo_rollekatalog.junkyard import OrgUnitExclusions
+
 
 class _Settings(BaseSettings):
     class Config:
@@ -81,13 +83,30 @@ class _Settings(BaseSettings):
     mit_id_user_key: str = Field(
         "MitIDEmployee", description="User_key of the MitID address-type"
     )
-    exclude_org_unit_level: UUID | None = Field(
-        None,
-        description="UUID of `org_unit_level` to ignore. If a unit has this level the unit (including it's children) will not be synced",
+    exclude_org_unit_levels: list[UUID] = Field(
+        [],
+        description=(
+            "UUIDs of `org_unit_level` classes to ignore. If a unit has one of "
+            "these levels, the unit - including its children - is not synced. "
+            "Given as a JSON list."
+        ),
+    )
+    exclude_org_unit_types: list[UUID] = Field(
+        [],
+        description=(
+            "UUIDs of `org_unit_type` classes to ignore. If a unit has one of "
+            "these types, the unit - including its children - is not synced. "
+            "Given as a JSON list."
+        ),
     )
     exclude_org_units: list[UUID] = Field(
         [],
-        description="UUIDs of org units to exclude from Rollekatalog. The unit and all its descendants are skipped.",
+        description=(
+            "UUIDs of org units to ignore, including their children. Use this "
+            "for named subtrees that should stay out of Rollekatalog, such as a "
+            "MED-organisation or error/conversion departments. Given as a JSON "
+            "list."
+        ),
     )
     prefer_nickname: bool = Field(
         False,
@@ -98,3 +117,12 @@ class _Settings(BaseSettings):
     )
 
     httpx_timeout: int = Field(30, description="Timeout when we sync to Rollekatalog.")
+
+    @property
+    def org_unit_exclusions(self) -> OrgUnitExclusions:
+        """The three EXCLUDE_ORG_UNIT* settings as one predicate."""
+        return OrgUnitExclusions(
+            levels=frozenset(self.exclude_org_unit_levels),
+            types=frozenset(self.exclude_org_unit_types),
+            uuids=frozenset(self.exclude_org_units),
+        )

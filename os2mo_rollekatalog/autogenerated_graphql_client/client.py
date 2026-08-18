@@ -184,9 +184,15 @@ class GraphQLClient(AsyncBaseClient):
                             org_unit_level {
                               uuid
                             }
+                            org_unit_type: unit_type {
+                              uuid
+                            }
                             ancestors {
                               uuid
                               org_unit_level {
+                                uuid
+                              }
+                              org_unit_type: unit_type {
                                 uuid
                               }
                             }
@@ -309,9 +315,15 @@ class GraphQLClient(AsyncBaseClient):
                     org_unit_level {
                       uuid
                     }
+                    org_unit_type: unit_type {
+                      uuid
+                    }
                     ancestors {
                       uuid
                       org_unit_level {
+                        uuid
+                      }
+                      org_unit_type: unit_type {
                         uuid
                       }
                     }
