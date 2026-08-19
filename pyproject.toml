@@ -29,7 +29,6 @@ pytest = "^8.3.5"
 pytest-asyncio = "^1.4"
 pytest-cov = "^5"
 pytest-split = "^0.9"
-respx = "^0.21.1"
 
 [tool.poetry.group.dev.dependencies]
 ariadne-codegen = "0.7.1"
