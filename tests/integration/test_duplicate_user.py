@@ -18,6 +18,7 @@ from unittest.mock import patch
 
 import pytest
 from fastramqpi.pytest_util import retry
+from structlog.testing import capture_logs
 from httpx import AsyncClient
 
 from os2mo_rollekatalog import person as person_module
@@ -36,7 +37,6 @@ async def test_concurrent_sync_person_no_duplicate_key_error(
     test_client: AsyncClient,
     graphql_client: GraphQLClient,
     root_uuid: uuid.UUID,
-    caplog: pytest.LogCaptureFixture,
     create_org_unit: Callable[..., Awaitable[uuid.UUID]],
     create_it_system: Callable[..., Awaitable[uuid.UUID]],
     create_ituser: Callable[..., Awaitable[uuid.UUID]],
@@ -104,11 +104,10 @@ async def test_concurrent_sync_person_no_duplicate_key_error(
                 pass
         return result
 
-    caplog.clear()
     with patch(
         "os2mo_rollekatalog.person.fetch_users_from_db",
         new=synchronized_fetch,
-    ), caplog.at_level("INFO", logger="os2mo_rollekatalog.person"):
+    ), capture_logs() as cap_logs:
         responses = await asyncio.gather(
             *(test_client.post(f"/sync/person/{employee}") for _ in range(CONCURRENT)),
             return_exceptions=True,
@@ -118,10 +117,8 @@ async def test_concurrent_sync_person_no_duplicate_key_error(
         assert not isinstance(r, BaseException), f"request raised: {r!r}"
         assert r.status_code == 200, f"request failed: {r.status_code} {r.text}"
 
-    add_count = sum(1 for r in caplog.records if "Add new user" in r.getMessage())
-    unchanged_count = sum(
-        1 for r in caplog.records if "User unchanged" in r.getMessage()
-    )
+    add_count = sum(1 for log in cap_logs if log["event"] == "Add new user")
+    unchanged_count = sum(1 for log in cap_logs if log["event"] == "User unchanged")
     assert add_count == 1, f"expected exactly one Add new user, got {add_count}"
     assert (
         unchanged_count == CONCURRENT - 1
@@ -151,7 +148,6 @@ async def test_sync_handles_extuuid_change_with_same_nemlogin(
     test_client: AsyncClient,
     graphql_client: GraphQLClient,
     root_uuid: uuid.UUID,
-    caplog: pytest.LogCaptureFixture,
     mit_id_employee: uuid.UUID,
     create_org_unit: Callable[..., Awaitable[uuid.UUID]],
     create_it_system: Callable[..., Awaitable[uuid.UUID]],
@@ -243,14 +239,13 @@ async def test_sync_handles_extuuid_change_with_same_nemlogin(
 
     await wait_for_swap()
 
-    caplog.clear()
-    with caplog.at_level("INFO", logger="os2mo_rollekatalog.person"):
+    with capture_logs() as cap_logs:
         response = await test_client.post(f"/sync/person/{employee}")
         assert response.status_code == 200, response.text
 
-    messages = [r.getMessage() for r in caplog.records]
-    assert sum("Remove user" in m for m in messages) == 1, messages
-    assert sum("Add new user" in m for m in messages) == 1, messages
+    events = [log["event"] for log in cap_logs]
+    assert events.count("Remove user") == 1, events
+    assert events.count("Add new user") == 1, events
 
     cached = (await test_client.get(f"/cache/person/{employee}")).json()
     assert cached == [
