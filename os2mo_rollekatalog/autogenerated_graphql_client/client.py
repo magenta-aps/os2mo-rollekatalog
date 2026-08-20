@@ -6,6 +6,10 @@ from ._testing__create_address import (
     TestingCreateAddress,
     TestingCreateAddressAddressCreate,
 )
+from ._testing__create_association import (
+    TestingCreateAssociation,
+    TestingCreateAssociationAssociationCreate,
+)
 from ._testing__create_class import TestingCreateClass, TestingCreateClassClassCreate
 from ._testing__create_employee import (
     TestingCreateEmployee,
@@ -36,6 +40,7 @@ from ._testing__update_address import (
     TestingUpdateAddress,
     TestingUpdateAddressAddressUpdate,
 )
+from ._testing__update_class import TestingUpdateClass, TestingUpdateClassClassUpdate
 from ._testing__update_it_user import (
     TestingUpdateItUser,
     TestingUpdateItUserItuserUpdate,
@@ -71,7 +76,9 @@ from .get_uuids_for_it_user import GetUuidsForItUser, GetUuidsForItUserItusers
 from .input_types import (
     AddressCreateInput,
     AddressUpdateInput,
+    AssociationCreateInput,
     ClassCreateInput,
+    ClassUpdateInput,
     EmployeeCreateInput,
     EngagementCreateInput,
     FacetCreateInput,
@@ -682,6 +689,40 @@ class GraphQLClient(AsyncBaseClient):
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return TestingCreateManager.parse_obj(data).manager_create
+
+    async def _testing__create_association(
+        self, input: AssociationCreateInput
+    ) -> TestingCreateAssociationAssociationCreate:
+        query = gql(
+            """
+            mutation _Testing_CreateAssociation($input: AssociationCreateInput!) {
+              association_create(input: $input) {
+                uuid
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {"input": input}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return TestingCreateAssociation.parse_obj(data).association_create
+
+    async def _testing__update_class(
+        self, input: ClassUpdateInput
+    ) -> TestingUpdateClassClassUpdate:
+        query = gql(
+            """
+            mutation _Testing_UpdateClass($input: ClassUpdateInput!) {
+              class_update(input: $input) {
+                uuid
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {"input": input}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return TestingUpdateClass.parse_obj(data).class_update
 
     async def refresh_all(
         self, root_uuid: Union[Optional[List[UUID]], UnsetType] = UNSET

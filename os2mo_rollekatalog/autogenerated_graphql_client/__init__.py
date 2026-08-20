@@ -2,6 +2,10 @@ from ._testing__create_address import (
     TestingCreateAddress,
     TestingCreateAddressAddressCreate,
 )
+from ._testing__create_association import (
+    TestingCreateAssociation,
+    TestingCreateAssociationAssociationCreate,
+)
 from ._testing__create_class import TestingCreateClass, TestingCreateClassClassCreate
 from ._testing__create_employee import (
     TestingCreateEmployee,
@@ -32,6 +36,7 @@ from ._testing__update_address import (
     TestingUpdateAddress,
     TestingUpdateAddressAddressUpdate,
 )
+from ._testing__update_class import TestingUpdateClass, TestingUpdateClassClassUpdate
 from ._testing__update_it_user import (
     TestingUpdateItUser,
     TestingUpdateItUserItuserUpdate,
@@ -522,6 +527,8 @@ __all__ = [
     "RoleRegistrationFilter",
     "TestingCreateAddress",
     "TestingCreateAddressAddressCreate",
+    "TestingCreateAssociation",
+    "TestingCreateAssociationAssociationCreate",
     "TestingCreateClass",
     "TestingCreateClassClassCreate",
     "TestingCreateEmployee",
@@ -540,6 +547,8 @@ __all__ = [
     "TestingCreateOrgUnitOrgUnitCreate",
     "TestingUpdateAddress",
     "TestingUpdateAddressAddressUpdate",
+    "TestingUpdateClass",
+    "TestingUpdateClassClassUpdate",
     "TestingUpdateItUser",
     "TestingUpdateItUserItuserUpdate",
     "TestingUpdateOrgUnit",
