@@ -58,7 +58,7 @@ services:
       MARIADB_ROOT_PASSWORD: 'Test1234'
 
   rollekatalog:
-    image: rollekatalog/linux:2025-05-26
+    image: rollekatalog/linux:2026-06-24
     ports:
       - 8090:8090
     environment:
