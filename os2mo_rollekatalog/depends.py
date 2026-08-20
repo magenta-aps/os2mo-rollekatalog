@@ -15,8 +15,8 @@ from os2mo_rollekatalog.config import _Settings
 
 GraphQLClient = Annotated[_GraphQLClient, Depends(from_context("graphql_client"))]
 Settings = Annotated[_Settings, Depends(from_user_context("settings"))]
-TitleClient = Annotated[
-    rollekatalog.RollekatalogClient, Depends(from_user_context("title_client"))
+RollekatalogClient = Annotated[
+    rollekatalog.RollekatalogClient, Depends(from_user_context("rollekatalog_client"))
 ]
 PeriodicSync = Annotated[
     rollekatalog.PeriodicSync, Depends(from_user_context("periodic_sync"))

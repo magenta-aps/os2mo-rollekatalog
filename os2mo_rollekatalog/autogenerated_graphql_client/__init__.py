@@ -51,6 +51,12 @@ from .exceptions import (
     GraphQLClientHttpError,
     GraphQlClientInvalidResponseError,
 )
+from .get_functions import (
+    GetFunctions,
+    GetFunctionsClasses,
+    GetFunctionsClassesObjects,
+    GetFunctionsClassesObjectsCurrent,
+)
 from .get_org_unit import (
     GetOrgUnit,
     GetOrgUnitOrgUnits,
@@ -330,6 +336,10 @@ __all__ = [
     "FileFilter",
     "FileStore",
     "FullEventFilter",
+    "GetFunctions",
+    "GetFunctionsClasses",
+    "GetFunctionsClassesObjects",
+    "GetFunctionsClassesObjectsCurrent",
     "GetOrgUnit",
     "GetOrgUnitOrgUnits",
     "GetOrgUnitOrgUnitsObjects",

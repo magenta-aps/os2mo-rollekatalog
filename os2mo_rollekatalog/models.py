@@ -40,6 +40,25 @@ class Base(DeclarativeBase):
     }
 
 
+class Function(Base):
+    """A tillidsfunktion in Rollekatalog, i.e. an association type in MO.
+
+    Rollekatalog assigns its own UUID when a function is first created, so we
+    must remember it to rename a function in place when the class is renamed
+    in MO. rk_uuid is unknown until the first successful catalog sync.
+    """
+
+    __tablename__ = "function"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    mo_uuid: Mapped[UUID] = mapped_column(unique=True)
+    rk_uuid: Mapped[UUID | None]
+    name: Mapped[str]
+
+    def __repr__(self) -> str:
+        return f"Function({self.mo_uuid=}, {self.rk_uuid=}, {self.name=})"
+
+
 class Position(Base):
     __tablename__ = "position"
 

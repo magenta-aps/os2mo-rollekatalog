@@ -46,6 +46,7 @@ from ._testing__update_org_unit import (
 )
 from .async_base_client import AsyncBaseClient
 from .base_model import UNSET, UnsetType
+from .get_functions import GetFunctions, GetFunctionsClasses
 from .get_org_unit import GetOrgUnit, GetOrgUnitOrgUnits
 from .get_org_unit_uuid_for_kle import GetOrgUnitUuidForKle, GetOrgUnitUuidForKleKles
 from .get_org_unit_uuid_for_manager import (
@@ -104,6 +105,26 @@ class GraphQLClient(AsyncBaseClient):
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return GetTitles.parse_obj(data).classes
+
+    async def get_functions(self) -> GetFunctionsClasses:
+        query = gql(
+            """
+            query GetFunctions {
+              classes(filter: {facet: {user_keys: "association_type"}}) {
+                objects {
+                  current {
+                    name
+                    uuid
+                  }
+                }
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return GetFunctions.parse_obj(data).classes
 
     async def get_person(
         self,
@@ -627,7 +648,7 @@ class GraphQLClient(AsyncBaseClient):
               class_refresh(
                 owner: "2011e000-baad-c0de-726f-6c6c656b6174"
                 limit: 1
-                filter: {facet: {user_keys: "engagement_job_function"}}
+                filter: {facet: {user_keys: ["engagement_job_function", "association_type"]}}
               ) {
                 objects
               }

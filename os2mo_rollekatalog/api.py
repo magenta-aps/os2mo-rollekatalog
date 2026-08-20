@@ -8,7 +8,9 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 
 from os2mo_rollekatalog import depends
+from os2mo_rollekatalog.functions import get_function_types
 from os2mo_rollekatalog.junkyard import WillNotSync
+from os2mo_rollekatalog.models import Function
 from os2mo_rollekatalog.models import Title
 from os2mo_rollekatalog.models import User
 from os2mo_rollekatalog.models import OrgUnit
@@ -29,6 +31,21 @@ logger = structlog.stdlib.get_logger(__name__)
 async def titles(mo: depends.GraphQLClient) -> list[Title]:
     """Get job titles that would be synced with SYNC_TITLES=true."""
     return await get_job_titles(mo)
+
+
+@router.get("/functions")
+async def functions(mo: depends.GraphQLClient) -> dict[UUID, str]:
+    """Get association types that would be synced with SYNC_FUNCTIONS=true."""
+    return await get_function_types(mo)
+
+
+@router.get("/cache/functions")
+async def functions_from_cache(session: depends.Session) -> list[dict]:
+    """Inspect the function catalog and its Rollekatalog UUID mapping."""
+    functions = (await session.scalars(select(Function))).all()
+    return [
+        {"mo_uuid": f.mo_uuid, "rk_uuid": f.rk_uuid, "name": f.name} for f in functions
+    ]
 
 
 @router.get("/cache/stikprøve/person")

@@ -96,5 +96,12 @@ class _Settings(BaseSettings):
     sync_titles: bool = Field(
         False, description="Whether we should sync job titles objects to Rollekatalog."
     )
+    sync_functions: bool = Field(
+        False,
+        description=(
+            "Whether we should sync association types and each person's "
+            "associations to Rollekatalog as tillidsfunktioner."
+        ),
+    )
 
     httpx_timeout: int = Field(30, description="Timeout when we sync to Rollekatalog.")
