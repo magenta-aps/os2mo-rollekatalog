@@ -58,6 +58,10 @@ from .get_person_uuid_for_address import (
     GetPersonUuidForAddress,
     GetPersonUuidForAddressAddresses,
 )
+from .get_person_uuid_for_association import (
+    GetPersonUuidForAssociation,
+    GetPersonUuidForAssociationAssociations,
+)
 from .get_person_uuid_for_engagement import (
     GetPersonUuidForEngagement,
     GetPersonUuidForEngagementEngagements,
@@ -164,6 +168,34 @@ class GraphQLClient(AsyncBaseClient):
                       value
                       ituser(filter: {from_date: $now, to_date: null}) {
                         uuid
+                      }
+                    }
+                    associations(filter: {it_association: false, from_date: $now, to_date: null}) {
+                      uuid
+                      association_type {
+                        uuid
+                      }
+                      org_unit(
+                        filter: {ancestor: {uuids: $root_uuids}, from_date: $now, to_date: null}
+                      ) {
+                        uuid
+                        org_unit_level {
+                          uuid
+                        }
+                        ancestors {
+                          uuid
+                          org_unit_level {
+                            uuid
+                          }
+                        }
+                        validity {
+                          from
+                          to
+                        }
+                      }
+                      validity {
+                        from
+                        to
                       }
                     }
                     itusers(
@@ -304,6 +336,27 @@ class GraphQLClient(AsyncBaseClient):
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return GetPersonUuidForEngagement.parse_obj(data).engagements
+
+    async def get_person_uuid_for_association(
+        self, uuid: UUID
+    ) -> GetPersonUuidForAssociationAssociations:
+        query = gql(
+            """
+            query GetPersonUuidForAssociation($uuid: UUID!) {
+              associations(filter: {uuids: [$uuid], from_date: null, to_date: null}) {
+                objects {
+                  validities {
+                    employee_uuid
+                  }
+                }
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {"uuid": uuid}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return GetPersonUuidForAssociation.parse_obj(data).associations
 
     async def get_org_unit(
         self,

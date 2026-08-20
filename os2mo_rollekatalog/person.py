@@ -20,6 +20,7 @@ from os2mo_rollekatalog.junkyard import select_relevant
 from os2mo_rollekatalog.models import Name
 from os2mo_rollekatalog.models import Position
 from os2mo_rollekatalog.models import User
+from os2mo_rollekatalog.models import UserFunction
 
 
 logger = structlog.stdlib.get_logger(__name__)
@@ -35,6 +36,7 @@ async def get_person(
     person_uuid: UUID,
     prefer_nickname: bool,
     sync_titles: bool,
+    sync_functions: bool,
     external_roots: list[UUID],
     exclude_org_unit_level: UUID | None,
     exclude_org_units: list[UUID],
@@ -70,6 +72,24 @@ async def get_person(
         name = Name(mo_person.nickname)
     else:
         name = Name(mo_person.name)
+
+    # Tillidsfunktioner are the person's associations, resolved to org units
+    # within the sync tree the same way as engagements. They are not tied to
+    # an AD account in MO, so every user of the person carries all of them.
+    functions: list[tuple[UUID, UUID]] = []
+    if sync_functions:
+        association_units = [
+            (assoc, one(select_relevant(assoc.org_unit)))
+            for assoc in select_relevant(mo_person.associations)
+            if assoc.org_unit and assoc.association_type is not None
+        ]
+        functions = [
+            (org_unit.uuid, assoc.association_type.uuid)
+            for assoc, org_unit in association_units
+            if not is_org_unit_excluded(
+                org_unit, exclude_org_unit_level, exclude_org_units
+            )
+        ]
 
     users = []
     itusers, samaccounts = resolve_samaccounts(
@@ -139,13 +159,24 @@ async def get_person(
                 name=name,
                 email=email,
                 positions=positions,
+                functions=[
+                    UserFunction(
+                        orgUnitUuid=org_unit_uuid,
+                        associationTypeUuid=association_type_uuid,
+                    )
+                    for org_unit_uuid, association_type_uuid in functions
+                ],
             )
         )
     return users
 
 
 async def fetch_users_from_db(session: depends.Session, uuid: UUID) -> list[User]:
-    stmt = select(User).options(selectinload(User.positions)).where(User.person == uuid)
+    stmt = (
+        select(User)
+        .options(selectinload(User.positions), selectinload(User.functions))
+        .where(User.person == uuid)
+    )
     scalar_result = await session.scalars(stmt)
     users = scalar_result.all()
 
@@ -173,6 +204,7 @@ async def sync_person(
     person_uuid: UUID,
     prefer_nickname: bool,
     sync_titles: bool,
+    sync_functions: bool,
     external_roots: list[UUID],
     exclude_org_unit_level: UUID | None,
     exclude_org_units: list[UUID],
@@ -192,6 +224,7 @@ async def sync_person(
             person_uuid,
             prefer_nickname,
             sync_titles,
+            sync_functions,
             external_roots,
             exclude_org_unit_level,
             exclude_org_units,

@@ -22,6 +22,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from os2mo_rollekatalog.models import Function
 from os2mo_rollekatalog.models import OrgUnit
 from os2mo_rollekatalog.models import User
 
@@ -104,14 +105,33 @@ class PeriodicSync:
                 users_from_db = (
                     (
                         await session.execute(
-                            select(User).options(selectinload(User.positions))
+                            select(User).options(
+                                selectinload(User.positions),
+                                selectinload(User.functions),
+                            )
                         )
                     )
                     .scalars()
                     .all()
                 )
+                functions_from_db = (
+                    (await session.execute(select(Function))).scalars().all()
+                )
+                # Users reference tillidsfunktioner by MO's association type
+                # UUID; Rollekatalog only knows its own. Functions whose
+                # Rollekatalog UUID is still unknown are sent with a null
+                # functionUuid, which Rollekatalog skips, until the catalog
+                # sync has run.
+                function_uuids = {
+                    f.mo_uuid: f.rk_uuid
+                    for f in functions_from_db
+                    if f.rk_uuid is not None
+                }
                 org_units = [org.to_rollekatalog_payload() for org in org_units_from_db]
-                users = [user.to_rollekatalog_payload() for user in users_from_db]
+                users = [
+                    user.to_rollekatalog_payload(function_uuids)
+                    for user in users_from_db
+                ]
 
             if org_units == [] and users == []:
                 logger.warning("No data to upload")

@@ -8,6 +8,7 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 
 from os2mo_rollekatalog import depends
+from os2mo_rollekatalog.functions import fetch_function_map
 from os2mo_rollekatalog.functions import get_function_types
 from os2mo_rollekatalog.junkyard import WillNotSync
 from os2mo_rollekatalog.models import Function
@@ -55,7 +56,7 @@ async def random_users(session: depends.Session, count: int = 5) -> list:
     """
     stmt = (
         select(User)
-        .options(selectinload(User.positions))
+        .options(selectinload(User.positions), selectinload(User.functions))
         .order_by(func.random())
         .limit(count)
     )
@@ -63,7 +64,8 @@ async def random_users(session: depends.Session, count: int = 5) -> list:
     scalar_result = await session.scalars(stmt)
     users = scalar_result.all()
 
-    return [user.to_rollekatalog_payload() for user in users]
+    function_uuids = await fetch_function_map(session)
+    return [user.to_rollekatalog_payload(function_uuids) for user in users]
 
 
 @router.get("/cache/stikprøve/org_unit")
@@ -88,6 +90,7 @@ async def random_org_units(session: depends.Session, count: int = 5) -> list:
 async def person(
     settings: depends.Settings,
     mo: depends.GraphQLClient,
+    session: depends.Session,
     uuid: UUID,
 ) -> list | dict:
     """See how a person will be synced, or debug why it is not to be."""
@@ -102,13 +105,15 @@ async def person(
             uuid,
             settings.prefer_nickname,
             settings.sync_titles,
+            settings.sync_functions,
             settings.external_roots,
             settings.exclude_org_unit_level,
             settings.exclude_org_units,
         )
     except WillNotSync as e:
         return {"error": e.message}
-    return [u.to_rollekatalog_payload() for u in users]
+    function_uuids = await fetch_function_map(session)
+    return [u.to_rollekatalog_payload(function_uuids) for u in users]
 
 
 @router.post("/sync/person/{uuid}")
@@ -132,6 +137,7 @@ async def sync_person_on_demand(
         uuid,
         settings.prefer_nickname,
         settings.sync_titles,
+        settings.sync_functions,
         settings.external_roots,
         settings.exclude_org_unit_level,
         settings.exclude_org_units,
@@ -142,7 +148,8 @@ async def sync_person_on_demand(
 async def person_from_cache(session: depends.Session, uuid: UUID) -> list:
     """Inspect a person from the cache."""
     users = await fetch_users_from_db(session, uuid)
-    return [u.to_rollekatalog_payload() for u in users]
+    function_uuids = await fetch_function_map(session)
+    return [u.to_rollekatalog_payload(function_uuids) for u in users]
 
 
 @router.get("/debug/org_unit/{uuid}")

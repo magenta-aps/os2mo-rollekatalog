@@ -24,6 +24,11 @@ async def get_function_types(mo: GraphQLClient) -> dict[UUID, str]:
     }
 
 
+async def fetch_function_map(session: AsyncSession) -> dict[UUID, UUID]:
+    functions = (await session.scalars(select(Function))).all()
+    return {f.mo_uuid: f.rk_uuid for f in functions if f.rk_uuid is not None}
+
+
 async def sync_function_catalog(
     mo: GraphQLClient,
     client: AsyncClient,

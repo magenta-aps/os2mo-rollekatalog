@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
+from typing import Mapping
 from typing import NewType
 from uuid import UUID
 
@@ -89,6 +90,41 @@ class Position(Base):
         return jsonable_encoder(result)
 
 
+class UserFunction(Base):
+    """A person's tillidsfunktion, i.e. an association in MO.
+
+    Stores the MO association type; the Rollekatalog function UUID is looked
+    up through the Function table when the payload is built, as it may be
+    unknown when we learn about the association.
+    """
+
+    __tablename__ = "user_function"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    orgUnitUuid: Mapped[UUID]
+    associationTypeUuid: Mapped[UUID]
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
+
+    def __repr__(self) -> str:
+        return f"UserFunction({self.orgUnitUuid=}, {self.associationTypeUuid=})"
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, UserFunction):
+            return (
+                self.orgUnitUuid == other.orgUnitUuid
+                and self.associationTypeUuid == other.associationTypeUuid
+            )
+        raise NotImplementedError()
+
+    def to_rollekatalog_payload(self, function_uuids: Mapping[UUID, UUID]):
+        result = {
+            "ouUuid": self.orgUnitUuid,
+            "functionUuid": function_uuids.get(self.associationTypeUuid),
+        }
+        return jsonable_encoder(result)
+
+
 class User(Base):
     __tablename__ = "user"
 
@@ -102,9 +138,12 @@ class User(Base):
     positions: Mapped[list[Position]] = relationship(
         single_parent=True, cascade="all, delete-orphan"
     )
+    functions: Mapped[list[UserFunction]] = relationship(
+        single_parent=True, cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
-        return f"User({self.person=}, {self.extUuid=}, {self.nemloginUuid=}, {self.userId=}, {self.name=}, {self.email=}, {self.positions=})"
+        return f"User({self.person=}, {self.extUuid=}, {self.nemloginUuid=}, {self.userId=}, {self.name=}, {self.email=}, {self.positions=}, {self.functions=})"
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, User):
@@ -116,10 +155,11 @@ class User(Base):
                 and self.name == other.name
                 and self.email == other.email
                 and self.positions == other.positions
+                and self.functions == other.functions
             )
         raise NotImplementedError()
 
-    def to_rollekatalog_payload(self):
+    def to_rollekatalog_payload(self, function_uuids: Mapping[UUID, UUID]):
         return jsonable_encoder(
             {
                 "extUuid": self.extUuid,
@@ -128,6 +168,9 @@ class User(Base):
                 "name": self.name,
                 "email": self.email,
                 "positions": [pos.to_rollekatalog_payload() for pos in self.positions],
+                "functions": [
+                    f.to_rollekatalog_payload(function_uuids) for f in self.functions
+                ],
             }
         )
 

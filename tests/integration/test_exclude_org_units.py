@@ -116,6 +116,7 @@ async def test_person_keeps_only_positions_in_kept_units(
             "name": "Anders And",
             "email": None,
             "positions": [{"name": "Jurist", "orgUnitUuid": str(kept)}],
+            "functions": [],
         }
     ]
 
@@ -228,5 +229,6 @@ async def test_user_without_engagements_is_kept(
             "name": "Joakim von And",
             "email": None,
             "positions": [],
+            "functions": [],
         }
     ]

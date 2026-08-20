@@ -138,6 +138,7 @@ async def test_concurrent_sync_person_no_duplicate_key_error(
                     "orgUnitUuid": str(org_unit),
                 }
             ],
+            "functions": [],
         }
     ]
 
@@ -219,6 +220,7 @@ async def test_sync_handles_extuuid_change_with_same_nemlogin(
             "positions": [
                 {"name": "Jurist", "orgUnitUuid": str(org_unit)},
             ],
+            "functions": [],
         }
     ]
 
@@ -258,6 +260,7 @@ async def test_sync_handles_extuuid_change_with_same_nemlogin(
             "positions": [
                 {"name": "Jurist", "orgUnitUuid": str(org_unit)},
             ],
+            "functions": [],
         }
     ]
 
