@@ -117,6 +117,7 @@ async def test_person_keeps_only_positions_in_kept_units(
             "email": None,
             "positions": [{"name": "Jurist", "orgUnitUuid": str(kept)}],
             "functions": [],
+            "itsystem_user_key": "Active Directory",
         }
     ]
 
@@ -230,5 +231,6 @@ async def test_user_without_engagements_is_kept(
             "email": None,
             "positions": [],
             "functions": [],
+            "itsystem_user_key": "Active Directory",
         }
     ]

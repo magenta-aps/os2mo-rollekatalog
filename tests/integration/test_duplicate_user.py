@@ -139,6 +139,7 @@ async def test_concurrent_sync_person_no_duplicate_key_error(
                 }
             ],
             "functions": [],
+            "itsystem_user_key": "Active Directory",
         }
     ]
 
@@ -221,6 +222,7 @@ async def test_sync_handles_extuuid_change_with_same_nemlogin(
                 {"name": "Jurist", "orgUnitUuid": str(org_unit)},
             ],
             "functions": [],
+            "itsystem_user_key": "Active Directory",
         }
     ]
 
@@ -261,6 +263,7 @@ async def test_sync_handles_extuuid_change_with_same_nemlogin(
                 {"name": "Jurist", "orgUnitUuid": str(org_unit)},
             ],
             "functions": [],
+            "itsystem_user_key": "Active Directory",
         }
     ]
 

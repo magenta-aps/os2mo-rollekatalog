@@ -160,6 +160,7 @@ async def get_person(
                 userId=ituser.user_key,
                 name=name,
                 email=email,
+                itsystem_user_key=ituser.itsystem.user_key,
                 positions=positions,
                 functions=[
                     UserFunction(
