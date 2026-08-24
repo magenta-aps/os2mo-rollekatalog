@@ -51,9 +51,14 @@ def create_authenticated_client(
     return RollekatalogClient(client)
 
 
-async def upload(client: RollekatalogClient, path: str, payload: Any) -> None:
+async def upload(
+    client: RollekatalogClient,
+    path: str,
+    payload: Any,
+    params: dict[str, str] | None = None,
+) -> None:
     try:
-        r = await client.post(path, json=payload)
+        r = await client.post(path, json=payload, params=params)
         r.raise_for_status()
     except HTTPStatusError as e:
         logger.error("Error: Failed to upload data", http_body=e.response.text)
@@ -76,11 +81,13 @@ class PeriodicSync:
         interval: int,
         client: RollekatalogClient,
         sessionmaker: async_sessionmaker[AsyncSession],
+        itsystem_domains: dict[str, str],
     ):
         self.interval = interval
         self.sessionmaker = sessionmaker
         self.event = asyncio.Event()
         self.client = client
+        self.itsystem_domains = itsystem_domains
 
     def sync_soon(self) -> None:
         self.event.set()
@@ -114,21 +121,45 @@ class PeriodicSync:
                     .all()
                 )
                 org_units = [org.to_rollekatalog_payload() for org in org_units_from_db]
-                users = [user.to_rollekatalog_payload() for user in users_from_db]
+                # One upload per Rollekatalog domain; None is the primary
+                # domain. Its call carries the org units and comes first, so
+                # org units exist before other domains' users reference them.
+                # Rollekatalog compares users per domain, so every domain is
+                # synced on every run — also when it has no users left.
+                users_by_domain: dict[str | None, list] = {
+                    domain: [] for domain in [None, *self.itsystem_domains.values()]
+                }
+                for user in users_from_db:
+                    domain = (
+                        self.itsystem_domains.get(user.itsystem_user_key)
+                        if user.itsystem_user_key
+                        else None
+                    )
+                    users_by_domain[domain].append(user.to_rollekatalog_payload())
 
-            if org_units == [] and users == []:
+            if org_units == [] and not any(users_by_domain.values()):
                 logger.warning("No data to upload")
                 self.sync_soon()
                 continue
 
-            payload = {"orgUnits": org_units, "users": users}
-            logger.info("Uploading org units and users to Rollekatalog")
             try:
-                await upload(
-                    self.client,
-                    "/api/organisation/v3",
-                    payload,
-                )
+                for domain, users in users_by_domain.items():
+                    # Org units are included in every call: Rollekatalog only
+                    # imports them from the primary domain's call, but
+                    # validates user positions against them in all calls.
+                    payload = {"orgUnits": org_units, "users": users}
+                    params = None if domain is None else {"domain": domain}
+                    logger.info(
+                        "Uploading to Rollekatalog",
+                        domain=domain,
+                        users=len(users),
+                    )
+                    await upload(
+                        self.client,
+                        "/api/organisation/v3",
+                        payload,
+                        params=params,
+                    )
                 logger.info("Upload successful")
                 dipex_last_success_timestamp.set_to_current_time()
             except HTTPStatusError as e:

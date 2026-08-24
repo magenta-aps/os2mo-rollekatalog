@@ -102,6 +102,7 @@ def create_app() -> FastAPI:
         interval=settings.interval,
         client=client,
         sessionmaker=fastramqpi.get_context()["sessionmaker"],
+        itsystem_domains=settings.itsystem_domains,
     )
     fastramqpi.add_context(periodic_sync=periodic_sync_task)
     fastramqpi.add_lifespan_manager(periodic_sync_task.lifespan())
