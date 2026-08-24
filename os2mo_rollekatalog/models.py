@@ -30,6 +30,17 @@ class Title(BaseModel):
         return jsonable_encoder(result)
 
 
+# Functions (tillidsfunktioner), i.e. association types in MO, are synced
+# on-demand like titles and not part of the persistent state
+class Function(BaseModel):
+    uuid: UUID
+    name: str
+
+    def to_rollekatalog_payload(self):
+        result = {"name": self.name, "uuid": self.uuid}
+        return jsonable_encoder(result)
+
+
 class Base(DeclarativeBase):
     type_annotation_map = {
         SamAccountName: String,

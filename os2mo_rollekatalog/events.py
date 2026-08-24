@@ -10,6 +10,7 @@ from fastramqpi.events import Event
 
 from os2mo_rollekatalog import depends
 from os2mo_rollekatalog import rollekatalog
+from os2mo_rollekatalog.functions import get_functions
 from os2mo_rollekatalog.junkyard import flatten_validities
 from os2mo_rollekatalog.orgunit import sync_org_unit
 from os2mo_rollekatalog.person import sync_person
@@ -23,22 +24,43 @@ logger = structlog.stdlib.get_logger(__name__)
 @router.post("/class")
 async def handle_class(
     settings: depends.Settings,
-    title_client: depends.TitleClient,
+    rollekatalog_client: depends.RollekatalogClient,
     mo: depends.GraphQLClient,
+    periodic_sync: depends.PeriodicSync,
     event: Event[UUID],
 ) -> None:
-    # If this function is changed to not being on demand, it won't work unless the mutation is changed.
-    # Right now the mutation has `limit: 1`, so sync_job_titles is only triggered once
-    if not settings.sync_titles:
-        return
-    titles = await get_job_titles(mo)
-    payload = jsonable_encoder([title.to_rollekatalog_payload() for title in titles])
-    logger.info("Uploading titles to Rollekatalog", payload=payload)
-    await rollekatalog.upload(
-        title_client,
-        "/api/title",
-        payload,
-    )
+    # Any class event triggers a full refetch of both catalogs, so the
+    # `limit: 1` class refresh in the RefreshAll mutation is enough to
+    # trigger this handler.
+    if settings.sync_titles:
+        titles = await get_job_titles(mo)
+        payload = jsonable_encoder(
+            [title.to_rollekatalog_payload() for title in titles]
+        )
+        logger.info("Uploading titles to Rollekatalog", payload=payload)
+        await rollekatalog.upload(
+            rollekatalog_client,
+            "/api/title",
+            payload,
+        )
+    if settings.sync_functions:
+        functions = await get_functions(mo)
+        # Rollekatalog rejects an empty payload, so functions removed from
+        # MO can only be deactivated while at least one is left.
+        if functions:
+            payload = jsonable_encoder(
+                [function.to_rollekatalog_payload() for function in functions]
+            )
+            logger.info("Uploading functions to Rollekatalog", payload=payload)
+            await rollekatalog.upload(
+                rollekatalog_client,
+                "/api/v2/function/sync",
+                payload,
+            )
+    if settings.sync_titles or settings.sync_functions:
+        # Sync the organisation again in case it references titles or
+        # functions Rollekatalog didn't know when it was last uploaded.
+        periodic_sync.sync_soon()
 
 
 @router.post("/person")
