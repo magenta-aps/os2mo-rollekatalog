@@ -26,6 +26,7 @@ class GetPersonEmployeesObjectsCurrent(BaseModel):
     name: str
     email: List["GetPersonEmployeesObjectsCurrentEmail"]
     mitid: List["GetPersonEmployeesObjectsCurrentMitid"]
+    associations: List["GetPersonEmployeesObjectsCurrentAssociations"]
     itusers: List["GetPersonEmployeesObjectsCurrentItusers"]
 
 
@@ -52,6 +53,55 @@ class GetPersonEmployeesObjectsCurrentMitid(BaseModel):
 
 class GetPersonEmployeesObjectsCurrentMitidItuser(BaseModel):
     uuid: UUID
+
+
+class GetPersonEmployeesObjectsCurrentAssociations(BaseModel):
+    uuid: UUID
+    association_type: Optional[
+        "GetPersonEmployeesObjectsCurrentAssociationsAssociationType"
+    ]
+    org_unit: List["GetPersonEmployeesObjectsCurrentAssociationsOrgUnit"]
+    validity: "GetPersonEmployeesObjectsCurrentAssociationsValidity"
+
+
+class GetPersonEmployeesObjectsCurrentAssociationsAssociationType(BaseModel):
+    uuid: UUID
+
+
+class GetPersonEmployeesObjectsCurrentAssociationsOrgUnit(BaseModel):
+    uuid: UUID
+    org_unit_level: Optional[
+        "GetPersonEmployeesObjectsCurrentAssociationsOrgUnitOrgUnitLevel"
+    ]
+    ancestors: List["GetPersonEmployeesObjectsCurrentAssociationsOrgUnitAncestors"]
+    validity: "GetPersonEmployeesObjectsCurrentAssociationsOrgUnitValidity"
+
+
+class GetPersonEmployeesObjectsCurrentAssociationsOrgUnitOrgUnitLevel(BaseModel):
+    uuid: UUID
+
+
+class GetPersonEmployeesObjectsCurrentAssociationsOrgUnitAncestors(BaseModel):
+    uuid: UUID
+    org_unit_level: Optional[
+        "GetPersonEmployeesObjectsCurrentAssociationsOrgUnitAncestorsOrgUnitLevel"
+    ]
+
+
+class GetPersonEmployeesObjectsCurrentAssociationsOrgUnitAncestorsOrgUnitLevel(
+    BaseModel
+):
+    uuid: UUID
+
+
+class GetPersonEmployeesObjectsCurrentAssociationsOrgUnitValidity(BaseModel):
+    from_: datetime = Field(alias="from")
+    to: Optional[datetime]
+
+
+class GetPersonEmployeesObjectsCurrentAssociationsValidity(BaseModel):
+    from_: datetime = Field(alias="from")
+    to: Optional[datetime]
 
 
 class GetPersonEmployeesObjectsCurrentItusers(BaseModel):
@@ -161,6 +211,14 @@ GetPersonEmployeesObjectsCurrentEmailValidity.update_forward_refs()
 GetPersonEmployeesObjectsCurrentEmailItuser.update_forward_refs()
 GetPersonEmployeesObjectsCurrentMitid.update_forward_refs()
 GetPersonEmployeesObjectsCurrentMitidItuser.update_forward_refs()
+GetPersonEmployeesObjectsCurrentAssociations.update_forward_refs()
+GetPersonEmployeesObjectsCurrentAssociationsAssociationType.update_forward_refs()
+GetPersonEmployeesObjectsCurrentAssociationsOrgUnit.update_forward_refs()
+GetPersonEmployeesObjectsCurrentAssociationsOrgUnitOrgUnitLevel.update_forward_refs()
+GetPersonEmployeesObjectsCurrentAssociationsOrgUnitAncestors.update_forward_refs()
+GetPersonEmployeesObjectsCurrentAssociationsOrgUnitAncestorsOrgUnitLevel.update_forward_refs()
+GetPersonEmployeesObjectsCurrentAssociationsOrgUnitValidity.update_forward_refs()
+GetPersonEmployeesObjectsCurrentAssociationsValidity.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusers.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusersItsystem.update_forward_refs()
 GetPersonEmployeesObjectsCurrentItusersValidity.update_forward_refs()

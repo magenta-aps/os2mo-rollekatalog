@@ -83,6 +83,7 @@ async def handle_person(
         event.subject,
         settings.prefer_nickname,
         settings.sync_titles,
+        settings.sync_functions,
         settings.external_roots,
         settings.exclude_org_unit_level,
         settings.exclude_org_units,
@@ -124,6 +125,7 @@ async def handle_ituser(
             person_uuid,
             settings.prefer_nickname,
             settings.sync_titles,
+            settings.sync_functions,
             settings.external_roots,
             settings.exclude_org_unit_level,
             settings.exclude_org_units,
@@ -169,6 +171,7 @@ async def handle_address(
             person_uuid,
             settings.prefer_nickname,
             settings.sync_titles,
+            settings.sync_functions,
             settings.external_roots,
             settings.exclude_org_unit_level,
             settings.exclude_org_units,
@@ -200,6 +203,39 @@ async def handle_engagement(
             person_uuid,
             settings.prefer_nickname,
             settings.sync_titles,
+            settings.sync_functions,
+            settings.external_roots,
+            settings.exclude_org_unit_level,
+            settings.exclude_org_units,
+        )
+
+
+@router.post("/association")
+async def handle_association(
+    settings: depends.Settings,
+    mo: depends.GraphQLClient,
+    periodic_sync: depends.PeriodicSync,
+    session: depends.Session,
+    event: Event[UUID],
+) -> None:
+    result = await mo.get_person_uuid_for_association(event.subject)
+    persons: set[UUID] = {
+        a.employee_uuid for a in flatten_validities(result) if a.employee_uuid
+    }
+    for person_uuid in persons:
+        await sync_person(
+            mo,
+            periodic_sync,
+            session,
+            settings.ad_itsystem_user_keys,
+            settings.fk_itsystem_user_key,
+            settings.employee_email_user_key,
+            settings.mit_id_user_key,
+            settings.root_org_unit,
+            person_uuid,
+            settings.prefer_nickname,
+            settings.sync_titles,
+            settings.sync_functions,
             settings.external_roots,
             settings.exclude_org_unit_level,
             settings.exclude_org_units,

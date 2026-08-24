@@ -61,6 +61,12 @@ def create_app() -> FastAPI:
             ),
             Listener(
                 namespace="mo",
+                user_key="association",
+                routing_key="association",
+                path="/association",
+            ),
+            Listener(
+                namespace="mo",
                 user_key="org_unit",
                 routing_key="org_unit",
                 path="/org_unit",

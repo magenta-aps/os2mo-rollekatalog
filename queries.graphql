@@ -72,6 +72,40 @@ query GetPerson(
             uuid
           }
         }
+        associations(
+          filter: { it_association: false, from_date: $now, to_date: null }
+        ) {
+          uuid
+          association_type {
+            uuid
+          }
+          org_unit(
+            filter: {
+              ancestor: { uuids: $root_uuids }
+              from_date: $now
+              to_date: null
+            }
+          ) {
+            uuid
+            org_unit_level {
+              uuid
+            }
+            ancestors {
+              uuid
+              org_unit_level {
+                uuid
+              }
+            }
+            validity {
+              from
+              to
+            }
+          }
+          validity {
+            from
+            to
+          }
+        }
         itusers(
           filter: {
             itsystem: { user_keys: $itsystem_user_keys }
@@ -174,6 +208,17 @@ query GetPersonUuidForAddress($uuid: UUID!) {
 
 query GetPersonUuidForEngagement($uuid: UUID!) {
   engagements(filter: {uuids: [$uuid], from_date: null, to_date: null}) {
+    objects {
+      validities {
+        employee_uuid
+      }
+    }
+  }
+}
+
+
+query GetPersonUuidForAssociation($uuid: UUID!) {
+  associations(filter: {uuids: [$uuid], from_date: null, to_date: null}) {
     objects {
       validities {
         employee_uuid
