@@ -75,6 +75,7 @@ async def test_future_engagement_is_synced(
             "email": None,
             "positions": [{"name": "Jurist", "orgUnitUuid": str(org_unit)}],
             "functions": [],
+            "itsystem_user_key": "Active Directory",
         }
     ]
 

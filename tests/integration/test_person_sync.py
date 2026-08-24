@@ -97,6 +97,7 @@ async def test_person_and_accounts_are_synced(
                 "email": None,
                 "positions": [{"name": "Jurist", "orgUnitUuid": str(unit)}],
                 "functions": [],
+                "itsystem_user_key": "Active Directory",
             },
             {
                 "extUuid": str(external_2),
@@ -106,6 +107,7 @@ async def test_person_and_accounts_are_synced(
                 "email": None,
                 "positions": [{"name": "Jurist", "orgUnitUuid": str(unit)}],
                 "functions": [],
+                "itsystem_user_key": "Active Directory",
             },
         ]
 
@@ -289,6 +291,7 @@ async def test_future_account_is_synced(
             "email": None,
             "positions": [{"name": "Jurist", "orgUnitUuid": str(unit)}],
             "functions": [],
+            "itsystem_user_key": "Active Directory",
         }
     ]
 

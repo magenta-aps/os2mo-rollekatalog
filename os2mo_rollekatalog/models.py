@@ -122,6 +122,10 @@ class User(Base):
     userId: Mapped[SamAccountName]
     name: Mapped[Name]
     email: Mapped[str | None]
+    # User_key of the AD itsystem the account came from. Decides which
+    # Rollekatalog domain the user is uploaded to. Nullable for rows from
+    # before the column existed; they belong to the primary domain.
+    itsystem_user_key: Mapped[str | None]
     positions: Mapped[list[Position]] = relationship(
         single_parent=True, cascade="all, delete-orphan"
     )
@@ -130,7 +134,7 @@ class User(Base):
     )
 
     def __repr__(self) -> str:
-        return f"User({self.person=}, {self.extUuid=}, {self.nemloginUuid=}, {self.userId=}, {self.name=}, {self.email=}, {self.positions=}, {self.functions=})"
+        return f"User({self.person=}, {self.extUuid=}, {self.nemloginUuid=}, {self.userId=}, {self.name=}, {self.email=}, {self.itsystem_user_key=}, {self.positions=}, {self.functions=})"
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, User):
@@ -141,6 +145,7 @@ class User(Base):
                 and self.userId == other.userId
                 and self.name == other.name
                 and self.email == other.email
+                and self.itsystem_user_key == other.itsystem_user_key
                 and self.positions == other.positions
                 and self.functions == other.functions
             )
