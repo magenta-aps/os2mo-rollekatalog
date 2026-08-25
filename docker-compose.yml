@@ -63,7 +63,6 @@ services:
       - 8090:8090
     environment:
       rc.customer.cvr: "12345678"
-      rc.customer.apikey: "00000000-0000-4000-0000-000000000000"
       rc.scheduled.enabled: "true"
       rc.titles.enabled: "true"
 

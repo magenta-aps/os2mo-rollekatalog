@@ -7,6 +7,22 @@ until curl --silent --output /dev/null http://localhost:8090/; do
     sleep 1;
 done
 
+# Since Rollekatalog 2026-08-24, API keys must be registered as clients in
+# its database; the rc.customer.apikey environment variable alone no longer
+# authorizes API calls. Lookups are cached, including misses, so Rollekatalog
+# is restarted after registering.
+if ! docker compose exec -T maria mariadb -urollekatalog -pTest1234 rollekatalog -N \
+        -e "SELECT 1 FROM client WHERE api_key = '00000000-0000-4000-0000-000000000000'" | grep -q 1; then
+    printf "Registering the integration's API client in Rollekatalog\n";
+    docker compose exec -T maria mariadb -urollekatalog -pTest1234 rollekatalog \
+        -e "INSERT INTO client (name, api_key, access_role) VALUES ('os2mo', '00000000-0000-4000-0000-000000000000', 'ADMINISTRATOR')";
+    docker compose restart rollekatalog;
+    printf "Waiting for Rollekatalog to come back up\n";
+    until curl --silent --output /dev/null http://localhost:8090/; do
+        sleep 1;
+    done
+fi
+
 REALM="mo"
 BASEURL="http://localhost:5000/auth"
 TOKEN_URL="${BASEURL}/realms/${REALM}/protocol/openid-connect/token"
