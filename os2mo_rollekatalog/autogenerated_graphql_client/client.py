@@ -6,6 +6,10 @@ from ._testing__create_address import (
     TestingCreateAddress,
     TestingCreateAddressAddressCreate,
 )
+from ._testing__create_association import (
+    TestingCreateAssociation,
+    TestingCreateAssociationAssociationCreate,
+)
 from ._testing__create_class import TestingCreateClass, TestingCreateClassClassCreate
 from ._testing__create_employee import (
     TestingCreateEmployee,
@@ -46,6 +50,7 @@ from ._testing__update_org_unit import (
 )
 from .async_base_client import AsyncBaseClient
 from .base_model import UNSET, UnsetType
+from .get_functions import GetFunctions, GetFunctionsClasses
 from .get_org_unit import GetOrgUnit, GetOrgUnitOrgUnits
 from .get_org_unit_uuid_for_kle import GetOrgUnitUuidForKle, GetOrgUnitUuidForKleKles
 from .get_org_unit_uuid_for_manager import (
@@ -57,6 +62,10 @@ from .get_person_uuid_for_address import (
     GetPersonUuidForAddress,
     GetPersonUuidForAddressAddresses,
 )
+from .get_person_uuid_for_association import (
+    GetPersonUuidForAssociation,
+    GetPersonUuidForAssociationAssociations,
+)
 from .get_person_uuid_for_engagement import (
     GetPersonUuidForEngagement,
     GetPersonUuidForEngagementEngagements,
@@ -66,6 +75,7 @@ from .get_uuids_for_it_user import GetUuidsForItUser, GetUuidsForItUserItusers
 from .input_types import (
     AddressCreateInput,
     AddressUpdateInput,
+    AssociationCreateInput,
     ClassCreateInput,
     EmployeeCreateInput,
     EngagementCreateInput,
@@ -105,6 +115,26 @@ class GraphQLClient(AsyncBaseClient):
         data = self.get_data(response)
         return GetTitles.parse_obj(data).classes
 
+    async def get_functions(self) -> GetFunctionsClasses:
+        query = gql(
+            """
+            query GetFunctions {
+              classes(filter: {facet: {user_keys: "association_type"}}) {
+                objects {
+                  current {
+                    name
+                    uuid
+                  }
+                }
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return GetFunctions.parse_obj(data).classes
+
     async def get_person(
         self,
         employee_uuid: UUID,
@@ -143,6 +173,34 @@ class GraphQLClient(AsyncBaseClient):
                       value
                       ituser(filter: {from_date: $now, to_date: null}) {
                         uuid
+                      }
+                    }
+                    associations(filter: {it_association: false, from_date: $now, to_date: null}) {
+                      uuid
+                      association_type {
+                        uuid
+                      }
+                      org_unit(
+                        filter: {ancestor: {uuids: $root_uuids}, from_date: $now, to_date: null}
+                      ) {
+                        uuid
+                        org_unit_level {
+                          uuid
+                        }
+                        ancestors {
+                          uuid
+                          org_unit_level {
+                            uuid
+                          }
+                        }
+                        validity {
+                          from
+                          to
+                        }
+                      }
+                      validity {
+                        from
+                        to
                       }
                     }
                     itusers(
@@ -283,6 +341,27 @@ class GraphQLClient(AsyncBaseClient):
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return GetPersonUuidForEngagement.parse_obj(data).engagements
+
+    async def get_person_uuid_for_association(
+        self, uuid: UUID
+    ) -> GetPersonUuidForAssociationAssociations:
+        query = gql(
+            """
+            query GetPersonUuidForAssociation($uuid: UUID!) {
+              associations(filter: {uuids: [$uuid], from_date: null, to_date: null}) {
+                objects {
+                  validities {
+                    employee_uuid
+                  }
+                }
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {"uuid": uuid}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return GetPersonUuidForAssociation.parse_obj(data).associations
 
     async def get_org_unit(
         self,
@@ -609,6 +688,23 @@ class GraphQLClient(AsyncBaseClient):
         data = self.get_data(response)
         return TestingCreateManager.parse_obj(data).manager_create
 
+    async def _testing__create_association(
+        self, input: AssociationCreateInput
+    ) -> TestingCreateAssociationAssociationCreate:
+        query = gql(
+            """
+            mutation _Testing_CreateAssociation($input: AssociationCreateInput!) {
+              association_create(input: $input) {
+                uuid
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {"input": input}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return TestingCreateAssociation.parse_obj(data).association_create
+
     async def refresh_all(
         self, root_uuid: Union[Optional[List[UUID]], UnsetType] = UNSET
     ) -> RefreshAll:
@@ -627,7 +723,7 @@ class GraphQLClient(AsyncBaseClient):
               class_refresh(
                 owner: "2011e000-baad-c0de-726f-6c6c656b6174"
                 limit: 1
-                filter: {facet: {user_keys: "engagement_job_function"}}
+                filter: {facet: {user_keys: ["engagement_job_function", "association_type"]}}
               ) {
                 objects
               }

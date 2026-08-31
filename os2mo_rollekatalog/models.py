@@ -30,6 +30,17 @@ class Title(BaseModel):
         return jsonable_encoder(result)
 
 
+# Functions (tillidsfunktioner), i.e. association types in MO, are synced
+# on-demand like titles and not part of the persistent state
+class Function(BaseModel):
+    uuid: UUID
+    name: str
+
+    def to_rollekatalog_payload(self):
+        result = {"name": self.name, "uuid": self.uuid}
+        return jsonable_encoder(result)
+
+
 class Base(DeclarativeBase):
     type_annotation_map = {
         SamAccountName: String,
@@ -70,6 +81,37 @@ class Position(Base):
         return jsonable_encoder(result)
 
 
+class UserFunction(Base):
+    """A person's tillidsfunktion, i.e. an association in MO.
+
+    functionUuid is the UUID of the association type class, which is also the
+    function's UUID in Rollekatalog, like titles.
+    """
+
+    __tablename__ = "user_function"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    orgUnitUuid: Mapped[UUID]
+    functionUuid: Mapped[UUID]
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
+
+    def __repr__(self) -> str:
+        return f"UserFunction({self.orgUnitUuid=}, {self.functionUuid=})"
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, UserFunction):
+            return (
+                self.orgUnitUuid == other.orgUnitUuid
+                and self.functionUuid == other.functionUuid
+            )
+        raise NotImplementedError()
+
+    def to_rollekatalog_payload(self):
+        result = {"ouUuid": self.orgUnitUuid, "functionUuid": self.functionUuid}
+        return jsonable_encoder(result)
+
+
 class User(Base):
     __tablename__ = "user"
 
@@ -83,9 +125,12 @@ class User(Base):
     positions: Mapped[list[Position]] = relationship(
         single_parent=True, cascade="all, delete-orphan"
     )
+    functions: Mapped[list[UserFunction]] = relationship(
+        single_parent=True, cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
-        return f"User({self.person=}, {self.extUuid=}, {self.nemloginUuid=}, {self.userId=}, {self.name=}, {self.email=}, {self.positions=})"
+        return f"User({self.person=}, {self.extUuid=}, {self.nemloginUuid=}, {self.userId=}, {self.name=}, {self.email=}, {self.positions=}, {self.functions=})"
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, User):
@@ -97,6 +142,7 @@ class User(Base):
                 and self.name == other.name
                 and self.email == other.email
                 and self.positions == other.positions
+                and self.functions == other.functions
             )
         raise NotImplementedError()
 
@@ -109,6 +155,7 @@ class User(Base):
                 "name": self.name,
                 "email": self.email,
                 "positions": [pos.to_rollekatalog_payload() for pos in self.positions],
+                "functions": [f.to_rollekatalog_payload() for f in self.functions],
             }
         )
 

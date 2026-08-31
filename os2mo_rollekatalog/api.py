@@ -8,7 +8,9 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 
 from os2mo_rollekatalog import depends
+from os2mo_rollekatalog.functions import get_functions
 from os2mo_rollekatalog.junkyard import WillNotSync
+from os2mo_rollekatalog.models import Function
 from os2mo_rollekatalog.models import Title
 from os2mo_rollekatalog.models import User
 from os2mo_rollekatalog.models import OrgUnit
@@ -31,6 +33,13 @@ async def titles(mo: depends.GraphQLClient) -> list[Title]:
     return await get_job_titles(mo)
 
 
+@router.get("/functions")
+async def functions(mo: depends.GraphQLClient) -> list[Function]:
+    """Get functions (association types) that would be synced with
+    SYNC_FUNCTIONS=true."""
+    return await get_functions(mo)
+
+
 @router.get("/cache/stikprøve/person")
 async def random_users(session: depends.Session, count: int = 5) -> list:
     """
@@ -38,7 +47,7 @@ async def random_users(session: depends.Session, count: int = 5) -> list:
     """
     stmt = (
         select(User)
-        .options(selectinload(User.positions))
+        .options(selectinload(User.positions), selectinload(User.functions))
         .order_by(func.random())
         .limit(count)
     )
@@ -85,6 +94,7 @@ async def person(
             uuid,
             settings.prefer_nickname,
             settings.sync_titles,
+            settings.sync_functions,
             settings.external_roots,
             settings.exclude_org_unit_level,
             settings.exclude_org_units,
@@ -115,6 +125,7 @@ async def sync_person_on_demand(
         uuid,
         settings.prefer_nickname,
         settings.sync_titles,
+        settings.sync_functions,
         settings.external_roots,
         settings.exclude_org_unit_level,
         settings.exclude_org_units,

@@ -96,6 +96,7 @@ async def test_person_and_accounts_are_synced(
                 "name": "Anders And",
                 "email": None,
                 "positions": [{"name": "Jurist", "orgUnitUuid": str(unit)}],
+                "functions": [],
             },
             {
                 "extUuid": str(external_2),
@@ -104,6 +105,7 @@ async def test_person_and_accounts_are_synced(
                 "name": "Anders And",
                 "email": None,
                 "positions": [{"name": "Jurist", "orgUnitUuid": str(unit)}],
+                "functions": [],
             },
         ]
 
@@ -286,6 +288,7 @@ async def test_future_account_is_synced(
             "name": "Fætter Højben",
             "email": None,
             "positions": [{"name": "Jurist", "orgUnitUuid": str(unit)}],
+            "functions": [],
         }
     ]
 

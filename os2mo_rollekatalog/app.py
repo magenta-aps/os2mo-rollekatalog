@@ -61,6 +61,12 @@ def create_app() -> FastAPI:
             ),
             Listener(
                 namespace="mo",
+                user_key="association",
+                routing_key="association",
+                path="/association",
+            ),
+            Listener(
+                namespace="mo",
                 user_key="org_unit",
                 routing_key="org_unit",
                 path="/org_unit",
@@ -90,7 +96,7 @@ def create_app() -> FastAPI:
         settings.api_key,
         settings.httpx_timeout,
     )
-    fastramqpi.add_context(title_client=client)
+    fastramqpi.add_context(rollekatalog_client=client)
 
     periodic_sync_task = rollekatalog.PeriodicSync(
         interval=settings.interval,

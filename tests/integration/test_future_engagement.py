@@ -74,6 +74,7 @@ async def test_future_engagement_is_synced(
             "name": "Fætter Højben",
             "email": None,
             "positions": [{"name": "Jurist", "orgUnitUuid": str(org_unit)}],
+            "functions": [],
         }
     ]
 

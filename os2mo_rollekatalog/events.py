@@ -10,6 +10,7 @@ from fastramqpi.events import Event
 
 from os2mo_rollekatalog import depends
 from os2mo_rollekatalog import rollekatalog
+from os2mo_rollekatalog.functions import get_functions
 from os2mo_rollekatalog.junkyard import flatten_validities
 from os2mo_rollekatalog.orgunit import sync_org_unit
 from os2mo_rollekatalog.person import sync_person
@@ -23,22 +24,43 @@ logger = structlog.stdlib.get_logger(__name__)
 @router.post("/class")
 async def handle_class(
     settings: depends.Settings,
-    title_client: depends.TitleClient,
+    rollekatalog_client: depends.RollekatalogClient,
     mo: depends.GraphQLClient,
+    periodic_sync: depends.PeriodicSync,
     event: Event[UUID],
 ) -> None:
-    # If this function is changed to not being on demand, it won't work unless the mutation is changed.
-    # Right now the mutation has `limit: 1`, so sync_job_titles is only triggered once
-    if not settings.sync_titles:
-        return
-    titles = await get_job_titles(mo)
-    payload = jsonable_encoder([title.to_rollekatalog_payload() for title in titles])
-    logger.info("Uploading titles to Rollekatalog", payload=payload)
-    await rollekatalog.upload(
-        title_client,
-        "/api/title",
-        payload,
-    )
+    # Any class event triggers a full refetch of both catalogs, so the
+    # `limit: 1` class refresh in the RefreshAll mutation is enough to
+    # trigger this handler.
+    if settings.sync_titles:
+        titles = await get_job_titles(mo)
+        payload = jsonable_encoder(
+            [title.to_rollekatalog_payload() for title in titles]
+        )
+        logger.info("Uploading titles to Rollekatalog", payload=payload)
+        await rollekatalog.upload(
+            rollekatalog_client,
+            "/api/title",
+            payload,
+        )
+    if settings.sync_functions:
+        functions = await get_functions(mo)
+        # Rollekatalog rejects an empty payload, so functions removed from
+        # MO can only be deactivated while at least one is left.
+        if functions:
+            payload = jsonable_encoder(
+                [function.to_rollekatalog_payload() for function in functions]
+            )
+            logger.info("Uploading functions to Rollekatalog", payload=payload)
+            await rollekatalog.upload(
+                rollekatalog_client,
+                "/api/v2/function/sync",
+                payload,
+            )
+    if settings.sync_titles or settings.sync_functions:
+        # Sync the organisation again in case it references titles or
+        # functions Rollekatalog didn't know when it was last uploaded.
+        periodic_sync.sync_soon()
 
 
 @router.post("/person")
@@ -61,6 +83,7 @@ async def handle_person(
         event.subject,
         settings.prefer_nickname,
         settings.sync_titles,
+        settings.sync_functions,
         settings.external_roots,
         settings.exclude_org_unit_level,
         settings.exclude_org_units,
@@ -102,6 +125,7 @@ async def handle_ituser(
             person_uuid,
             settings.prefer_nickname,
             settings.sync_titles,
+            settings.sync_functions,
             settings.external_roots,
             settings.exclude_org_unit_level,
             settings.exclude_org_units,
@@ -147,6 +171,7 @@ async def handle_address(
             person_uuid,
             settings.prefer_nickname,
             settings.sync_titles,
+            settings.sync_functions,
             settings.external_roots,
             settings.exclude_org_unit_level,
             settings.exclude_org_units,
@@ -178,6 +203,39 @@ async def handle_engagement(
             person_uuid,
             settings.prefer_nickname,
             settings.sync_titles,
+            settings.sync_functions,
+            settings.external_roots,
+            settings.exclude_org_unit_level,
+            settings.exclude_org_units,
+        )
+
+
+@router.post("/association")
+async def handle_association(
+    settings: depends.Settings,
+    mo: depends.GraphQLClient,
+    periodic_sync: depends.PeriodicSync,
+    session: depends.Session,
+    event: Event[UUID],
+) -> None:
+    result = await mo.get_person_uuid_for_association(event.subject)
+    persons: set[UUID] = {
+        a.employee_uuid for a in flatten_validities(result) if a.employee_uuid
+    }
+    for person_uuid in persons:
+        await sync_person(
+            mo,
+            periodic_sync,
+            session,
+            settings.ad_itsystem_user_keys,
+            settings.fk_itsystem_user_key,
+            settings.employee_email_user_key,
+            settings.mit_id_user_key,
+            settings.root_org_unit,
+            person_uuid,
+            settings.prefer_nickname,
+            settings.sync_titles,
+            settings.sync_functions,
             settings.external_roots,
             settings.exclude_org_unit_level,
             settings.exclude_org_units,

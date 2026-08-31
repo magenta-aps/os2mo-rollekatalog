@@ -2,6 +2,10 @@ from ._testing__create_address import (
     TestingCreateAddress,
     TestingCreateAddressAddressCreate,
 )
+from ._testing__create_association import (
+    TestingCreateAssociation,
+    TestingCreateAssociationAssociationCreate,
+)
 from ._testing__create_class import TestingCreateClass, TestingCreateClassClassCreate
 from ._testing__create_employee import (
     TestingCreateEmployee,
@@ -51,6 +55,12 @@ from .exceptions import (
     GraphQLClientHttpError,
     GraphQlClientInvalidResponseError,
 )
+from .get_functions import (
+    GetFunctions,
+    GetFunctionsClasses,
+    GetFunctionsClassesObjects,
+    GetFunctionsClassesObjectsCurrent,
+)
 from .get_org_unit import (
     GetOrgUnit,
     GetOrgUnitOrgUnits,
@@ -89,6 +99,14 @@ from .get_person import (
     GetPersonEmployees,
     GetPersonEmployeesObjects,
     GetPersonEmployeesObjectsCurrent,
+    GetPersonEmployeesObjectsCurrentAssociations,
+    GetPersonEmployeesObjectsCurrentAssociationsAssociationType,
+    GetPersonEmployeesObjectsCurrentAssociationsOrgUnit,
+    GetPersonEmployeesObjectsCurrentAssociationsOrgUnitAncestors,
+    GetPersonEmployeesObjectsCurrentAssociationsOrgUnitAncestorsOrgUnitLevel,
+    GetPersonEmployeesObjectsCurrentAssociationsOrgUnitOrgUnitLevel,
+    GetPersonEmployeesObjectsCurrentAssociationsOrgUnitValidity,
+    GetPersonEmployeesObjectsCurrentAssociationsValidity,
     GetPersonEmployeesObjectsCurrentEmail,
     GetPersonEmployeesObjectsCurrentEmailItuser,
     GetPersonEmployeesObjectsCurrentEmailValidity,
@@ -114,6 +132,12 @@ from .get_person_uuid_for_address import (
     GetPersonUuidForAddressAddresses,
     GetPersonUuidForAddressAddressesObjects,
     GetPersonUuidForAddressAddressesObjectsValidities,
+)
+from .get_person_uuid_for_association import (
+    GetPersonUuidForAssociation,
+    GetPersonUuidForAssociationAssociations,
+    GetPersonUuidForAssociationAssociationsObjects,
+    GetPersonUuidForAssociationAssociationsObjectsValidities,
 )
 from .get_person_uuid_for_engagement import (
     GetPersonUuidForEngagement,
@@ -330,6 +354,10 @@ __all__ = [
     "FileFilter",
     "FileStore",
     "FullEventFilter",
+    "GetFunctions",
+    "GetFunctionsClasses",
+    "GetFunctionsClassesObjects",
+    "GetFunctionsClassesObjectsCurrent",
     "GetOrgUnit",
     "GetOrgUnitOrgUnits",
     "GetOrgUnitOrgUnitsObjects",
@@ -361,6 +389,14 @@ __all__ = [
     "GetPersonEmployees",
     "GetPersonEmployeesObjects",
     "GetPersonEmployeesObjectsCurrent",
+    "GetPersonEmployeesObjectsCurrentAssociations",
+    "GetPersonEmployeesObjectsCurrentAssociationsAssociationType",
+    "GetPersonEmployeesObjectsCurrentAssociationsOrgUnit",
+    "GetPersonEmployeesObjectsCurrentAssociationsOrgUnitAncestors",
+    "GetPersonEmployeesObjectsCurrentAssociationsOrgUnitAncestorsOrgUnitLevel",
+    "GetPersonEmployeesObjectsCurrentAssociationsOrgUnitOrgUnitLevel",
+    "GetPersonEmployeesObjectsCurrentAssociationsOrgUnitValidity",
+    "GetPersonEmployeesObjectsCurrentAssociationsValidity",
     "GetPersonEmployeesObjectsCurrentEmail",
     "GetPersonEmployeesObjectsCurrentEmailItuser",
     "GetPersonEmployeesObjectsCurrentEmailValidity",
@@ -384,6 +420,10 @@ __all__ = [
     "GetPersonUuidForAddressAddresses",
     "GetPersonUuidForAddressAddressesObjects",
     "GetPersonUuidForAddressAddressesObjectsValidities",
+    "GetPersonUuidForAssociation",
+    "GetPersonUuidForAssociationAssociations",
+    "GetPersonUuidForAssociationAssociationsObjects",
+    "GetPersonUuidForAssociationAssociationsObjectsValidities",
     "GetPersonUuidForEngagement",
     "GetPersonUuidForEngagementEngagements",
     "GetPersonUuidForEngagementEngagementsObjects",
@@ -486,6 +526,8 @@ __all__ = [
     "RoleRegistrationFilter",
     "TestingCreateAddress",
     "TestingCreateAddressAddressCreate",
+    "TestingCreateAssociation",
+    "TestingCreateAssociationAssociationCreate",
     "TestingCreateClass",
     "TestingCreateClassClassCreate",
     "TestingCreateEmployee",

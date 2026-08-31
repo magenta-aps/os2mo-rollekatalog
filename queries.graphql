@@ -14,6 +14,18 @@ query GetTitles {
 }
 
 
+query GetFunctions {
+  classes(filter: {facet: {user_keys:"association_type"}}) {
+    objects {
+      current {
+        name
+        uuid
+      }
+    }
+  }
+}
+
+
 query GetPerson(
   $employee_uuid: UUID!
   $root_uuids: [UUID!]!
@@ -58,6 +70,40 @@ query GetPerson(
           value
           ituser(filter: {from_date: $now, to_date: null}) {
             uuid
+          }
+        }
+        associations(
+          filter: { it_association: false, from_date: $now, to_date: null }
+        ) {
+          uuid
+          association_type {
+            uuid
+          }
+          org_unit(
+            filter: {
+              ancestor: { uuids: $root_uuids }
+              from_date: $now
+              to_date: null
+            }
+          ) {
+            uuid
+            org_unit_level {
+              uuid
+            }
+            ancestors {
+              uuid
+              org_unit_level {
+                uuid
+              }
+            }
+            validity {
+              from
+              to
+            }
+          }
+          validity {
+            from
+            to
           }
         }
         itusers(
@@ -162,6 +208,17 @@ query GetPersonUuidForAddress($uuid: UUID!) {
 
 query GetPersonUuidForEngagement($uuid: UUID!) {
   engagements(filter: {uuids: [$uuid], from_date: null, to_date: null}) {
+    objects {
+      validities {
+        employee_uuid
+      }
+    }
+  }
+}
+
+
+query GetPersonUuidForAssociation($uuid: UUID!) {
+  associations(filter: {uuids: [$uuid], from_date: null, to_date: null}) {
     objects {
       validities {
         employee_uuid
@@ -338,6 +395,12 @@ mutation _Testing_CreateManager($input: ManagerCreateInput!) {
   }
 }
 
+mutation _Testing_CreateAssociation($input: AssociationCreateInput!) {
+  association_create(input: $input) {
+    uuid
+  }
+}
+
 # owner scopes the refresh to this integration's own event listeners, so a
 # full sync doesn't broadcast refresh events to every other integration
 # listening on the same routing keys. It is the rollekatalog service-account
@@ -355,7 +418,9 @@ mutation RefreshAll($root_uuid: [UUID!]) {
   class_refresh(
     owner: "2011e000-baad-c0de-726f-6c6c656b6174"
     limit: 1
-    filter: { facet: { user_keys: "engagement_job_function" } }
+    filter: {
+      facet: { user_keys: ["engagement_job_function", "association_type"] }
+    }
   ) {
     objects
   }
