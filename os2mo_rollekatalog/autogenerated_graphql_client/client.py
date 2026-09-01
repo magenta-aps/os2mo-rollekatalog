@@ -115,11 +115,15 @@ class GraphQLClient(AsyncBaseClient):
         data = self.get_data(response)
         return GetTitles.parse_obj(data).classes
 
-    async def get_functions(self) -> GetFunctionsClasses:
+    async def get_functions(
+        self, association_type_uuids: Union[Optional[List[UUID]], UnsetType] = UNSET
+    ) -> GetFunctionsClasses:
         query = gql(
             """
-            query GetFunctions {
-              classes(filter: {facet: {user_keys: "association_type"}}) {
+            query GetFunctions($association_type_uuids: [UUID!]) {
+              classes(
+                filter: {facet: {user_keys: "association_type"}, uuids: $association_type_uuids}
+              ) {
                 objects {
                   current {
                     name
@@ -130,7 +134,9 @@ class GraphQLClient(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {}
+        variables: dict[str, object] = {
+            "association_type_uuids": association_type_uuids
+        }
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return GetFunctions.parse_obj(data).classes
@@ -143,10 +149,11 @@ class GraphQLClient(AsyncBaseClient):
         employee_email_user_key: str,
         mit_id_user_key: str,
         now: datetime,
+        association_type_uuids: Union[Optional[List[UUID]], UnsetType] = UNSET,
     ) -> GetPersonEmployees:
         query = gql(
             """
-            query GetPerson($employee_uuid: UUID!, $root_uuids: [UUID!]!, $itsystem_user_keys: [String!]!, $employee_email_user_key: String!, $mit_id_user_key: String!, $now: DateTime!) {
+            query GetPerson($employee_uuid: UUID!, $root_uuids: [UUID!]!, $itsystem_user_keys: [String!]!, $employee_email_user_key: String!, $mit_id_user_key: String!, $now: DateTime!, $association_type_uuids: [UUID!]) {
               employees(filter: {uuids: [$employee_uuid], from_date: $now, to_date: null}) {
                 objects {
                   current {
@@ -175,7 +182,9 @@ class GraphQLClient(AsyncBaseClient):
                         uuid
                       }
                     }
-                    associations(filter: {it_association: false, from_date: $now, to_date: null}) {
+                    associations(
+                      filter: {it_association: false, association_type: {uuids: $association_type_uuids}, from_date: $now, to_date: null}
+                    ) {
                       uuid
                       association_type {
                         uuid
@@ -271,6 +280,7 @@ class GraphQLClient(AsyncBaseClient):
             "employee_email_user_key": employee_email_user_key,
             "mit_id_user_key": mit_id_user_key,
             "now": now,
+            "association_type_uuids": association_type_uuids,
         }
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)

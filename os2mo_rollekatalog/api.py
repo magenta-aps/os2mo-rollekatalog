@@ -34,10 +34,12 @@ async def titles(mo: depends.GraphQLClient) -> list[Title]:
 
 
 @router.get("/functions")
-async def functions(mo: depends.GraphQLClient) -> list[Function]:
+async def functions(
+    settings: depends.Settings, mo: depends.GraphQLClient
+) -> list[Function]:
     """Get functions (association types) that would be synced with
     SYNC_FUNCTIONS=true."""
-    return await get_functions(mo)
+    return await get_functions(mo, settings.sync_association_types)
 
 
 @router.get("/cache/stikprøve/person")
@@ -95,6 +97,7 @@ async def person(
             settings.prefer_nickname,
             settings.sync_titles,
             settings.sync_functions,
+            settings.sync_association_types,
             settings.external_roots,
             settings.exclude_org_unit_level,
             settings.exclude_org_units,
@@ -126,6 +129,7 @@ async def sync_person_on_demand(
         settings.prefer_nickname,
         settings.sync_titles,
         settings.sync_functions,
+        settings.sync_association_types,
         settings.external_roots,
         settings.exclude_org_unit_level,
         settings.exclude_org_units,
