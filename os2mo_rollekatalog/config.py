@@ -104,4 +104,12 @@ class _Settings(BaseSettings):
         ),
     )
 
+    sync_association_types: list[UUID] | None = Field(
+        None,
+        description=(
+            "UUIDs of the association types to sync as tillidsfunktioner. "
+            "Unset means all of them. See GET /functions."
+        ),
+    )
+
     httpx_timeout: int = Field(30, description="Timeout when we sync to Rollekatalog.")

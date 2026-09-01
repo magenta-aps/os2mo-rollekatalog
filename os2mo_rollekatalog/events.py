@@ -44,7 +44,7 @@ async def handle_class(
             payload,
         )
     if settings.sync_functions:
-        functions = await get_functions(mo)
+        functions = await get_functions(mo, settings.sync_association_types)
         # Rollekatalog rejects an empty payload, so functions removed from
         # MO can only be deactivated while at least one is left.
         if functions:
@@ -84,6 +84,7 @@ async def handle_person(
         settings.prefer_nickname,
         settings.sync_titles,
         settings.sync_functions,
+        settings.sync_association_types,
         settings.external_roots,
         settings.exclude_org_unit_level,
         settings.exclude_org_units,
@@ -126,6 +127,7 @@ async def handle_ituser(
             settings.prefer_nickname,
             settings.sync_titles,
             settings.sync_functions,
+            settings.sync_association_types,
             settings.external_roots,
             settings.exclude_org_unit_level,
             settings.exclude_org_units,
@@ -172,6 +174,7 @@ async def handle_address(
             settings.prefer_nickname,
             settings.sync_titles,
             settings.sync_functions,
+            settings.sync_association_types,
             settings.external_roots,
             settings.exclude_org_unit_level,
             settings.exclude_org_units,
@@ -204,6 +207,7 @@ async def handle_engagement(
             settings.prefer_nickname,
             settings.sync_titles,
             settings.sync_functions,
+            settings.sync_association_types,
             settings.external_roots,
             settings.exclude_org_unit_level,
             settings.exclude_org_units,
@@ -236,6 +240,7 @@ async def handle_association(
             settings.prefer_nickname,
             settings.sync_titles,
             settings.sync_functions,
+            settings.sync_association_types,
             settings.external_roots,
             settings.exclude_org_unit_level,
             settings.exclude_org_units,

@@ -37,6 +37,7 @@ async def get_person(
     prefer_nickname: bool,
     sync_titles: bool,
     sync_functions: bool,
+    sync_association_types: list[UUID] | None,
     external_roots: list[UUID],
     exclude_org_unit_level: UUID | None,
     exclude_org_units: list[UUID],
@@ -48,6 +49,7 @@ async def get_person(
         employee_email_user_key,
         mit_id_user_key,
         datetime.now(),
+        sync_association_types,
     )
 
     if len(result.objects) == 0 or one(result.objects).current is None:
@@ -205,6 +207,7 @@ async def sync_person(
     prefer_nickname: bool,
     sync_titles: bool,
     sync_functions: bool,
+    sync_association_types: list[UUID] | None,
     external_roots: list[UUID],
     exclude_org_unit_level: UUID | None,
     exclude_org_units: list[UUID],
@@ -225,6 +228,7 @@ async def sync_person(
             prefer_nickname,
             sync_titles,
             sync_functions,
+            sync_association_types,
             external_roots,
             exclude_org_unit_level,
             exclude_org_units,

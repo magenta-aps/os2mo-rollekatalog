@@ -14,8 +14,13 @@ query GetTitles {
 }
 
 
-query GetFunctions {
-  classes(filter: {facet: {user_keys:"association_type"}}) {
+query GetFunctions($association_type_uuids: [UUID!]) {
+  classes(
+    filter: {
+      facet: { user_keys: "association_type" }
+      uuids: $association_type_uuids
+    }
+  ) {
     objects {
       current {
         name
@@ -33,6 +38,7 @@ query GetPerson(
   $employee_email_user_key: String!
   $mit_id_user_key: String!
   $now: DateTime!
+  $association_type_uuids: [UUID!]
 ) {
   employees(
     filter: { uuids: [$employee_uuid], from_date: $now, to_date: null }
@@ -73,7 +79,12 @@ query GetPerson(
           }
         }
         associations(
-          filter: { it_association: false, from_date: $now, to_date: null }
+          filter: {
+            it_association: false
+            association_type: { uuids: $association_type_uuids }
+            from_date: $now
+            to_date: null
+          }
         ) {
           uuid
           association_type {
@@ -397,6 +408,12 @@ mutation _Testing_CreateManager($input: ManagerCreateInput!) {
 
 mutation _Testing_CreateAssociation($input: AssociationCreateInput!) {
   association_create(input: $input) {
+    uuid
+  }
+}
+
+mutation _Testing_UpdateAssociation($input: AssociationUpdateInput!) {
+  association_update(input: $input) {
     uuid
   }
 }

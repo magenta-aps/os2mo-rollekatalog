@@ -5,6 +5,7 @@
 import uuid
 from collections.abc import Awaitable
 from collections.abc import Callable
+from datetime import datetime
 
 import pytest
 from httpx import AsyncClient
@@ -171,3 +172,125 @@ async def test_association_in_unsynced_org_unit_produces_no_function(
 
     user = one((await test_client.get(f"/cache/person/{employee}")).json())
     assert [f["ouUuid"] for f in user["functions"]] == [str(kept)]
+
+
+@pytest.mark.integration_test
+@pytest.mark.envvar({"LISTEN_TO_CHANGES_IN_MO": "False", "SYNC_FUNCTIONS": "true"})
+async def test_sync_configured_function_catalog(
+    test_client: AsyncClient,
+    tillidsrepraesentant: uuid.UUID,
+    create_association_type: Callable[..., Awaitable[uuid.UUID]],
+) -> None:
+    """Only tillidsrepraesentant is in SYNC_ASSOCIATION_TYPES."""
+    await create_association_type("Arbejdsmiljørepræsentant")
+
+    functions = (await test_client.get("/functions")).json()
+
+    assert functions == [
+        {"uuid": str(tillidsrepraesentant), "name": "Tillidsrepræsentant"}
+    ]
+
+
+@pytest.mark.integration_test
+@pytest.mark.envvar({"LISTEN_TO_CHANGES_IN_MO": "False", "SYNC_FUNCTIONS": "true"})
+async def test_sync_configured_association_types(
+    test_client: AsyncClient,
+    graphql_client: GraphQLClient,
+    trigger_event: Callable[[str, uuid.UUID], Awaitable[None]],
+    root_uuid: uuid.UUID,
+    tillidsrepraesentant: uuid.UUID,
+    create_org_unit: Callable[..., Awaitable[uuid.UUID]],
+    create_it_system: Callable[..., Awaitable[uuid.UUID]],
+    create_ituser: Callable[..., Awaitable[uuid.UUID]],
+    create_association: Callable[..., Awaitable[uuid.UUID]],
+    create_association_type: Callable[..., Awaitable[uuid.UUID]],
+) -> None:
+    """An association of another type produces no function."""
+    other_type = await create_association_type("Arbejdsmiljørepræsentant")
+    await create_org_unit(name="Root", uuid=root_uuid)
+    synced_unit = await create_org_unit(name="Synced", parent=root_uuid)
+    other_unit = await create_org_unit(name="Other", parent=root_uuid)
+    employee = (
+        await graphql_client._testing__create_employee(
+            input=EmployeeCreateInput(given_name="Joakim", surname="von And")
+        )
+    ).uuid
+    AD = await create_it_system("Active Directory")
+    FK = await create_it_system("FK ORG")
+    object_guid, external_id = uuid.uuid4(), uuid.uuid4()
+    await create_ituser(
+        itsystem=AD, external_id=str(object_guid), person=employee, user_key="JVA"
+    )
+    await create_ituser(
+        itsystem=FK,
+        external_id=str(external_id),
+        person=employee,
+        user_key=str(object_guid),
+    )
+    await create_association(org_unit=synced_unit, person=employee)
+    await create_association(
+        org_unit=other_unit, person=employee, association_type=other_type
+    )
+
+    await trigger_event("person", employee)
+
+    user = one((await test_client.get(f"/cache/person/{employee}")).json())
+    assert user["functions"] == [
+        {"ouUuid": str(synced_unit), "functionUuid": str(tillidsrepraesentant)}
+    ]
+
+
+@pytest.mark.integration_test
+@pytest.mark.envvar({"LISTEN_TO_CHANGES_IN_MO": "False", "SYNC_FUNCTIONS": "true"})
+async def test_sync_retyped_association(
+    test_client: AsyncClient,
+    graphql_client: GraphQLClient,
+    trigger_event: Callable[[str, uuid.UUID], Awaitable[None]],
+    root_uuid: uuid.UUID,
+    tillidsrepraesentant: uuid.UUID,
+    create_org_unit: Callable[..., Awaitable[uuid.UUID]],
+    create_it_system: Callable[..., Awaitable[uuid.UUID]],
+    create_ituser: Callable[..., Awaitable[uuid.UUID]],
+    create_association: Callable[..., Awaitable[uuid.UUID]],
+    create_association_type: Callable[..., Awaitable[uuid.UUID]],
+    update_association_type: Callable[..., Awaitable[uuid.UUID]],
+) -> None:
+    """Retyping an association away from a synced type removes its function."""
+    other_type = await create_association_type("Arbejdsmiljørepræsentant")
+    await create_org_unit(name="Root", uuid=root_uuid)
+    unit = await create_org_unit(name="Unit", parent=root_uuid)
+    employee = (
+        await graphql_client._testing__create_employee(
+            input=EmployeeCreateInput(given_name="Fætter", surname="Vims")
+        )
+    ).uuid
+    AD = await create_it_system("Active Directory")
+    FK = await create_it_system("FK ORG")
+    object_guid, external_id = uuid.uuid4(), uuid.uuid4()
+    await create_ituser(
+        itsystem=AD, external_id=str(object_guid), person=employee, user_key="FV"
+    )
+    await create_ituser(
+        itsystem=FK,
+        external_id=str(external_id),
+        person=employee,
+        user_key=str(object_guid),
+    )
+    association = await create_association(org_unit=unit, person=employee)
+
+    await trigger_event("person", employee)
+    user = one((await test_client.get(f"/cache/person/{employee}")).json())
+    assert user["functions"] == [
+        {"ouUuid": str(unit), "functionUuid": str(tillidsrepraesentant)}
+    ]
+
+    await update_association_type(
+        association=association,
+        association_type=other_type,
+        from_=datetime.now(),
+    )
+
+    await trigger_event("person", employee)
+
+    user = one((await test_client.get(f"/cache/person/{employee}")).json())
+    assert user["functions"] == []
