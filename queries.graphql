@@ -412,6 +412,12 @@ mutation _Testing_CreateAssociation($input: AssociationCreateInput!) {
   }
 }
 
+mutation _Testing_UpdateAssociation($input: AssociationUpdateInput!) {
+  association_update(input: $input) {
+    uuid
+  }
+}
+
 # owner scopes the refresh to this integration's own event listeners, so a
 # full sync doesn't broadcast refresh events to every other integration
 # listening on the same routing keys. It is the rollekatalog service-account

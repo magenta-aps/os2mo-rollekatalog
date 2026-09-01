@@ -36,6 +36,10 @@ from ._testing__update_address import (
     TestingUpdateAddress,
     TestingUpdateAddressAddressUpdate,
 )
+from ._testing__update_association import (
+    TestingUpdateAssociation,
+    TestingUpdateAssociationAssociationUpdate,
+)
 from ._testing__update_it_user import (
     TestingUpdateItUser,
     TestingUpdateItUserItuserUpdate,
@@ -546,6 +550,8 @@ __all__ = [
     "TestingCreateOrgUnitOrgUnitCreate",
     "TestingUpdateAddress",
     "TestingUpdateAddressAddressUpdate",
+    "TestingUpdateAssociation",
+    "TestingUpdateAssociationAssociationUpdate",
     "TestingUpdateItUser",
     "TestingUpdateItUserItuserUpdate",
     "TestingUpdateOrgUnit",

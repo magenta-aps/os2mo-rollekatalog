@@ -40,6 +40,10 @@ from ._testing__update_address import (
     TestingUpdateAddress,
     TestingUpdateAddressAddressUpdate,
 )
+from ._testing__update_association import (
+    TestingUpdateAssociation,
+    TestingUpdateAssociationAssociationUpdate,
+)
 from ._testing__update_it_user import (
     TestingUpdateItUser,
     TestingUpdateItUserItuserUpdate,
@@ -76,6 +80,7 @@ from .input_types import (
     AddressCreateInput,
     AddressUpdateInput,
     AssociationCreateInput,
+    AssociationUpdateInput,
     ClassCreateInput,
     EmployeeCreateInput,
     EngagementCreateInput,
@@ -714,6 +719,23 @@ class GraphQLClient(AsyncBaseClient):
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return TestingCreateAssociation.parse_obj(data).association_create
+
+    async def _testing__update_association(
+        self, input: AssociationUpdateInput
+    ) -> TestingUpdateAssociationAssociationUpdate:
+        query = gql(
+            """
+            mutation _Testing_UpdateAssociation($input: AssociationUpdateInput!) {
+              association_update(input: $input) {
+                uuid
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {"input": input}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return TestingUpdateAssociation.parse_obj(data).association_update
 
     async def refresh_all(
         self, root_uuid: Union[Optional[List[UUID]], UnsetType] = UNSET
