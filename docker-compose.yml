@@ -26,7 +26,11 @@ services:
       ROLLEKATALOG_URL: "http://rollekatalog:8090"
       API_KEY: "00000000-0000-4000-0000-000000000000"
       INTERVAL: "15"
-      AD_ITSYSTEM_USER_KEYS: '["OpenDesk"]'
+      AD_ITSYSTEM_USER_KEYS: '["OpenDesk", "Active Directory"]'
+      # Users from "Active Directory" go to Rollekatalog's Skole domain;
+      # OpenDesk users are unmapped and go to the primary domain. devtool
+      # creates the Skole domain and gives Ludvig an account in both.
+      ITSYSTEM_DOMAINS: '{"Active Directory": "Skole"}'
       FK_ITSYSTEM_USER_KEY: "Office365"
       EXCLUDE_ORG_UNIT_LEVEL: "c553d5fd-0768-4907-9d34-14757c87454c" # N3
       EXCLUDE_ORG_UNITS: '[]'  # Specific org units to exclude (incl. their descendants)
