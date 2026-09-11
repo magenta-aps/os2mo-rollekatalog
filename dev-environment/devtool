@@ -23,6 +23,21 @@ if ! docker compose exec -T maria mariadb -urollekatalog -pTest1234 rollekatalog
     done
 fi
 
+# There is no migration framework: create_all() adds new tables but not new
+# columns, so an existing database needs this by hand. Same DDL as the deploy.
+printf "Ensuring the user.itsystem_user_key column exists\n";
+docker compose exec -T db psql -q -U rollekatalog -d rollekatalog \
+    -c 'ALTER TABLE "user" ADD COLUMN IF NOT EXISTS itsystem_user_key VARCHAR';
+
+# The domain named in ITSYSTEM_DOMAINS must exist in Rollekatalog, or the
+# import returns 404. Flyway seeds only the primary domain, "Administrativt".
+if ! docker compose exec -T maria mariadb -urollekatalog -pTest1234 rollekatalog -N \
+        -e "SELECT 1 FROM domains WHERE name = 'Skole'" | grep -q 1; then
+    printf "Creating the Skole domain in Rollekatalog\n";
+    docker compose exec -T maria mariadb -urollekatalog -pTest1234 rollekatalog \
+        -e "INSERT INTO domains (name) VALUES ('Skole')";
+fi
+
 REALM="mo"
 BASEURL="http://localhost:5000/auth"
 TOKEN_URL="${BASEURL}/realms/${REALM}/protocol/openid-connect/token"
@@ -115,6 +130,39 @@ run_graphql "$MUTATION_1"
 printf "Executing Mutation 2 (FK) \n"
 run_graphql "$MUTATION_2"
 
+# Ludvig's second AD account, for the Skole domain. Each AD account needs its
+# own FK account: the AD ituser's external_id must match an FK ituser's
+# user_key, and that FK ituser's external_id becomes the extUuid. Without the
+# FK partner the account resolves to no extUuid and is skipped entirely.
+SKOLE_AD_ITUSER="b0b0b0b0-0000-4000-8000-000000000001"
+SKOLE_FK_ITUSER="b0b0b0b0-0000-4000-8000-000000000002"
+SKOLE_LINK="e1e1e1e1-0000-4000-8000-000000000002"
+SKOLE_EXTUUID="f2f2f2f2-0000-4000-8000-000000000002"
+AD_ITSYSTEM="a1608e69-c422-404f-a6cc-b873c50af111"
+FK_ITSYSTEM="5168dd45-4cb5-4932-b8a1-10dbe736fc5d"
+LUDVIG="4e7e5443-09a9-4a46-8cd5-f7bcefeb2902"
+ENGAGEMENT="9a850987-0dda-4f98-8e22-c6267d4834c5"
+
+ituser_exists() {
+    curl -s -X POST "${GRAPHQL_URL}" \
+      -H "Authorization: bearer ${TOKEN}" \
+      -H "Content-Type: application/json" \
+      -d "$(jq -n --arg q "{ itusers(filter: {uuids: [\"$1\"]}) { objects { uuid } } }" '{query: $q}')" \
+      | jq -r '.data.itusers.objects | length'
+}
+
+ensure_ituser() {
+    if [ "$(ituser_exists "$1")" = "0" ]; then
+        run_graphql "mutation { ituser_create(input: {uuid: \"$1\", user_key: \"$2\", itsystem: \"$3\", person: \"${LUDVIG}\", engagements: [\"${ENGAGEMENT}\"], external_id: \"$4\", validity: {from: \"1997-09-13\"}}) { uuid } }"
+    else
+        run_graphql "mutation { ituser_update(input: {uuid: \"$1\", user_key: \"$2\", external_id: \"$4\", validity: {from: \"1997-09-13\"}}) { uuid } }"
+    fi
+}
+
+printf "Ensuring Ludvig's second AD account (Skole) and its FK account\n"
+ensure_ituser "${SKOLE_AD_ITUSER}" "LudvigH-skole" "${AD_ITSYSTEM}" "${SKOLE_LINK}"
+ensure_ituser "${SKOLE_FK_ITUSER}" "${SKOLE_LINK}" "${FK_ITSYSTEM}" "${SKOLE_EXTUUID}"
+
 printf "GraphQL adjustments completed.\n"
 
 printf "Requesting sync of Ludvigs OU\n"
@@ -136,6 +184,13 @@ sleep 15
 
 printf 'Assigning "Administrator" to Ludvig in Rollekatalog\n'
 curl -X PUT -H 'ApiKey: 00000000-0000-4000-0000-000000000000' 'http://localhost:8090/api/user/LudvigH/assign/userrole/1'
+
+printf "\nLudvig's two accounts and their domains:\n"
+curl -s 'http://localhost:8000/cache/person/4e7e5443-09a9-4a46-8cd5-f7bcefeb2902' \
+  | jq -r '.[] | "  \(.userId)\t\(.itsystem_user_key)"'
+printf "Users per domain in Rollekatalog:\n"
+docker compose exec -T maria mariadb -urollekatalog -pTest1234 rollekatalog -N \
+    -e "SELECT CONCAT('  ', d.name, ': ', u.user_id) FROM users u JOIN domains d ON u.domain_id = d.id"
 
 printf "You should now be able to log in to http://localhost:8090 with ludvig:ludvig\n"
 printf "This is Ludvig in OS2mo: http://localhost:5000/employee/4e7e5443-09a9-4a46-8cd5-f7bcefeb2902#ituser\n"

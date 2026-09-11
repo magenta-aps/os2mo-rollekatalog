@@ -138,9 +138,16 @@ async def sync_person_on_demand(
 
 @router.get("/cache/person/{uuid}")
 async def person_from_cache(session: depends.Session, uuid: UUID) -> list:
-    """Inspect a person from the cache."""
+    """Inspect a person from the cache.
+
+    itsystem_user_key is not part of the Rollekatalog payload; it decides
+    which domain the user is uploaded to.
+    """
     users = await fetch_users_from_db(session, uuid)
-    return [u.to_rollekatalog_payload() for u in users]
+    return [
+        u.to_rollekatalog_payload() | {"itsystem_user_key": u.itsystem_user_key}
+        for u in users
+    ]
 
 
 @router.get("/debug/org_unit/{uuid}")

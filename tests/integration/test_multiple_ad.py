@@ -97,6 +97,7 @@ async def test_multiple_ad_itsystems_map_to_fk(
                 {"name": "Jurist", "orgUnitUuid": str(org_unit)},
             ],
             "functions": [],
+            "itsystem_user_key": "Active Directory",
         },
         {
             "extUuid": str(skole_external_id),
@@ -108,5 +109,6 @@ async def test_multiple_ad_itsystems_map_to_fk(
                 {"name": "Jurist", "orgUnitUuid": str(org_unit)},
             ],
             "functions": [],
+            "itsystem_user_key": "Skole-AD",
         },
     ]

@@ -8,6 +8,7 @@ from pydantic import AnyHttpUrl
 from pydantic import BaseSettings
 from pydantic import Field
 from pydantic import SecretStr
+from pydantic import validator
 
 
 class _Settings(BaseSettings):
@@ -59,6 +60,37 @@ class _Settings(BaseSettings):
             '\'["Active Directory", "Skole-AD"]\'.'
         )
     )
+    itsystem_domains: dict[str, str] = Field(
+        {},
+        description=dedent(
+            """
+            Map of AD itsystem user_keys to Rollekatalog domain names. Users
+            whose account is from a mapped itsystem are uploaded with the
+            domain parameter, e.g. POST /api/organisation/v3?domain=Skole.
+            Users from unmapped itsystems are uploaded to Rollekatalog's
+            primary domain, which never needs to be named. Domain names are
+            case sensitive and must exist in the Rollekatalog instance.
+            Given as a JSON object, e.g. '{"Skole-AD": "Skole"}'.
+            """
+        ),
+    )
+
+    @validator("itsystem_domains")
+    def itsystem_domains_must_be_ad_itsystems(
+        cls, v: dict[str, str], values: dict
+    ) -> dict[str, str]:
+        # Absent when AD_ITSYSTEM_USER_KEYS itself failed validation. Checking
+        # against nothing would report every key here as unknown too, burying
+        # the real error.
+        if "ad_itsystem_user_keys" not in values:
+            return v
+        unknown = set(v) - set(values["ad_itsystem_user_keys"])
+        if unknown:
+            raise ValueError(
+                f"ITSYSTEM_DOMAINS keys must be in AD_ITSYSTEM_USER_KEYS: {unknown}"
+            )
+        return v
+
     manager_itsystem_user_key: str | None = Field(
         None,
         description=dedent(
