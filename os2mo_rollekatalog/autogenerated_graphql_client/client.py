@@ -36,6 +36,10 @@ from ._testing__create_org_unit import (
     TestingCreateOrgUnit,
     TestingCreateOrgUnitOrgUnitCreate,
 )
+from ._testing__terminate_it_user import (
+    TestingTerminateItUser,
+    TestingTerminateItUserItuserTerminate,
+)
 from ._testing__update_address import (
     TestingUpdateAddress,
     TestingUpdateAddressAddressUpdate,
@@ -87,6 +91,7 @@ from .input_types import (
     FacetCreateInput,
     ITSystemCreateInput,
     ITUserCreateInput,
+    ITUserTerminateInput,
     ITUserUpdateInput,
     ManagerCreateInput,
     OrganisationUnitCreateInput,
@@ -295,7 +300,7 @@ class GraphQLClient(AsyncBaseClient):
         query = gql(
             """
             query GetUuidsForItUser($uuid: UUID!) {
-              itusers(filter: {uuids: [$uuid]}) {
+              itusers(filter: {uuids: [$uuid], from_date: null, to_date: null}) {
                 objects {
                   validities(start: null, end: null) {
                     person {
@@ -668,6 +673,23 @@ class GraphQLClient(AsyncBaseClient):
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return TestingUpdateItUser.parse_obj(data).ituser_update
+
+    async def _testing__terminate_it_user(
+        self, input: ITUserTerminateInput
+    ) -> TestingTerminateItUserItuserTerminate:
+        query = gql(
+            """
+            mutation _Testing_TerminateItUser($input: ITUserTerminateInput!) {
+              ituser_terminate(input: $input) {
+                uuid
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {"input": input}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return TestingTerminateItUser.parse_obj(data).ituser_terminate
 
     async def _testing__create_engagement(
         self, input: EngagementCreateInput

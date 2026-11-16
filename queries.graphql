@@ -191,7 +191,7 @@ query GetPerson(
 
 
 query GetUuidsForItUser($uuid: UUID!) {
-  itusers(filter: {uuids: [$uuid]}) {
+  itusers(filter: {uuids: [$uuid], from_date: null, to_date: null}) {
     objects {
       validities(start: null, end: null) {
         person {
@@ -390,6 +390,12 @@ mutation _Testing_CreateItUser($input: ITUserCreateInput!) {
 
 mutation _Testing_UpdateItUser($input: ITUserUpdateInput!) {
   ituser_update(input: $input) {
+    uuid
+  }
+}
+
+mutation _Testing_TerminateItUser($input: ITUserTerminateInput!) {
+  ituser_terminate(input: $input) {
     uuid
   }
 }

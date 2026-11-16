@@ -32,6 +32,10 @@ from ._testing__create_org_unit import (
     TestingCreateOrgUnit,
     TestingCreateOrgUnitOrgUnitCreate,
 )
+from ._testing__terminate_it_user import (
+    TestingTerminateItUser,
+    TestingTerminateItUserItuserTerminate,
+)
 from ._testing__update_address import (
     TestingUpdateAddress,
     TestingUpdateAddressAddressUpdate,
@@ -548,6 +552,8 @@ __all__ = [
     "TestingCreateManagerManagerCreate",
     "TestingCreateOrgUnit",
     "TestingCreateOrgUnitOrgUnitCreate",
+    "TestingTerminateItUser",
+    "TestingTerminateItUserItuserTerminate",
     "TestingUpdateAddress",
     "TestingUpdateAddressAddressUpdate",
     "TestingUpdateAssociation",
